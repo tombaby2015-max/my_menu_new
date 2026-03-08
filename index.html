@@ -1384,7 +1384,7 @@ function showPriceHist(name) {
 //  PARSING (Yerevan City via Cloudflare Worker)
 // ══════════════════════════════════════════════════════
 // Worker URL — замени на свой после деплоя
-const WORKER_URL = 'https://yc-proxy.YOUR-SUBDOMAIN.workers.dev';
+const WORKER_URL = 'my-menu.belovolov-email.workers.dev';
 
 async function apiCall(path, body) {
   const r = await fetch(WORKER_URL + path, {
