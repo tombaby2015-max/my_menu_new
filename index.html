@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ПП Меню</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Unbounded:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f13;
+  --bg2: #16161d;
+  --bg3: #1e1e28;
+  --bg4: #252532;
+  --border: #2e2e3e;
+  --border2: #3a3a50;
+  --accent: #7c6af7;
+  --accent2: #5b4fd4;
+  --accent-glow: rgba(124,106,247,0.15);
+  --green: #3ecf8e;
+  --green-dim: rgba(62,207,142,0.12);
+  --red: #f0506e;
+  --red-dim: rgba(240,80,110,0.12);
+  --yellow: #f5a623;
+  --yellow-dim: rgba(245,166,35,0.12);
+  --text: #e2e2ef;
+  --text2: #9090b0;
+  --text3: #5a5a78;
+  --mono: 'JetBrains Mono', monospace;
+  --head: 'Unbounded', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;overflow:hidden;}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100vh;}
+#topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
+#main{flex:1;overflow:hidden;position:relative;}
+.section{display:none;height:100%;overflow-y:auto;padding:20px;}
+.section.active{display:flex;flex-direction:column;}
+
+/* ── TOPBAR ──────────────────────────────────────────── */
+#menuBtn{width:36px;height:36px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;transition:border-color .2s,background .2s;}
+#menuBtn:hover{background:var(--bg4);border-color:var(--accent);}
+#menuBtn svg{width:16px;height:16px;stroke:var(--text2);}
+#menuBtn:hover svg{stroke:var(--accent);}
+#menuBtn .tooltip{position:absolute;left:44px;top:50%;transform:translateY(-50%);background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;}
+#menuBtn:hover .tooltip{opacity:1;}
+
+#navDropdown{position:absolute;top:52px;left:16px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:6px;min-width:220px;z-index:500;box-shadow:0 16px 40px rgba(0,0,0,.5);display:none;}
+#navDropdown.open{display:block;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;color:var(--text2);font-size:12px;}
+.nav-item:hover{background:var(--bg4);color:var(--text);}
+.nav-item.active{background:var(--accent-glow);color:var(--accent);}
+.nav-item .ni{width:20px;text-align:center;font-size:14px;}
+
+#dateLabel{font-family:var(--head);font-size:11px;font-weight:300;color:var(--text3);letter-spacing:.5px;}
+
+/* ── DAY TABS ────────────────────────────────────────── */
+#dayTabs{display:flex;gap:4px;padding:0 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.day-tab{padding:10px 14px;font-family:var(--head);font-size:10px;font-weight:400;letter-spacing:.5px;color:var(--text3);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap;}
+.day-tab:hover{color:var(--text2);}
+.day-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── MENU SECTION ────────────────────────────────────── */
+#sec-menu{padding:0;overflow:hidden;flex-direction:column;}
+#sec-menu.active{display:flex;}
+#menuTitle{font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);padding:14px 20px 0;letter-spacing:.3px;}
+
+#tableWrap{flex:1;overflow:auto;}
+#menuTable{width:100%;border-collapse:collapse;font-size:12px;}
+#menuTable th{background:var(--bg3);color:var(--text3);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:10;}
+#menuTable td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+#menuTable tr:hover td{background:rgba(124,106,247,.04);}
+
+.meal-header-row td{background:var(--bg3);font-family:var(--head);font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent);padding:8px 10px;border-top:2px solid var(--border2);}
+.meal-total-row td{background:var(--bg3);font-size:11px;color:var(--text2);border-top:1px dashed var(--border2);}
+.day-total-row td{background:linear-gradient(90deg,var(--accent-glow),transparent);font-family:var(--head);font-size:10px;font-weight:600;color:var(--accent);border-top:2px solid var(--accent2);}
+.meal-spacer td{height:6px;background:transparent;border:none;}
+
+.td-time{width:60px;text-align:center;color:var(--text2);font-size:11px;cursor:pointer;}
+.td-time:hover .time-val{color:var(--accent);}
+.time-val{transition:color .15s;}
+.td-meal{width:90px;font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.5px;color:var(--text2);text-transform:uppercase;}
+.td-dish{color:var(--text);font-weight:500;position:relative;min-width:120px;}
+.td-ingredient{min-width:140px;}
+.ingredient-wrap{display:flex;align-items:center;gap:6px;}
+.td-weight{width:70px;}
+.weight-input{width:54px;padding:3px 6px;background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--text);text-align:center;font-family:var(--mono);font-size:11px;}
+.weight-input:focus{outline:none;border-color:var(--accent);}
+.td-num{width:52px;text-align:center;color:var(--text2);}
+.td-kcal{width:60px;text-align:center;font-weight:500;color:var(--text);}
+.td-recipe{max-width:220px;color:var(--text3);font-size:11px;line-height:1.5;}
+
+.btn-x{width:16px;height:16px;border:1px solid var(--border2);border-radius:50%;background:transparent;color:var(--text3);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-x:hover{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+.btn-q{width:16px;height:16px;border:1px solid var(--yellow);border-radius:50%;background:var(--yellow-dim);color:var(--yellow);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;}
+.btn-q:hover{background:var(--yellow);color:#000;}
+.not-found-cell{background:var(--red-dim)!important;}
+.not-found-cell .ingredient-wrap span{color:var(--red);}
+
+.btn-add-dish{position:absolute;right:6px;bottom:6px;width:18px;height:18px;background:var(--green-dim);border:1px solid var(--green);border-radius:4px;color:var(--green);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;}
+.btn-add-dish:hover{background:var(--green);color:#000;}
+
+.btn-save-meal{opacity:0;width:14px;height:14px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text3);cursor:pointer;font-size:8px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;transition:all .15s;vertical-align:middle;}
+.td-meal:hover .btn-save-meal{opacity:1;}
+.btn-save-meal:hover{border-color:var(--green);color:var(--green);background:var(--green-dim);}
+
+/* ── DROPDOWN POPUPS ─────────────────────────────────── */
+.dropdown-popup{position:fixed;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;z-index:1000;box-shadow:0 16px 40px rgba(0,0,0,.5);overflow:hidden;}
+.dropdown-popup .dp-item{padding:8px 14px;cursor:pointer;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);transition:background .1s,color .1s;}
+.dropdown-popup .dp-item:last-child{border-bottom:none;}
+.dropdown-popup .dp-item:hover{background:var(--accent-glow);color:var(--accent);}
+
+/* ── MODAL ───────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;min-width:380px;max-width:560px;width:90%;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:var(--head);font-size:14px;font-weight:600;color:var(--text);margin-bottom:20px;text-align:center;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.form-label{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.form-group{display:flex;flex-direction:column;}
+.form-input{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--mono);font-size:12px;}
+.form-input:focus{outline:none;border-color:var(--accent);}
+.form-input.full{grid-column:1/-1;}
+.modal-btns{display:flex;gap:8px;justify-content:center;margin-top:20px;}
+.btn{padding:9px 20px;border:1px solid transparent;border-radius:8px;cursor:pointer;font-family:var(--mono);font-size:12px;font-weight:500;transition:all .15s;}
+.btn-primary{background:var(--accent);border-color:var(--accent2);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-secondary{background:var(--bg4);border-color:var(--border2);color:var(--text2);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+
+/* ── PRODUCT SELECT MODAL ────────────────────────────── */
+#prodSelectModal .modal-box{max-width:680px;}
+#prodSearchInput{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:9px 14px;color:var(--text);font-family:var(--mono);font-size:12px;margin-bottom:12px;}
+#prodSearchInput:focus{outline:none;border-color:var(--accent);}
+#prodListWrap{max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;}
+#prodTable{width:100%;border-collapse:collapse;font-size:12px;}
+#prodTable th{background:var(--bg3);color:var(--text3);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;}
+#prodTable td{padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;}
+#prodTable tr:hover td{background:var(--accent-glow);color:var(--accent);}
+
+/* ── RECIPE LOAD SECTION ─────────────────────────────── */
+#sec-recipes{gap:20px;}
+.recipe-area-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;flex:1;}
+.recipe-area-wrap label{display:block;font-family:var(--head);font-size:10px;font-weight:400;letter-spacing:.8px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;}
+#recipeTextarea{width:100%;height:320px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:14px;color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.7;resize:vertical;}
+#recipeTextarea:focus{outline:none;border-color:var(--accent);}
+.template-box{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:16px;font-size:11px;line-height:1.8;color:var(--text3);}
+.template-box strong{color:var(--accent);font-weight:500;}
+.template-box .kw{color:var(--green);}
+.sec-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ── SAVED RECIPES ───────────────────────────────────── */
+#sec-saved{gap:16px;}
+.saved-group{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.saved-group-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;transition:background .15s;}
+.saved-group-header:hover{background:var(--bg3);}
+.saved-group-header h3{font-family:var(--head);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);}
+.saved-group-header .arrow{color:var(--text3);transition:transform .2s;}
+.saved-group-header.open .arrow{transform:rotate(90deg);}
+.saved-group-body{display:none;padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.saved-group-body.collapsed{display:none;}
+.recipe-card{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px;position:relative;}
+.recipe-card h4{font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px;}
+.recipe-card .rc-kbju{font-size:10px;color:var(--text3);margin-bottom:10px;}
+.recipe-card .rc-ingredients{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:10px;}
+.btn-add-recipe{width:100%;padding:6px;background:var(--accent-glow);border:1px solid var(--accent2);border-radius:6px;color:var(--accent);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;}
+.btn-add-recipe:hover{background:var(--accent);color:#fff;}
+
+/* ── COST SECTION ────────────────────────────────────── */
+#sec-cost{gap:16px;}
+#costTable{width:100%;border-collapse:collapse;font-size:12px;background:var(--bg2);border-radius:12px;overflow:hidden;}
+#costTable th{background:var(--bg3);color:var(--text3);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid var(--border);}
+#costTable td{padding:9px 14px;border-bottom:1px solid var(--border);}
+#costTable tr:last-child td{border-bottom:none;}
+.cost-total-row td{background:var(--accent-glow);font-family:var(--head);font-size:10px;font-weight:600;color:var(--accent);border-top:2px solid var(--accent2);}
+
+/* ── KBJU TABLE ──────────────────────────────────────── */
+#sec-kbju{gap:16px;}
+#kbjuTableWrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+#kbjuTable{width:100%;border-collapse:collapse;font-size:12px;}
+#kbjuTable th{background:var(--bg3);color:var(--text3);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;}
+#kbjuTable th:hover{color:var(--text2);}
+#kbjuTable td{padding:8px 14px;border-bottom:1px solid var(--border);}
+#kbjuTable tr:hover td{background:rgba(124,106,247,.04);}
+.kbju-archive-header{background:var(--bg4)!important;color:var(--text3)!important;font-style:italic;}
+.price-cell{display:flex;align-items:center;gap:6px;}
+.price-badge{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;cursor:pointer;flex-shrink:0;}
+.price-badge.up{background:var(--red-dim);border:1px solid var(--red);color:var(--red);}
+.price-badge.down{background:var(--green-dim);border:1px solid var(--green);color:var(--green);}
+.price-badge.same{background:var(--bg4);border:1px solid var(--border2);color:var(--text3);}
+.price-date{font-size:10px;color:var(--text3);}
+
+/* ── PRICE HISTORY MODAL ─────────────────────────────── */
+#priceHistModal .modal-box{max-width:480px;}
+#priceChart{width:100%;height:180px;position:relative;margin-top:12px;}
+
+/* ── PARSING SECTION ─────────────────────────────────── */
+#sec-parse{gap:16px;padding:16px;}
+.parse-workspace{display:grid;grid-template-columns:1fr 1fr;gap:16px;height:360px;}
+.parse-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.parse-panel-header{padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);}
+.parse-panel-body{flex:1;overflow-y:auto;}
+.cat-item{border-bottom:1px solid var(--border);}
+.cat-row{display:flex;align-items:center;padding:9px 14px;cursor:pointer;gap:8px;transition:background .1s;}
+.cat-row:hover{background:var(--bg4);}
+.cat-toggle{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:10px;flex-shrink:0;transition:transform .2s;}
+.cat-toggle.open{transform:rotate(90deg);color:var(--accent);}
+.cat-check{width:15px;height:15px;border:1.5px solid var(--border2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer;}
+.cat-check:hover{border-color:var(--accent);}
+.cat-check.checked{background:var(--accent);border-color:var(--accent);}
+.cat-check.checked::after{content:'✓';color:#fff;font-size:9px;font-weight:700;}
+.cat-name{flex:1;font-size:12px;color:var(--text2);}
+.cat-children{display:none;background:var(--bg3);}
+.cat-children.open{display:block;}
+.cat-children .cat-row{padding-left:32px;}
+.cat-children .cat-children .cat-row{padding-left:50px;}
+.loading-row{padding:10px 16px;color:var(--text3);font-size:11px;display:flex;align-items:center;gap:8px;}
+.spinner{width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.selected-list{padding:10px;}
+.selected-tag{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--accent-glow);border:1px solid var(--accent2);border-radius:7px;margin-bottom:6px;}
+.selected-tag .tag-name{flex:1;font-size:12px;color:var(--accent);}
+.selected-tag .tag-remove{cursor:pointer;color:var(--text3);font-size:14px;transition:color .15s;}
+.selected-tag .tag-remove:hover{color:var(--red);}
+.selected-empty{padding:30px;text-align:center;color:var(--text3);font-size:12px;}
+.btn-export{margin:10px;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-family:var(--head);font-size:10px;font-weight:600;letter-spacing:.5px;cursor:pointer;width:calc(100% - 20px);transition:background .15s;}
+.btn-export:hover{background:var(--accent2);}
+.btn-export:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed;border:1px solid var(--border);}
+
+/* ── PARSED TABLE ────────────────────────────────────── */
+#parsedTableSection{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.parsed-table-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.parsed-table-header span{font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);}
+#parsedTable{width:100%;border-collapse:collapse;font-size:12px;}
+#parsedTable th{background:var(--bg3);color:var(--text3);font-family:var(--head);font-size:9px;font-weight:400;letter-spacing:.8px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+#parsedTable td{padding:7px 10px;border-bottom:1px solid var(--border);}
+#parsedTable tr:hover td{background:rgba(124,106,247,.04);}
+.cb-meal{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+#listsSection{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;}
+.list-box{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px;}
+.list-box h4{font-family:var(--head);font-size:9px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.list-box ul{list-style:none;font-size:11px;line-height:2;color:var(--text2);}
+.btn-transfer{margin-top:12px;width:100%;padding:8px;background:var(--green-dim);border:1px solid var(--green);border-radius:8px;color:var(--green);cursor:pointer;font-family:var(--mono);font-size:11px;transition:all .15s;}
+.btn-transfer:hover{background:var(--green);color:#000;}
+
+/* ── NOTES SECTION ───────────────────────────────────── */
+#sec-notes{gap:16px;}
+#notesArea{width:100%;flex:1;min-height:400px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.8;resize:none;}
+#notesArea:focus{outline:none;border-color:var(--accent);}
+
+/* ── SYNC CONFLICT MODAL ─────────────────────────────── */
+#syncModal .modal-box{max-width:460px;}
+.conflict-item{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:10px;}
+.conflict-item p{font-size:11px;color:var(--text2);margin-bottom:10px;}
+.conflict-item strong{color:var(--yellow);}
+
+/* ── ADD TO MENU MODAL ───────────────────────────────── */
+#addToMenuModal .modal-box{max-width:400px;}
+.day-meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.day-meal-grid select{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:12px;}
+.day-meal-grid select:focus{outline:none;border-color:var(--accent);}
+
+/* ── PROGRESS BAR ────────────────────────────────────── */
+.progress-bar{height:2px;background:var(--border);}
+.progress-fill{height:100%;background:var(--accent);transition:width .3s;}
+
+/* ── SCROLLBAR ───────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="menuBtn" onclick="toggleNav()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <span class="tooltip">Разделы</span>
+    </div>
+    <div id="dateLabel"></div>
+  </div>
+
+  <!-- NAV DROPDOWN -->
+  <div id="navDropdown">
+    <div class="nav-item active" data-sec="menu" onclick="switchSection('menu')"><span class="ni">📅</span> Главное окно меню</div>
+    <div class="nav-item" data-sec="parse" onclick="switchSection('parse')"><span class="ni">🛒</span> Парсинг продуктов</div>
+    <div class="nav-item" data-sec="recipes" onclick="switchSection('recipes')"><span class="ni">📥</span> Загрузка рецептов</div>
+    <div class="nav-item" data-sec="saved" onclick="switchSection('saved')"><span class="ni">💾</span> Сохраненные рецепты</div>
+    <div class="nav-item" data-sec="cost" onclick="switchSection('cost')"><span class="ni">💰</span> Стоимость рецептов</div>
+    <div class="nav-item" data-sec="kbju" onclick="switchSection('kbju')"><span class="ni">📊</span> Таблица КБЖУ</div>
+    <div class="nav-item" data-sec="notes" onclick="switchSection('notes')"><span class="ni">📝</span> Заметки</div>
+  </div>
+
+  <!-- DAY TABS (only for menu) -->
+  <div id="dayTabs"></div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main">
+
+    <!-- MENU SECTION -->
+    <div id="sec-menu" class="section active">
+      <div id="menuTitle">Меню на понедельник</div>
+      <div id="tableWrap">
+        <table id="menuTable">
+          <thead><tr>
+            <th>Время</th><th>Приём пищи</th><th>Блюдо</th><th>Состав блюда</th>
+            <th>Вес</th><th>Б</th><th>Ж</th><th>У</th><th>Ккал</th><th>Приготовление</th>
+          </tr></thead>
+          <tbody id="menuBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARSE SECTION -->
+    <div id="sec-parse" class="section">
+      <div class="parse-workspace">
+        <div class="parse-panel">
+          <div class="parse-panel-header">📂 Каталог категорий</div>
+          <div class="parse-panel-body" id="catalogPanel">
+            <div class="loading-row"><div class="spinner"></div> Загрузка каталога...</div>
+          </div>
+        </div>
+        <div class="parse-panel">
+          <div class="parse-panel-header">✅ Выбранные категории</div>
+          <div class="parse-panel-body" id="selectedPanel">
+            <div class="selected-empty">Отметьте категории слева</div>
+          </div>
+          <button class="btn-export" id="exportBtn" onclick="exportData()" disabled>⬇ Выгрузить данные</button>
+        </div>
+      </div>
+      <!-- Progress -->
+      <div class="progress-bar"><div class="progress-fill" id="parseProg" style="width:0%"></div></div>
+      <div id="parseStatus" style="font-size:11px;color:var(--text3);padding:4px 0;"></div>
+
+      <!-- Parsed table -->
+      <div id="parsedTableSection" style="display:none;">
+        <div class="parsed-table-header">
+          <span id="parsedCount">0 товаров</span>
+          <button class="btn btn-secondary" style="font-size:11px;padding:5px 12px;" onclick="document.getElementById('listsSection').scrollIntoView({behavior:'smooth'})">↓ К спискам</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="parsedTable">
+            <thead><tr>
+              <th>Категория</th><th></th><th>Название</th><th>Цена</th><th>1 кг/л</th>
+              <th style="min-width:80px">Перекус</th><th style="min-width:80px">Завтрак</th>
+              <th style="min-width:80px">Обед</th><th style="min-width:80px">Ужин</th>
+            </tr></thead>
+            <tbody id="parsedBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Product lists -->
+      <div id="listsSection" style="display:none;">
+        <div class="list-box"><h4>Перекус</h4><ul id="list-snack"></ul></div>
+        <div class="list-box"><h4>Завтрак</h4><ul id="list-breakfast"></ul></div>
+        <div class="list-box"><h4>Обед</h4><ul id="list-lunch"></ul></div>
+        <div class="list-box"><h4>Ужин</h4><ul id="list-dinner"></ul></div>
+      </div>
+      <div id="listsSection" style="display:none;padding:0 0 16px;">
+        <button class="btn-transfer" onclick="transferToKbju()" style="margin:0 16px;width:calc(100% - 32px);">
+          ↗ Перенести в Таблицу КБЖУ
+        </button>
+      </div>
+    </div>
+
+    <!-- RECIPES LOAD SECTION -->
+    <div id="sec-recipes" class="section">
+      <h2 style="font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);">Загрузка рецептов</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;">
+        <div class="recipe-area-wrap">
+          <label>Вставьте рецепты из буфера обмена</label>
+          <textarea id="recipeTextarea" placeholder="Вставьте рецепты сюда..."></textarea>
+          <div class="sec-actions" style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="parseRecipes()">Загрузить в меню</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('recipeTextarea').value=''">Очистить</button>
+          </div>
+        </div>
+        <div>
+          <div class="form-label" style="margin-bottom:8px;font-family:var(--head);font-size:9px;letter-spacing:.8px;text-transform:uppercase;">Шаблон формата</div>
+          <div class="template-box">
+<strong>===</strong><br>
+<span class="kw">Завтрак</span><br>
+<span class="kw">Понедельник</span><br>
+Омлет с овощами<br>
+<strong>Состав:</strong><br>
+Яйца – 100 г<br>
+Кабачки – 100 г<br>
+<strong>КБЖУ:</strong> 360 Ккал (Б 22 г / Ж 23 г / У 12 г) <em style="color:var(--text3)">(игнорируется)</em><br>
+<strong>Приготовление:</strong><br>
+Обжарь лук...<br>
+<strong>===</strong><br><br>
+<span style="color:var(--text3);font-size:10px;">Приёмы пищи: Завтрак, 1й перекус, 2й перекус, 3й перекус, Обед, Ужин<br>
+Дни: Понедельник, Вторник, Среда, Четверг, Пятница, Суббота, Воскресенье</span>
+          </div>
+        </div>
+      </div>
+      <div id="recipeParseLog" style="font-size:11px;color:var(--text3);margin-top:8px;"></div>
+    </div>
+
+    <!-- SAVED RECIPES SECTION -->
+    <div id="sec-saved" class="section">
+      <h2 style="font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);">Сохранённые рецепты</h2>
+      <div id="savedGroups"></div>
+    </div>
+
+    <!-- COST SECTION -->
+    <div id="sec-cost" class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 style="font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);">Стоимость на неделю</h2>
+        <button class="btn btn-primary" onclick="calcCosts()" style="font-size:11px;">Пересчитать</button>
+      </div>
+      <div style="overflow:auto;flex:1;">
+        <table id="costTable">
+          <thead><tr>
+            <th>Продукт</th><th>Нужно (г)</th><th>Упаковка</th><th>Кол-во пачек</th><th>Стоимость</th>
+          </tr></thead>
+          <tbody id="costBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- KBJU TABLE SECTION -->
+    <div id="sec-kbju" class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);">Таблица КБЖУ</h2>
+        <div style="display:flex;gap:8px;">
+          <input id="kbjuSearch" type="text" placeholder="Поиск продукта..." style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:var(--mono);font-size:12px;width:220px;" oninput="renderKbjuTable()">
+          <button class="btn btn-primary" onclick="openAddProduct(null)" style="font-size:11px;">+ Добавить</button>
+        </div>
+      </div>
+      <div id="kbjuTableWrap" style="flex:1;overflow:auto;">
+        <table id="kbjuTable">
+          <thead><tr>
+            <th>№</th><th onclick="sortKbju('name')">Продукт ⇅</th>
+            <th onclick="sortKbju('proteins')">Б ⇅</th><th onclick="sortKbju('fats')">Ж ⇅</th>
+            <th onclick="sortKbju('carbs')">У ⇅</th><th onclick="sortKbju('calories')">Ккал ⇅</th>
+            <th>Цена</th><th>Действие</th>
+          </tr></thead>
+          <tbody id="kbjuBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTES SECTION -->
+    <div id="sec-notes" class="section">
+      <h2 style="font-family:var(--head);font-size:13px;font-weight:600;color:var(--text);">Заметки</h2>
+      <textarea id="notesArea" placeholder="Ваши заметки..." oninput="saveNotes()"></textarea>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add/Edit product -->
+<div id="addProductModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="addProductTitle">Добавить продукт</div>
+    <div style="margin-bottom:10px;">
+      <div class="form-label">Название продукта</div>
+      <input id="npName" class="form-input" style="width:100%;" type="text" placeholder="Яйца">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Белки (г/100г)</div><input id="npB" class="form-input" type="number" step="0.1" placeholder="0"></div>
+      <div class="form-group"><div class="form-label">Жиры (г/100г)</div><input id="npJ" class="form-input" type="number" step="0.1" placeholder="0"></div>
+      <div class="form-group"><div class="form-label">Углеводы (г/100г)</div><input id="npU" class="form-input" type="number" step="0.1" placeholder="0"></div>
+      <div class="form-group"><div class="form-label">Ккал (на 100г)</div><input id="npK" class="form-input" type="number" step="0.1" placeholder="0"></div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div class="form-label">Цена (за 1 кг или упаковку)</div>
+      <div style="display:flex;gap:8px;">
+        <input id="npPrice" class="form-input" type="number" step="1" placeholder="0" style="flex:1;">
+        <select id="npPriceType" class="form-input" style="width:140px;">
+          <option value="kg">за 1 кг (весовой)</option>
+          <option value="pack">за упаковку</option>
+        </select>
+      </div>
+    </div>
+    <div id="npPackRow" style="display:none;margin-bottom:10px;">
+      <div class="form-label">Вес упаковки (г)</div>
+      <input id="npPackWeight" class="form-input" type="number" step="1" placeholder="850" style="width:100%;">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveProduct()">Сохранить</button>
+      <button class="btn btn-danger" id="npDeleteBtn" style="display:none;" onclick="deleteProduct()">Удалить</button>
+      <button class="btn btn-secondary" onclick="closeModal('addProductModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Price history -->
+<div id="priceHistModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="priceHistTitle">История цен</div>
+    <canvas id="priceCanvas" width="420" height="180" style="width:100%;height:180px;border-radius:8px;background:var(--bg3);"></canvas>
+    <div id="priceHistList" style="margin-top:12px;font-size:11px;line-height:2;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
+    <div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal('priceHistModal')">Закрыть</button></div>
+  </div>
+</div>
+
+<!-- Product select -->
+<div id="prodSelectModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:680px;width:95%;">
+    <div class="modal-title">Выбрать продукт</div>
+    <input id="prodSearchInput" type="text" placeholder="Поиск..." oninput="filterProdTable()">
+    <div id="prodListWrap">
+      <table id="prodTable">
+        <thead><tr><th>Продукт</th><th>Б</th><th>Ж</th><th>У</th><th>Ккал</th></tr></thead>
+        <tbody id="prodTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-btns"><button class="btn btn-secondary" onclick="closeModal('prodSelectModal')">Отмена</button></div>
+  </div>
+</div>
+
+<!-- Save recipe to saved -->
+<div id="saveRecipeModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Сохранить рецепт</div>
+    <p id="saveRecipeName" style="text-align:center;color:var(--text2);margin-bottom:16px;font-size:12px;"></p>
+    <div class="form-label">Раздел</div>
+    <select id="saveRecipeGroup" class="form-input" style="width:100%;margin-bottom:16px;">
+      <option value="Завтрак">Завтрак</option>
+      <option value="Перекус">Перекус</option>
+      <option value="Обед">Обед</option>
+      <option value="Ужин">Ужин</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="confirmSaveRecipe()">Сохранить</button>
+      <button class="btn btn-secondary" onclick="closeModal('saveRecipeModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add saved recipe to menu -->
+<div id="addToMenuModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Добавить в меню</div>
+    <p id="addToMenuName" style="text-align:center;color:var(--text2);margin-bottom:16px;font-size:12px;"></p>
+    <div class="day-meal-grid" style="margin-bottom:16px;">
+      <div>
+        <div class="form-label" style="margin-bottom:6px;">День недели</div>
+        <select id="atmDay" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;">
+          <option>Понедельник</option><option>Вторник</option><option>Среда</option>
+          <option>Четверг</option><option>Пятница</option><option>Суббота</option><option>Воскресенье</option>
+        </select>
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:6px;">Приём пищи</div>
+        <select id="atmMeal" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;">
+          <option>Завтрак</option><option>1й перекус</option><option>Обед</option>
+          <option>2й перекус</option><option>Ужин</option><option>3й перекус</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="confirmAddToMenu()">Добавить</button>
+      <button class="btn btn-secondary" onclick="closeModal('addToMenuModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync conflict -->
+<div id="syncModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Синхронизация с таблицей КБЖУ</div>
+    <div id="syncConflicts"></div>
+    <div id="syncSummary" style="font-size:11px;color:var(--text3);margin-top:10px;"></div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="applySyncDecisions()">Применить</button>
+      <button class="btn btn-secondary" onclick="closeModal('syncModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════
+const DAYS = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+const MEALS = ['Завтрак','1й перекус','Обед','2й перекус','Ужин','3й перекус'];
+const MEAL_LABELS = {'Завтрак':'Завтрак','1й перекус':'1й Перекус','Обед':'Обед','2й перекус':'2й Перекус','Ужин':'Ужин','3й перекус':'3й Перекус'};
+
+let menuData = {};   // {день: {приём: {dish, ingredients:[{name,originalName,weight,proteins,fats,carbs,calories,status,suggestions}], recipe}}}
+let kbjuTable = {};  // {name: {proteins,fats,carbs,calories,price,priceType,packWeight,priceHistory:[{date,price}],archived}}
+let mealTimes = {};  // {meal: 'HH:MM'}
+let savedRecipes = {Завтрак:[],Перекус:[],Обед:[],Ужин:[]};
+let notes = '';
+let parsedProducts = []; // temp for parse section
+
+let currentDay = 'Понедельник';
+let currentSection = 'menu';
+let kbjuSortKey = null, kbjuSortDir = 1;
+let _addProductEditing = null;
+let _prodSelectTarget = null; // {day, meal}
+let _saveRecipeTarget = null; // {day, meal}
+let _addToMenuRecipe = null;
+let _syncDecisions = [];
+let _parsedRows = []; // [{catName, name, price, pricePerUnit, weightMeasure, photo}]
+
+// ── init ──────────────────────────────────────────────
+function init() {
+  loadAll();
+  setDateLabel();
+  buildDayTabs();
+  renderMenuDay(currentDay);
+  renderKbjuTable();
+  renderSavedRecipes();
+  renderNotes();
+
+  document.getElementById('npPriceType').addEventListener('change', function() {
+    document.getElementById('npPackRow').style.display = this.value === 'pack' ? 'block' : 'none';
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#navDropdown') && !e.target.closest('#menuBtn')) {
+      document.getElementById('navDropdown').classList.remove('open');
+    }
+    document.querySelectorAll('.dropdown-popup').forEach(d => d.remove());
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+      document.querySelectorAll('.dropdown-popup').forEach(d => d.remove());
+    }
+  });
+
+  // Load catalog when parse section first opened
+  window._catalogLoaded = false;
+}
+
+function setDateLabel() {
+  const now = new Date();
+  const opts = {weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  document.getElementById('dateLabel').textContent = now.toLocaleDateString('ru-RU', opts);
+}
+
+// ══════════════════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════════════════
+function saveAll() {
+  localStorage.setItem('menuData', JSON.stringify(menuData));
+  localStorage.setItem('kbjuTable', JSON.stringify(kbjuTable));
+  localStorage.setItem('mealTimes', JSON.stringify(mealTimes));
+  localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+  localStorage.setItem('notes', notes);
+}
+function loadAll() {
+  try { menuData = JSON.parse(localStorage.getItem('menuData') || '{}'); } catch(e){}
+  try { kbjuTable = JSON.parse(localStorage.getItem('kbjuTable') || '{}'); } catch(e){}
+  try { mealTimes = JSON.parse(localStorage.getItem('mealTimes') || '{}'); } catch(e){}
+  try { savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '{"Завтрак":[],"Перекус":[],"Обед":[],"Ужин":[]}'); } catch(e){}
+  notes = localStorage.getItem('notes') || '';
+}
+
+// ══════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════
+function toggleNav() {
+  document.getElementById('navDropdown').classList.toggle('open');
+}
+function switchSection(sec) {
+  document.getElementById('navDropdown').classList.remove('open');
+  currentSection = sec;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + sec).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.sec === sec);
+  });
+  document.getElementById('dayTabs').style.display = sec === 'menu' ? 'flex' : 'none';
+
+  if (sec === 'cost') calcCosts();
+  if (sec === 'kbju') renderKbjuTable();
+  if (sec === 'saved') renderSavedRecipes();
+  if (sec === 'parse' && !window._catalogLoaded) { loadTopCategories(); window._catalogLoaded = true; }
+}
+
+// ══════════════════════════════════════════════════════
+//  DAY TABS
+// ══════════════════════════════════════════════════════
+function buildDayTabs() {
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  DAYS.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tab' + (d === currentDay ? ' active' : '');
+    btn.textContent = d.slice(0, 2);
+    btn.title = d;
+    btn.onclick = () => {
+      currentDay = d;
+      document.querySelectorAll('.day-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderMenuDay(d);
+    };
+    tabs.appendChild(btn);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  MENU RENDER
+// ══════════════════════════════════════════════════════
+function renderMenuDay(day) {
+  document.getElementById('menuTitle').textContent = 'Меню на ' + day.toLowerCase();
+  const dayData = menuData[day] || {};
+  const tbody = document.getElementById('menuBody');
+  let html = '';
+  let dayTotals = {proteins:0, fats:0, carbs:0, calories:0};
+
+  MEALS.forEach(meal => {
+    const mealData = dayData[meal];
+    const mealTime = mealTimes[meal] || '--:--';
+    const ings = mealData ? mealData.ingredients : [];
+
+    // Meal header row
+    html += `<tr class="meal-header-row">
+      <td class="td-time" onclick="showTimeDropdown(event,'${meal}')"><span class="time-val">${mealTime}</span></td>
+      <td class="td-meal">${MEAL_LABELS[meal]}<button class="btn-save-meal" title="Сохранить рецепт" onclick="openSaveRecipe('${day}','${meal}')">★</button></td>
+      <td class="td-dish" style="position:relative;">${mealData ? mealData.dish || '' : ''}
+        <button class="btn-add-dish" onclick="openProdSelect('${day}','${meal}')" title="Добавить ингредиент">+</button>
+      </td>
+      <td colspan="6"></td>
+      <td class="td-recipe" rowspan="${ings.length + 2}" style="max-width:220px;vertical-align:top;padding-top:10px;">${mealData ? (mealData.recipe || '') : ''}</td>
+    </tr>`;
+
+    // Ingredients
+    let mealTotals = {proteins:0, fats:0, carbs:0, calories:0};
+    ings.forEach((ing, i) => {
+      const nf = ing.status === 'not_found';
+      const partial = ing.status === 'partial';
+      mealTotals.proteins += ing.proteins || 0;
+      mealTotals.fats += ing.fats || 0;
+      mealTotals.carbs += ing.carbs || 0;
+      mealTotals.calories += ing.calories || 0;
+      html += `<tr>
+        <td></td><td></td><td></td>
+        <td class="td-ingredient${nf ? ' not-found-cell' : ''}">
+          <div class="ingredient-wrap">
+            <span>${ing.originalName || ing.name}</span>
+            ${nf||partial ? `<button class="btn-q" onclick="showSuggestions(event,'${day}','${meal}',${i})">?</button>` 
+                          : `<button class="btn-x" onclick="deleteIngredient('${day}','${meal}',${i})">✕</button>`}
+          </div>
+        </td>
+        <td class="td-weight"><input class="weight-input" type="number" value="${ing.weight}" onchange="updateWeight('${day}','${meal}',${i},this.value)"></td>
+        <td class="td-num">${n1(ing.proteins)}</td>
+        <td class="td-num">${n1(ing.fats)}</td>
+        <td class="td-num">${n1(ing.carbs)}</td>
+        <td class="td-kcal">${n1(ing.calories)}</td>
+      </tr>`;
+    });
+
+    // Meal total
+    dayTotals.proteins += mealTotals.proteins;
+    dayTotals.fats += mealTotals.fats;
+    dayTotals.carbs += mealTotals.carbs;
+    dayTotals.calories += mealTotals.calories;
+
+    html += `<tr class="meal-total-row">
+      <td></td><td></td><td></td>
+      <td style="text-align:right;color:var(--text3);">Итог:</td>
+      <td></td>
+      <td class="td-num">${n1(mealTotals.proteins)}</td>
+      <td class="td-num">${n1(mealTotals.fats)}</td>
+      <td class="td-num">${n1(mealTotals.carbs)}</td>
+      <td class="td-kcal">${n1(mealTotals.calories)}</td>
+    </tr>`;
+    html += `<tr class="meal-spacer"><td colspan="10"></td></tr>`;
+  });
+
+  // Day total
+  html += `<tr class="day-total-row">
+    <td colspan="4" style="text-align:right;">ИТОГО ЗА ДЕНЬ</td><td></td>
+    <td class="td-num">${n1(dayTotals.proteins)}</td>
+    <td class="td-num">${n1(dayTotals.fats)}</td>
+    <td class="td-num">${n1(dayTotals.carbs)}</td>
+    <td class="td-kcal">${n1(dayTotals.calories)}</td>
+    <td></td>
+  </tr>`;
+
+  tbody.innerHTML = html;
+}
+
+function n1(v) { return v ? (Math.round(v*10)/10).toFixed(1) : '—'; }
+
+// ── Weight update ─────────────────────────────────────
+function updateWeight(day, meal, idx, val) {
+  const w = parseFloat(val) || 0;
+  const ing = menuData[day]?.[meal]?.ingredients?.[idx];
+  if (!ing) return;
+  ing.weight = w;
+  if (kbjuTable[ing.name]) {
+    const r = w / 100;
+    const k = kbjuTable[ing.name];
+    ing.proteins = k.proteins * r;
+    ing.fats = k.fats * r;
+    ing.carbs = k.carbs * r;
+    ing.calories = k.calories * r;
+  }
+  saveAll();
+  renderMenuDay(currentDay);
+}
+
+function deleteIngredient(day, meal, idx) {
+  if (!confirm('Удалить ингредиент?')) return;
+  menuData[day][meal].ingredients.splice(idx, 1);
+  saveAll();
+  renderMenuDay(currentDay);
+}
+
+// ── Time dropdown ─────────────────────────────────────
+function showTimeDropdown(e, meal) {
+  e.stopPropagation();
+  document.querySelectorAll('.dropdown-popup').forEach(d => d.remove());
+  const dp = document.createElement('div');
+  dp.className = 'dropdown-popup';
+  dp.style.maxHeight = '200px';
+  dp.style.overflowY = 'auto';
+  dp.style.minWidth = '80px';
+
+  const addOpt = (t) => {
+    const d = document.createElement('div');
+    d.className = 'dp-item';
+    d.textContent = t || '--:--';
+    d.onclick = ev => { ev.stopPropagation(); setMealTime(meal, t); dp.remove(); };
+    dp.appendChild(d);
+  };
+  for (let h = 5; h <= 23; h++) addOpt(`${String(h).padStart(2,'0')}:00`);
+  addOpt('');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  dp.style.left = rect.left + 'px';
+  dp.style.top = (rect.bottom + 4) + 'px';
+  document.body.appendChild(dp);
+}
+
+function setMealTime(meal, time) {
+  mealTimes[meal] = time;
+  // Apply to all days (the time is global per meal type)
+  saveAll();
+  renderMenuDay(currentDay);
+}
+
+// ── Suggestions ───────────────────────────────────────
+function showSuggestions(e, day, meal, idx) {
+  e.stopPropagation();
+  document.querySelectorAll('.dropdown-popup').forEach(d => d.remove());
+  const ing = menuData[day][meal].ingredients[idx];
+  const term = (ing.originalName || ing.name).toLowerCase();
+  const matches = Object.keys(kbjuTable).filter(p =>
+    p.toLowerCase().includes(term) || term.includes(p.toLowerCase()) ||
+    p.toLowerCase().split(/\s+/).some(w => w.length > 2 && term.includes(w))
+  );
+  const all = matches.length ? matches : Object.keys(kbjuTable).slice(0, 20);
+
+  const dp = document.createElement('div');
+  dp.className = 'dropdown-popup';
+  dp.style.maxHeight = '200px';
+  dp.style.overflowY = 'auto';
+  dp.style.minWidth = '200px';
+  all.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'dp-item';
+    item.textContent = p;
+    item.onclick = ev => { ev.stopPropagation(); replaceIngredient(day, meal, idx, p); dp.remove(); };
+    dp.appendChild(item);
+  });
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  dp.style.left = rect.left + 'px';
+  dp.style.top = (rect.bottom + 4) + 'px';
+  document.body.appendChild(dp);
+}
+
+function replaceIngredient(day, meal, idx, newName) {
+  const ing = menuData[day][meal].ingredients[idx];
+  const k = kbjuTable[newName];
+  const r = ing.weight / 100;
+  ing.name = newName;
+  ing.proteins = k.proteins * r;
+  ing.fats = k.fats * r;
+  ing.carbs = k.carbs * r;
+  ing.calories = k.calories * r;
+  ing.status = 'exact';
+  ing.suggestions = [];
+  saveAll();
+  renderMenuDay(currentDay);
+}
+
+// ── Product select modal ───────────────────────────────
+function openProdSelect(day, meal) {
+  _prodSelectTarget = {day, meal};
+  document.getElementById('prodSearchInput').value = '';
+  filterProdTable();
+  openModal('prodSelectModal');
+}
+
+function filterProdTable() {
+  const q = document.getElementById('prodSearchInput').value.toLowerCase();
+  const tbody = document.getElementById('prodTableBody');
+  const products = Object.entries(kbjuTable).filter(([n, d]) => !d.archived && (!q || n.toLowerCase().includes(q)));
+  tbody.innerHTML = products.map(([name, d]) =>
+    `<tr onclick="selectProductForMenu('${name.replace(/'/g,"\\'")}')">
+      <td>${name}</td><td>${n1(d.proteins)}</td><td>${n1(d.fats)}</td><td>${n1(d.carbs)}</td><td>${n1(d.calories)}</td>
+    </tr>`
+  ).join('');
+}
+
+function selectProductForMenu(name) {
+  if (!_prodSelectTarget) return;
+  const {day, meal} = _prodSelectTarget;
+  if (!menuData[day]) menuData[day] = {};
+  if (!menuData[day][meal]) menuData[day][meal] = {dish: '', ingredients: [], recipe: ''};
+  const k = kbjuTable[name];
+  const r = 100/100;
+  menuData[day][meal].ingredients.push({
+    name, originalName: name, weight: 100,
+    proteins: k.proteins*r, fats: k.fats*r, carbs: k.carbs*r, calories: k.calories*r,
+    status: 'exact', suggestions: []
+  });
+  saveAll();
+  renderMenuDay(currentDay);
+  closeModal('prodSelectModal');
+}
+
+// ══════════════════════════════════════════════════════
+//  RECIPE LOADING
+// ══════════════════════════════════════════════════════
+function parseRecipes() {
+  const text = document.getElementById('recipeTextarea').value.trim();
+  if (!text) { alert('Вставьте рецепты!'); return; }
+  const blocks = text.split(/^===\s*$/m).map(b => b.trim()).filter(Boolean);
+  let loaded = 0, skipped = 0;
+  const log = [];
+
+  blocks.forEach(block => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 3) { skipped++; return; }
+
+    // Determine meal and day
+    let meal = null, day = null, dishName = '', ingredients = [], recipe = '', lineIdx = 0;
+    // First non-empty line = meal
+    const mealLine = lines[lineIdx++];
+    meal = MEALS.find(m => m.toLowerCase() === mealLine.toLowerCase());
+    if (!meal) { log.push(`⚠ Не распознан приём пищи: "${mealLine}"`); skipped++; return; }
+
+    const dayLine = lines[lineIdx++];
+    day = DAYS.find(d => d.toLowerCase() === dayLine.toLowerCase());
+    if (!day) { log.push(`⚠ Не распознан день: "${dayLine}"`); skipped++; return; }
+
+    // Dish name
+    dishName = lines[lineIdx++];
+    // Skip if it's "Состав:"
+    if (dishName.toLowerCase().includes('состав:')) { dishName = ''; lineIdx--; }
+
+    let mode = null;
+    for (let i = lineIdx; i < lines.length; i++) {
+      const l = lines[i];
+      if (/^состав\s*:/i.test(l)) { mode = 'ing'; continue; }
+      if (/^кбжу\s*:/i.test(l)) { mode = null; continue; }
+      if (/^приготовление\s*:/i.test(l)) { mode = 'recipe'; continue; }
+
+      if (mode === 'ing') {
+        const m = l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*г?/);
+        if (m) {
+          const ingName = m[1].trim();
+          const weight = parseFloat(m[2]);
+          const found = findInKbju(ingName);
+          if (found.type === 'exact') {
+            const k = kbjuTable[found.name]; const r = weight/100;
+            ingredients.push({name:found.name, originalName:ingName, weight, status:'exact', suggestions:[],
+              proteins:k.proteins*r, fats:k.fats*r, carbs:k.carbs*r, calories:k.calories*r});
+          } else if (found.type === 'partial') {
+            const k = kbjuTable[found.name]; const r = weight/100;
+            ingredients.push({name:found.name, originalName:ingName, weight, status:'partial', suggestions:found.all,
+              proteins:k.proteins*r, fats:k.fats*r, carbs:k.carbs*r, calories:k.calories*r});
+          } else {
+            ingredients.push({name:ingName, originalName:ingName, weight, status:'not_found', suggestions:[],
+              proteins:0, fats:0, carbs:0, calories:0});
+          }
+        }
+      } else if (mode === 'recipe') {
+        recipe += (recipe ? ' ' : '') + l;
+      }
+    }
+
+    if (!menuData[day]) menuData[day] = {};
+    menuData[day][meal] = {dish: dishName, ingredients, recipe};
+    loaded++;
+    log.push(`✓ ${day} / ${meal}: ${dishName}`);
+  });
+
+  saveAll();
+  renderMenuDay(currentDay);
+  document.getElementById('recipeParseLog').innerHTML =
+    `<span style="color:var(--green)">Загружено: ${loaded}</span> <span style="color:var(--red)">Пропущено: ${skipped}</span><br>` +
+    log.map(l => `<span style="color:${l.startsWith('✓') ? 'var(--green)' : 'var(--yellow)'}">${l}</span>`).join('<br>');
+}
+
+function findInKbju(name) {
+  const nl = name.toLowerCase();
+  const exact = Object.keys(kbjuTable).find(k => k.toLowerCase() === nl);
+  if (exact) return {type:'exact', name:exact};
+  const all = Object.keys(kbjuTable).filter(k => {
+    const kl = k.toLowerCase();
+    return kl.includes(nl) || nl.includes(kl) || kl.split(/\s+/).some(w => w.length>2 && nl.includes(w));
+  });
+  if (all.length) return {type:'partial', name:all[0], all};
+  return {type:'not_found'};
+}
+
+// ══════════════════════════════════════════════════════
+//  SAVE RECIPE
+// ══════════════════════════════════════════════════════
+function openSaveRecipe(day, meal) {
+  const mealData = menuData[day]?.[meal];
+  if (!mealData) { alert('Нет данных для сохранения'); return; }
+  _saveRecipeTarget = {day, meal};
+  document.getElementById('saveRecipeName').textContent = `${meal} — ${mealData.dish || ''}`;
+  openModal('saveRecipeModal');
+}
+
+function confirmSaveRecipe() {
+  if (!_saveRecipeTarget) return;
+  const {day, meal} = _saveRecipeTarget;
+  const mealData = menuData[day][meal];
+  const group = document.getElementById('saveRecipeGroup').value;
+  if (!savedRecipes[group]) savedRecipes[group] = [];
+  savedRecipes[group].push({
+    id: Date.now(),
+    name: mealData.dish || meal,
+    ingredients: JSON.parse(JSON.stringify(mealData.ingredients)),
+    recipe: mealData.recipe,
+    meal
+  });
+  saveAll();
+  closeModal('saveRecipeModal');
+  alert('Рецепт сохранён!');
+}
+
+// ══════════════════════════════════════════════════════
+//  SAVED RECIPES RENDER
+// ══════════════════════════════════════════════════════
+function renderSavedRecipes() {
+  const cont = document.getElementById('savedGroups');
+  cont.innerHTML = '';
+  Object.entries(savedRecipes).forEach(([group, recipes]) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'saved-group';
+    const header = document.createElement('div');
+    header.className = 'saved-group-header';
+    header.innerHTML = `<h3>${group} <span style="color:var(--text3);font-weight:300;">(${recipes.length})</span></h3><span class="arrow">▶</span>`;
+    const body = document.createElement('div');
+    body.className = 'saved-group-body collapsed';
+    header.onclick = () => {
+      const open = !body.classList.contains('collapsed');
+      body.classList.toggle('collapsed', open);
+      header.querySelector('.arrow').style.transform = open ? '' : 'rotate(90deg)';
+    };
+
+    body.innerHTML = recipes.length ? recipes.map((r, i) => {
+      const totals = r.ingredients.reduce((a,ing) => ({
+        proteins: a.proteins+(ing.proteins||0), fats: a.fats+(ing.fats||0),
+        carbs: a.carbs+(ing.carbs||0), calories: a.calories+(ing.calories||0)
+      }), {proteins:0,fats:0,carbs:0,calories:0});
+      return `<div class="recipe-card">
+        <h4>${r.name}</h4>
+        <div class="rc-kbju">Б ${n1(totals.proteins)} / Ж ${n1(totals.fats)} / У ${n1(totals.carbs)} / ${n1(totals.calories)} ккал</div>
+        <div class="rc-ingredients">${r.ingredients.map(ing => `${ing.originalName || ing.name} — ${ing.weight}г`).join('<br>')}</div>
+        <button class="btn-add-recipe" onclick="openAddToMenu(${JSON.stringify(group)},${i})">+ В меню</button>
+        <button class="btn btn-danger" style="width:100%;margin-top:6px;font-size:11px;padding:5px;" onclick="deleteSavedRecipe(${JSON.stringify(group)},${i})">Удалить</button>
+      </div>`;
+    }).join('') : '<div style="padding:16px;color:var(--text3);font-size:12px;">Нет сохранённых рецептов</div>';
+
+    wrap.appendChild(header);
+    wrap.appendChild(body);
+    cont.appendChild(wrap);
+  });
+}
+
+function deleteSavedRecipe(group, idx) {
+  if (!confirm('Удалить рецепт?')) return;
+  savedRecipes[group].splice(idx, 1);
+  saveAll();
+  renderSavedRecipes();
+}
+
+function openAddToMenu(group, idx) {
+  _addToMenuRecipe = {group, idx};
+  const r = savedRecipes[group][idx];
+  document.getElementById('addToMenuName').textContent = r.name;
+  openModal('addToMenuModal');
+}
+
+function confirmAddToMenu() {
+  if (!_addToMenuRecipe) return;
+  const {group, idx} = _addToMenuRecipe;
+  const recipe = savedRecipes[group][idx];
+  const day = document.getElementById('atmDay').value;
+  const meal = document.getElementById('atmMeal').value;
+  if (!menuData[day]) menuData[day] = {};
+  menuData[day][meal] = {
+    dish: recipe.name,
+    ingredients: JSON.parse(JSON.stringify(recipe.ingredients)),
+    recipe: recipe.recipe
+  };
+  saveAll();
+  closeModal('addToMenuModal');
+  switchSection('menu');
+  currentDay = day;
+  document.querySelectorAll('.day-tab').forEach((b, i) => b.classList.toggle('active', DAYS[i] === day));
+  renderMenuDay(day);
+}
+
+// ══════════════════════════════════════════════════════
+//  COST CALCULATION
+// ══════════════════════════════════════════════════════
+function calcCosts() {
+  const totals = {};
+  Object.values(menuData).forEach(day => {
+    Object.values(day).forEach(meal => {
+      (meal.ingredients || []).forEach(ing => {
+        if (ing.status === 'exact') {
+          totals[ing.name] = (totals[ing.name] || 0) + (ing.weight || 0);
+        }
+      });
+    });
+  });
+
+  let html = '', grandTotal = 0;
+  Object.entries(totals).forEach(([name, grams]) => {
+    const k = kbjuTable[name];
+    if (!k) return;
+    let cost = 0, packInfo = '—', packs = '—';
+    if (k.price && k.priceType === 'kg') {
+      cost = (grams / 1000) * k.price;
+      packInfo = `${k.price} ֏/кг`;
+      packs = `${(grams/1000).toFixed(2)} кг`;
+    } else if (k.price && k.priceType === 'pack' && k.packWeight) {
+      const packsNeeded = Math.ceil(grams / k.packWeight);
+      cost = packsNeeded * k.price;
+      packInfo = `${k.packWeight}г × ${k.price}֏`;
+      packs = `${packsNeeded} шт. (нужно ${grams}г, в пачке ${k.packWeight}г)`;
+    }
+    grandTotal += cost;
+    html += `<tr>
+      <td>${name}</td>
+      <td style="color:var(--text2)">${Math.round(grams)}г</td>
+      <td style="color:var(--text3)">${packInfo}</td>
+      <td style="color:var(--text2)">${packs}</td>
+      <td style="color:var(--accent);font-weight:500;">${cost ? Math.round(cost).toLocaleString('ru-RU') + ' ֏' : '—'}</td>
+    </tr>`;
+  });
+  html += `<tr class="cost-total-row">
+    <td colspan="4" style="text-align:right;">ИТОГО:</td>
+    <td>${Math.round(grandTotal).toLocaleString('ru-RU')} ֏</td>
+  </tr>`;
+  document.getElementById('costBody').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+//  KBJU TABLE
+// ══════════════════════════════════════════════════════
+function renderKbjuTable() {
+  const q = (document.getElementById('kbjuSearch')?.value || '').toLowerCase();
+  let products = Object.entries(kbjuTable).filter(([n, d]) => !d.archived && (!q || n.toLowerCase().includes(q)));
+  let archived = Object.entries(kbjuTable).filter(([n, d]) => d.archived && (!q || n.toLowerCase().includes(q)));
+
+  if (kbjuSortKey) {
+    const sortFn = (a, b) => {
+      const va = kbjuSortKey === 'name' ? a[0] : (a[1][kbjuSortKey] || 0);
+      const vb = kbjuSortKey === 'name' ? b[0] : (b[1][kbjuSortKey] || 0);
+      return kbjuSortDir * (va < vb ? -1 : va > vb ? 1 : 0);
+    };
+    products.sort(sortFn);
+    archived.sort(sortFn);
+  }
+
+  const renderRow = ([name, d], i, isArchive) => {
+    const hist = d.priceHistory || [];
+    const lastDate = hist.length ? hist[hist.length-1].date : null;
+    const prevPrice = hist.length > 1 ? hist[hist.length-2].price : null;
+    const curPrice = hist.length ? hist[hist.length-1].price : null;
+    let badgeClass = 'same', badgeSymbol = '!';
+    if (prevPrice !== null && curPrice !== null) {
+      if (curPrice > prevPrice) { badgeClass = 'up'; badgeSymbol = '↑'; }
+      else if (curPrice < prevPrice) { badgeClass = 'down'; badgeSymbol = '↓'; }
+    }
+    const priceDisplay = curPrice ? `${curPrice.toLocaleString('ru-RU')} ֏` : '—';
+    return `<tr style="${isArchive ? 'opacity:.6;' : ''}">
+      <td style="color:var(--text3)">${i+1}</td>
+      <td>${name}</td>
+      <td class="td-num">${n1(d.proteins)}</td>
+      <td class="td-num">${n1(d.fats)}</td>
+      <td class="td-num">${n1(d.carbs)}</td>
+      <td class="td-kcal">${n1(d.calories)}</td>
+      <td>
+        <div class="price-cell">
+          <span>${priceDisplay}</span>
+          ${hist.length ? `<span class="price-badge ${badgeClass}" title="История цен" onclick="showPriceHist('${name.replace(/'/g,"\\'")}')">
+            ${badgeSymbol}</span>` : ''}
+          ${lastDate ? `<span class="price-date">${lastDate}</span>` : ''}
+        </div>
+      </td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="openAddProduct('${name.replace(/'/g,"\\'")}')">✎</button>
+        <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="toggleArchive('${name.replace(/'/g,"\\'")}')">
+          ${isArchive ? '↩' : '📦'}
+        </button>
+      </td>
+    </tr>`;
+  };
+
+  let html = products.map((e, i) => renderRow(e, i, false)).join('');
+  if (archived.length) {
+    html += `<tr><td colspan="8" class="kbju-archive-header" style="padding:10px 14px;font-family:var(--head);font-size:9px;letter-spacing:.8px;text-transform:uppercase;">
+      Архивные продукты (${archived.length})</td></tr>`;
+    html += archived.map((e, i) => renderRow(e, i, true)).join('');
+  }
+  document.getElementById('kbjuBody').innerHTML = html;
+}
+
+function sortKbju(key) {
+  if (kbjuSortKey === key) kbjuSortDir *= -1;
+  else { kbjuSortKey = key; kbjuSortDir = 1; }
+  renderKbjuTable();
+}
+
+function toggleArchive(name) {
+  kbjuTable[name].archived = !kbjuTable[name].archived;
+  saveAll();
+  renderKbjuTable();
+}
+
+// ── Add/Edit product modal ────────────────────────────
+function openAddProduct(name) {
+  _addProductEditing = name || null;
+  document.getElementById('addProductTitle').textContent = name ? 'Редактировать продукт' : 'Добавить продукт';
+  document.getElementById('npDeleteBtn').style.display = name ? 'inline-flex' : 'none';
+  if (name && kbjuTable[name]) {
+    const d = kbjuTable[name];
+    document.getElementById('npName').value = name;
+    document.getElementById('npB').value = d.proteins || '';
+    document.getElementById('npJ').value = d.fats || '';
+    document.getElementById('npU').value = d.carbs || '';
+    document.getElementById('npK').value = d.calories || '';
+    document.getElementById('npPrice').value = (d.priceHistory?.length ? d.priceHistory[d.priceHistory.length-1].price : '') || '';
+    document.getElementById('npPriceType').value = d.priceType || 'kg';
+    document.getElementById('npPackWeight').value = d.packWeight || '';
+    document.getElementById('npPackRow').style.display = d.priceType === 'pack' ? 'block' : 'none';
+  } else {
+    ['npName','npB','npJ','npU','npK','npPrice','npPackWeight'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('npPriceType').value = 'kg';
+    document.getElementById('npPackRow').style.display = 'none';
+  }
+  openModal('addProductModal');
+}
+
+function saveProduct() {
+  const name = document.getElementById('npName').value.trim();
+  if (!name) { alert('Введите название'); return; }
+  const proteins = parseFloat(document.getElementById('npB').value) || 0;
+  const fats = parseFloat(document.getElementById('npJ').value) || 0;
+  const carbs = parseFloat(document.getElementById('npU').value) || 0;
+  const calories = parseFloat(document.getElementById('npK').value) || 0;
+  const price = parseFloat(document.getElementById('npPrice').value) || null;
+  const priceType = document.getElementById('npPriceType').value;
+  const packWeight = parseFloat(document.getElementById('npPackWeight').value) || null;
+
+  const today = new Date().toLocaleDateString('ru-RU');
+  let existing = _addProductEditing ? kbjuTable[_addProductEditing] : null;
+
+  if (_addProductEditing && _addProductEditing !== name) {
+    // Rename
+    kbjuTable[name] = kbjuTable[_addProductEditing];
+    delete kbjuTable[_addProductEditing];
+    existing = kbjuTable[name];
+  }
+
+  if (!kbjuTable[name]) kbjuTable[name] = {priceHistory: []};
+  const product = kbjuTable[name];
+  product.proteins = proteins;
+  product.fats = fats;
+  product.carbs = carbs;
+  product.calories = calories;
+  product.priceType = priceType;
+  if (packWeight) product.packWeight = packWeight;
+  if (!product.priceHistory) product.priceHistory = [];
+
+  if (price !== null) {
+    const lastPrice = product.priceHistory.length ? product.priceHistory[product.priceHistory.length-1].price : null;
+    if (lastPrice !== price) {
+      product.priceHistory.push({date: today, price});
+    }
+  }
+
+  saveAll();
+  renderKbjuTable();
+  closeModal('addProductModal');
+}
+
+function deleteProduct() {
+  if (!_addProductEditing) return;
+  if (!confirm(`Удалить "${_addProductEditing}"?`)) return;
+  delete kbjuTable[_addProductEditing];
+  saveAll();
+  renderKbjuTable();
+  closeModal('addProductModal');
+}
+
+// ── Price history ─────────────────────────────────────
+function showPriceHist(name) {
+  const d = kbjuTable[name];
+  if (!d || !d.priceHistory?.length) return;
+  document.getElementById('priceHistTitle').textContent = `История цен: ${name}`;
+  const hist = d.priceHistory;
+
+  // Simple canvas chart
+  const canvas = document.getElementById('priceCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const prices = hist.map(h => h.price);
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+  const range = maxP - minP || 1;
+  const pad = {l:40, r:20, t:20, b:30};
+  const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
+
+  ctx.fillStyle = '#1e1e28';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#2e2e3e';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (iH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    const val = maxP - (range / 4) * i;
+    ctx.fillStyle = '#5a5a78';
+    ctx.font = '10px JetBrains Mono';
+    ctx.fillText(Math.round(val), 2, y + 4);
+  }
+
+  if (hist.length > 1) {
+    // Line
+    ctx.strokeStyle = '#7c6af7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    hist.forEach((h, i) => {
+      const x = pad.l + (i / (hist.length-1)) * iW;
+      const y = pad.t + (1 - (h.price - minP) / range) * iH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Dots
+    hist.forEach((h, i) => {
+      const x = pad.l + (i / (hist.length-1)) * iW;
+      const y = pad.t + (1 - (h.price - minP) / range) * iH;
+      ctx.fillStyle = '#7c6af7';
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    });
+  } else if (hist.length === 1) {
+    const x = pad.l + iW/2, y = pad.t + iH/2;
+    ctx.fillStyle = '#7c6af7';
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+  }
+
+  document.getElementById('priceHistList').innerHTML = hist.slice().reverse().map(h =>
+    `<div>${h.date}: <strong style="color:var(--accent)">${h.price.toLocaleString('ru-RU')} ֏</strong></div>`
+  ).join('');
+
+  openModal('priceHistModal');
+}
+
+// ══════════════════════════════════════════════════════
+//  PARSING (Yerevan City via Cloudflare Worker)
+// ══════════════════════════════════════════════════════
+// Worker URL — замени на свой после деплоя
+const WORKER_URL = 'https://yc-proxy.YOUR-SUBDOMAIN.workers.dev';
+
+async function apiCall(path, body) {
+  const r = await fetch(WORKER_URL + path, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+const parseSelected = new Map();
+
+async function loadTopCategories() {
+  const panel = document.getElementById('catalogPanel');
+  try {
+    const data = await apiCall('/api/categories', {page:1, pageSize:200});
+    const cats = data?.data?.categories || [];
+    panel.innerHTML = '';
+    cats.forEach(cat => panel.appendChild(buildCatItem(cat, 0)));
+  } catch(e) {
+    panel.innerHTML = `<div class="loading-row" style="color:var(--red)">⚠ Ошибка загрузки. Проверьте Worker URL в коде.</div>`;
+  }
+}
+
+function buildCatItem(cat, depth) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cat-item';
+  wrap.dataset.id = cat.id;
+
+  const row = document.createElement('div');
+  row.className = 'cat-row';
+
+  const toggle = document.createElement('div');
+  toggle.className = 'cat-toggle';
+  toggle.innerHTML = '▶';
+
+  const check = document.createElement('div');
+  check.className = 'cat-check';
+  check.onclick = e => { e.stopPropagation(); toggleCatSel(cat, check); };
+
+  const name = document.createElement('div');
+  name.className = 'cat-name';
+  name.style.paddingLeft = (depth * 14) + 'px';
+  name.textContent = cat.name;
+
+  row.append(toggle, check, name);
+  wrap.appendChild(row);
+
+  const children = document.createElement('div');
+  children.className = 'cat-children';
+  wrap.appendChild(children);
+
+  let loaded = false, open = false;
+  row.onclick = async () => {
+    open = !open;
+    toggle.classList.toggle('open', open);
+    children.classList.toggle('open', open);
+    if (open && !loaded) {
+      loaded = true;
+      children.innerHTML = '<div class="loading-row"><div class="spinner"></div></div>';
+      try {
+        const data = await apiCall('/api/children', {parentId: cat.id, page:1, pageSize:100});
+        const inner = data?.data || {};
+        const all = [...(inner.categoryWithChildren||[]), ...(inner.categories||[])];
+        children.innerHTML = '';
+        if (!all.length) {
+          children.innerHTML = '<div class="loading-row" style="font-size:11px;color:var(--text3)">Конечная категория</div>';
+        } else {
+          all.forEach(c => children.appendChild(buildCatItem(c, depth+1)));
+        }
+      } catch(e) {
+        children.innerHTML = '<div class="loading-row" style="color:var(--red)">Ошибка</div>';
+      }
+    }
+  };
+  return wrap;
+}
+
+function toggleCatSel(cat, el) {
+  if (parseSelected.has(cat.id)) { parseSelected.delete(cat.id); el.classList.remove('checked'); }
+  else { parseSelected.set(cat.id, cat); el.classList.add('checked'); }
+  renderSelectedPanel();
+}
+function removeCatSel(id) {
+  parseSelected.delete(id);
+  document.querySelectorAll(`.cat-item[data-id="${id}"] .cat-check`).forEach(e => e.classList.remove('checked'));
+  renderSelectedPanel();
+}
+function renderSelectedPanel() {
+  const panel = document.getElementById('selectedPanel');
+  const btn = document.getElementById('exportBtn');
+  if (!parseSelected.size) {
+    panel.innerHTML = '<div class="selected-empty">Отметьте категории слева</div>';
+    btn.disabled = true; return;
+  }
+  btn.disabled = false;
+  panel.innerHTML = '<div class="selected-list" id="sl"></div>';
+  parseSelected.forEach((cat, id) => {
+    const tag = document.createElement('div');
+    tag.className = 'selected-tag';
+    tag.innerHTML = `<span class="tag-name">📁 ${cat.name}</span><span class="tag-remove" onclick="removeCatSel(${id})">×</span>`;
+    document.getElementById('sl').appendChild(tag);
+  });
+}
+
+async function exportData() {
+  if (!parseSelected.size) return;
+  const btn = document.getElementById('exportBtn');
+  btn.disabled = true; btn.textContent = '⏳ Загрузка...';
+  const sec = document.getElementById('parsedTableSection');
+  const fill = document.getElementById('parseProg');
+  const msg = document.getElementById('parseStatus');
+  sec.style.display = 'block';
+  document.getElementById('parsedBody').innerHTML = '';
+  _parsedRows = [];
+
+  const cats = [...parseSelected.values()];
+  for (let i = 0; i < cats.length; i++) {
+    msg.textContent = `Загружаю: ${cats[i].name}...`;
+    fill.style.width = ((i / cats.length) * 100) + '%';
+    try {
+      const prods = await fetchAllProds(cats[i].id);
+      prods.sort((a,b) => {
+        const pa = a.discountedPrice > 0 ? a.discountedPrice : a.price||0;
+        const pb = b.discountedPrice > 0 ? b.discountedPrice : b.price||0;
+        return pa - pb;
+      });
+      prods.forEach((item, idx) => {
+        _parsedRows.push({
+          catName: idx === 0 ? (item.categoryName || cats[i].name) : '',
+          name: item.name || '',
+          price: item.discountedPrice > 0 ? item.discountedPrice : item.price,
+          pricePerUnit: item.productPricePerUnit,
+          weightMeasure: item.weightMeasure,
+          photo: item.photo || ''
+        });
+      });
+    } catch(e) { console.warn('Error fetching', cats[i].name, e); }
+  }
+
+  fill.style.width = '100%';
+  renderParsedTable();
+  document.getElementById('parsedCount').textContent = `${_parsedRows.length} товаров`;
+  msg.textContent = `✅ Готово — ${_parsedRows.length} товаров`;
+  btn.disabled = false; btn.textContent = '⬇ Выгрузить данные';
+}
+
+async function fetchAllProds(catId) {
+  const first = await apiCall('/api/products', {
+    categoryId: catId, parentId: catId, count:100, page:1,
+    priceFrom:null, priceTo:null, countries:[], categories:[],
+    brands:[], search:null, isDiscounted:false, sortBy:3
+  });
+  const inner = first?.data || {};
+  const pages = inner.pageCount || 1;
+  let items = inner.list || [];
+  const ps = [];
+  for (let p = 2; p <= pages; p++) {
+    ps.push(apiCall('/api/products', {
+      categoryId: catId, parentId: catId, count:100, page:p,
+      priceFrom:null, priceTo:null, countries:[], categories:[],
+      brands:[], search:null, isDiscounted:false, sortBy:3
+    }));
+  }
+  (await Promise.all(ps)).forEach(d => { items = items.concat(d?.data?.list || []); });
+  return items;
+}
+
+function renderParsedTable() {
+  const colW = 'min-width:80px;text-align:center;';
+  const tbody = document.getElementById('parsedBody');
+  tbody.innerHTML = _parsedRows.map((row, i) => {
+    const unit = row.pricePerUnit ? `${Math.round(row.pricePerUnit).toLocaleString('ru-RU')} ֏/${row.weightMeasure === 'ML' || row.weightMeasure === 'L' ? 'л' : 'кг'}` : '—';
+    const priceStr = row.price ? `${Math.round(row.price).toLocaleString('ru-RU')} ֏` : '—';
+    return `<tr>
+      <td style="color:var(--accent);font-size:11px;font-family:var(--head);">${row.catName}</td>
+      <td style="width:32px;text-align:center;">
+        ${row.photo ? `<div style="position:relative;display:inline-block;">
+          <span style="cursor:default;font-size:12px;">🖼</span>
+          <div style="display:none;position:absolute;left:30px;top:50%;transform:translateY(-50%);z-index:999;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:6px;">
+            <img src="${row.photo}" style="width:120px;height:120px;object-fit:contain;border-radius:4px;">
+          </div>
+        </div>` : '—'}
+      </td>
+      <td>${row.name}</td>
+      <td style="font-weight:500;white-space:nowrap;">${priceStr}</td>
+      <td style="color:var(--text3);font-size:11px;">${unit}</td>
+      <td style="${colW}"><input type="checkbox" class="cb-meal" data-row="${i}" data-meal="snack" onchange="updateMealList()"></td>
+      <td style="${colW}"><input type="checkbox" class="cb-meal" data-row="${i}" data-meal="breakfast" onchange="updateMealList()"></td>
+      <td style="${colW}"><input type="checkbox" class="cb-meal" data-row="${i}" data-meal="lunch" onchange="updateMealList()"></td>
+      <td style="${colW}"><input type="checkbox" class="cb-meal" data-row="${i}" data-meal="dinner" onchange="updateMealList()"></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateMealList() {
+  const lists = {snack:[], breakfast:[], lunch:[], dinner:[]};
+  document.querySelectorAll('.cb-meal:checked').forEach(cb => {
+    const row = _parsedRows[parseInt(cb.dataset.row)];
+    if (row) lists[cb.dataset.meal].push(row.name);
+  });
+  const map = {snack:'list-snack', breakfast:'list-breakfast', lunch:'list-lunch', dinner:'list-dinner'};
+  Object.entries(map).forEach(([key, id]) => {
+    document.getElementById(id).innerHTML = lists[key].map(n => `<li>${n}</li>`).join('');
+  });
+  const hasAny = Object.values(lists).some(l => l.length > 0);
+  document.getElementById('listsSection').style.display = hasAny ? 'grid' : 'none';
+}
+
+// Transfer parsed products to KBJU table
+function transferToKbju() {
+  const checked = document.querySelectorAll('.cb-meal:checked');
+  const names = new Set();
+  checked.forEach(cb => {
+    const row = _parsedRows[parseInt(cb.dataset.row)];
+    if (row) names.add(row.name);
+  });
+  if (!names.size) { alert('Отметьте продукты'); return; }
+
+  const conflicts = [];
+  const toAdd = [];
+  const today = new Date().toLocaleDateString('ru-RU');
+
+  names.forEach(name => {
+    const parsedRow = _parsedRows.find(r => r.name === name);
+    const newPrice = parsedRow ? parsedRow.price : null;
+    const existing = kbjuTable[name];
+
+    if (existing) {
+      const lastPrice = existing.priceHistory?.length ? existing.priceHistory[existing.priceHistory.length-1].price : null;
+      if (newPrice && lastPrice !== newPrice) {
+        // Just update price silently
+        if (!existing.priceHistory) existing.priceHistory = [];
+        existing.priceHistory.push({date: today, price: newPrice});
+      }
+    } else {
+      // Check for near-matches
+      const similar = Object.keys(kbjuTable).find(k =>
+        k.toLowerCase().includes(name.toLowerCase().slice(0,5)) ||
+        name.toLowerCase().includes(k.toLowerCase().slice(0,5))
+      );
+      if (similar) {
+        conflicts.push({newName: name, existingName: similar, price: newPrice});
+      } else {
+        toAdd.push({name, price: newPrice});
+      }
+    }
+  });
+
+  // Add no-conflict items
+  toAdd.forEach(({name, price}) => {
+    kbjuTable[name] = {proteins:0, fats:0, carbs:0, calories:0, priceType:'kg', priceHistory: price ? [{date: today, price}] : []};
+  });
+
+  if (conflicts.length) {
+    _syncDecisions = conflicts.map(c => ({...c, decision: 'new'}));
+    const html = conflicts.map((c, i) =>
+      `<div class="conflict-item">
+        <p>Новый: <strong>${c.newName}</strong><br>Похожий в таблице: <strong style="color:var(--text2)">${c.existingName}</strong></p>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" style="font-size:11px;" onclick="setSyncDecision(${i},'replace')">Заменить существующий</button>
+          <button class="btn btn-primary" style="font-size:11px;" onclick="setSyncDecision(${i},'new')">Добавить как новый</button>
+        </div>
+        <div id="sync-dec-${i}" style="margin-top:6px;font-size:11px;color:var(--green)"></div>
+      </div>`
+    ).join('');
+    document.getElementById('syncConflicts').innerHTML = html;
+    document.getElementById('syncSummary').textContent = `${toAdd.length} продуктов добавлено автоматически, ${conflicts.length} требуют решения.`;
+    saveAll();
+    openModal('syncModal');
+  } else {
+    saveAll();
+    renderKbjuTable();
+    alert(`Перенесено: ${toAdd.length} продуктов.`);
+  }
+}
+
+function setSyncDecision(i, decision) {
+  _syncDecisions[i].decision = decision;
+  document.getElementById(`sync-dec-${i}`).textContent = decision === 'new' ? '→ Добавить как новый' : '→ Заменить существующий';
+}
+
+function applySyncDecisions() {
+  const today = new Date().toLocaleDateString('ru-RU');
+  _syncDecisions.forEach(d => {
+    if (d.decision === 'replace') {
+      const existing = kbjuTable[d.existingName];
+      if (existing && d.price) {
+        if (!existing.priceHistory) existing.priceHistory = [];
+        existing.priceHistory.push({date: today, price: d.price});
+      }
+    } else {
+      kbjuTable[d.newName] = {proteins:0, fats:0, carbs:0, calories:0, priceType:'kg',
+        priceHistory: d.price ? [{date: today, price: d.price}] : []};
+    }
+  });
+  saveAll();
+  renderKbjuTable();
+  closeModal('syncModal');
+}
+
+// ══════════════════════════════════════════════════════
+//  NOTES
+// ══════════════════════════════════════════════════════
+function renderNotes() {
+  document.getElementById('notesArea').value = notes;
+}
+function saveNotes() {
+  notes = document.getElementById('notesArea').value;
+  saveAll();
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
