@@ -85,7 +85,7 @@ body {
 .section.active { display: flex; }
 #sec-menu { overflow: hidden; }
 #menuTitle { font-size: 20px; font-weight: bold; color: var(--accent); padding: 10px 20px 6px; flex-shrink: 0; }
-#tableWrap { flex: 1; overflow: auto; padding: 0 20px 20px; }
+#tableWrap { flex: 1; overflow: auto; padding: 16px 20px; }
 #menuTable { width: 100%; border-collapse: collapse; font-size: 13px; }
 #menuTable th {
   background: var(--accent); color: white; padding: 10px 6px;
@@ -267,7 +267,7 @@ body {
   #menuTable { font-size: 11px; }
   #menuTable th { padding: 7px 3px; font-size: 10px; }
   #menuTable td { padding: 4px 3px; }
-  .weight-input { width: 42px; font-size: 11px; }
+  .weight-input { width: 42px; font-size: 11px; } .weight-input::-webkit-inner-spin-button,.weight-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;} .weight-input{-moz-appearance:textfield;}
   .td-recipe { display: none; }
   .parse-workspace { grid-template-columns: 1fr; height: auto; }
   .parse-panel { height: 280px; }
@@ -292,6 +292,10 @@ body {
   #menuTable { font-size: 10px; }
   .td-num, .td-kcal { width: 36px; }
 }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
 </style>
 </head>
 <body>
@@ -301,6 +305,9 @@ body {
     <span class="s-tooltip">Разделы</span>
   </div>
   <div id="currentDate"></div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <button onclick="loadFromKV().then(l=>{if(l){renderMenuDay(currentDay);renderKbjuTable();renderSavedRecipes();document.getElementById('notesArea').value=notes;}})" style="background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--text-secondary);padding:4px 10px;cursor:pointer;font-size:12px;" title="Загрузить данные из облака">☁ Синхронизировать</button>
+  </div>
 </div>
 <div id="navDropdown">
   <div class="nav-item active" data-sec="menu"    onclick="switchSection('menu')">📅 Главное окно меню</div>
@@ -428,7 +435,7 @@ body {
         <div class="sec-title" style="margin-bottom:0;">Таблица КБЖУ</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <input id="kbjuSearch" type="text" placeholder="Поиск..." class="form-input" style="width:200px;" oninput="renderKbjuTable()">
-          <button class="control-btn secondary" onclick="loadKbjuFile()" style="margin-right:4px;">📂 Загрузить КБЖУ</button><button class="control-btn" onclick="openAddProduct(null)">+ Добавить продукт</button>
+          <button class="control-btn secondary" onclick="loadKbjuFile()" style="margin-right:4px;" title="Загрузить .txt/.csv файл">📂 Файл</button><button class="control-btn secondary" onclick="openPasteKbju()" style="margin-right:4px;" title="Вставить список из буфера">📋 Вставить КБЖУ</button><button class="control-btn" onclick="openAddProduct(null)">+ Добавить продукт</button>
         </div>
       </div>
       <div style="overflow:auto;">
@@ -560,10 +567,17 @@ let currentDay='Понедельник', kbjuSortKey=null, kbjuSortDir=1;
 let _editingProduct=null, _prodSelectTarget=null, _saveRecipeTarget=null, _addToMenuRecipe=null, _syncDecisions=[];
 
 function init(){
-  loadAll();
+  loadAll(); // сначала из localStorage
   document.getElementById('currentDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   buildDayTabs(); renderMenuDay(currentDay); renderKbjuTable(); renderSavedRecipes();
   document.getElementById('notesArea').value=notes;
+  // потом догружаем из KV и обновляем UI
+  loadFromKV().then(loaded => {
+    if (loaded) {
+      renderMenuDay(currentDay); renderKbjuTable(); renderSavedRecipes();
+      document.getElementById('notesArea').value = notes;
+    }
+  });
   document.addEventListener('click',e=>{
     if(!e.target.closest('#navDropdown')&&!e.target.closest('#sectionsBtn')) document.getElementById('navDropdown').classList.remove('open');
     if(!e.target.closest('.dropdown-popup')&&!e.target.closest('.btn-q')&&!e.target.closest('.td-time')) document.querySelectorAll('.dropdown-popup').forEach(d=>d.remove());
@@ -571,8 +585,85 @@ function init(){
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); document.querySelectorAll('.dropdown-popup').forEach(d=>d.remove()); }});
   document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); }));
 }
-function saveAll(){ localStorage.setItem('menuData',JSON.stringify(menuData)); localStorage.setItem('kbjuTable',JSON.stringify(kbjuTable)); localStorage.setItem('mealTimes',JSON.stringify(mealTimes)); localStorage.setItem('savedRecipes',JSON.stringify(savedRecipes)); localStorage.setItem('notes',notes); }
-function loadAll(){ try{menuData=JSON.parse(localStorage.getItem('menuData')||'{}')}catch(e){} try{kbjuTable=JSON.parse(localStorage.getItem('kbjuTable')||'{}')}catch(e){} try{mealTimes=JSON.parse(localStorage.getItem('mealTimes')||'{}')}catch(e){} try{savedRecipes=JSON.parse(localStorage.getItem('savedRecipes')||'{"Завтрак":[],"Перекус":[],"Обед":[],"Ужин":[]}')}catch(e){} notes=localStorage.getItem('notes')||''; }
+// ── STORAGE: localStorage + KV облако ──────────────────────────────
+const KV_KEYS = ['menuData','kbjuTable','mealTimes','savedRecipes','notes'];
+let _kvSyncTimer = null;
+
+function saveAll() {
+  // 1. Сразу в localStorage (мгновенно)
+  localStorage.setItem('menuData',     JSON.stringify(menuData));
+  localStorage.setItem('kbjuTable',    JSON.stringify(kbjuTable));
+  localStorage.setItem('mealTimes',    JSON.stringify(mealTimes));
+  localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+  localStorage.setItem('notes',        notes);
+  // 2. В KV через 1.5 сек после последнего изменения (debounce)
+  clearTimeout(_kvSyncTimer);
+  _kvSyncTimer = setTimeout(syncToKV, 1500);
+}
+
+async function syncToKV() {
+  const data = { menuData, kbjuTable, mealTimes, savedRecipes, notes };
+  try {
+    await fetch(WORKER_URL + '/kv/app_data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    showSyncBadge('✓ Сохранено в облаке', '#4caf50');
+  } catch(e) {
+    showSyncBadge('⚠ Только локально', '#ff9800');
+  }
+}
+
+async function loadFromKV() {
+  try {
+    const r = await fetch(WORKER_URL + '/kv/app_data');
+    const res = await r.json();
+    if (res.found && res.data) {
+      const d = res.data;
+      // Мержим: KV приоритетнее если данных там больше
+      if (d.menuData     && Object.keys(d.menuData).length     >= Object.keys(menuData).length)     menuData     = d.menuData;
+      if (d.kbjuTable    && Object.keys(d.kbjuTable).length    >= Object.keys(kbjuTable).length)    kbjuTable    = d.kbjuTable;
+      if (d.mealTimes    && Object.keys(d.mealTimes).length    >= Object.keys(mealTimes).length)    mealTimes    = d.mealTimes;
+      if (d.savedRecipes) savedRecipes = d.savedRecipes;
+      if (d.notes && d.notes.length >= notes.length) notes = d.notes;
+      // Обновляем localStorage из KV
+      localStorage.setItem('menuData',     JSON.stringify(menuData));
+      localStorage.setItem('kbjuTable',    JSON.stringify(kbjuTable));
+      localStorage.setItem('mealTimes',    JSON.stringify(mealTimes));
+      localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
+      localStorage.setItem('notes',        notes);
+      showSyncBadge('✓ Загружено из облака', '#4a9eff');
+      return true;
+    }
+  } catch(e) {
+    showSyncBadge('⚠ Работаем офлайн', '#ff9800');
+  }
+  return false;
+}
+
+function showSyncBadge(text, color) {
+  let badge = document.getElementById('syncBadge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'syncBadge';
+    badge.style.cssText = 'position:fixed;bottom:14px;right:16px;padding:6px 14px;border-radius:20px;font-size:12px;z-index:9999;transition:opacity .5s;pointer-events:none;';
+    document.body.appendChild(badge);
+  }
+  badge.style.background = color;
+  badge.style.color = '#fff';
+  badge.style.opacity = '1';
+  badge.textContent = text;
+  setTimeout(() => { badge.style.opacity = '0'; }, 3000);
+}
+
+function loadAll() {
+  try { menuData     = JSON.parse(localStorage.getItem('menuData')     || '{}'); } catch(e) {}
+  try { kbjuTable    = JSON.parse(localStorage.getItem('kbjuTable')    || '{}'); } catch(e) {}
+  try { mealTimes    = JSON.parse(localStorage.getItem('mealTimes')    || '{}'); } catch(e) {}
+  try { savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '{"Завтрак":[],"Перекус":[],"Обед":[],"Ужин":[]}'); } catch(e) {}
+  notes = localStorage.getItem('notes') || '';
+}
 
 function toggleNav(){ document.getElementById('navDropdown').classList.toggle('open'); }
 function switchSection(sec){
@@ -728,6 +819,32 @@ function updateMealList(){ const lists={snack:[],breakfast:[],lunch:[],dinner:[]
 function transferToKbju(){ const checked=document.querySelectorAll('.cb-meal:checked'),names=new Set(); checked.forEach(cb=>{const r=_parsedRows[parseInt(cb.dataset.row)];if(r) names.add(r.name);}); if(!names.size){alert('Отметьте продукты');return;} const today=new Date().toLocaleDateString('ru-RU'),conflicts=[],toAdd=[]; names.forEach(name=>{const pr=_parsedRows.find(r=>r.name===name),newPrice=pr?pr.price:null,ex=kbjuTable[name]; if(ex){const last=ex.priceHistory?.length?ex.priceHistory[ex.priceHistory.length-1].price:null; if(newPrice&&last!==newPrice){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:newPrice});}}else{const similar=Object.keys(kbjuTable).find(k=>k.toLowerCase().includes(name.toLowerCase().slice(0,5))||name.toLowerCase().includes(k.toLowerCase().slice(0,5))); if(similar) conflicts.push({newName:name,existingName:similar,price:newPrice}); else toAdd.push({name,price:newPrice});} }); toAdd.forEach(({name,price})=>{kbjuTable[name]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};}); if(conflicts.length){_syncDecisions=conflicts.map(c=>({...c,decision:'new'})); document.getElementById('syncConflicts').innerHTML=conflicts.map((c,i)=>'<div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px;"><p style="font-size:12px;margin-bottom:10px;">Новый: <strong style="color:var(--accent)">'+c.newName+'</strong><br>Похожий: <strong>'+c.existingName+'</strong></p><div style="display:flex;gap:8px;"><button class="control-btn secondary" style="font-size:12px;" onclick="setSyncDecision('+i+',\'replace\')">Заменить</button><button class="control-btn" style="font-size:12px;" onclick="setSyncDecision('+i+',\'new\')">Добавить новым</button></div><div id="sync-dec-'+i+'" style="margin-top:6px;font-size:11px;color:var(--green)"></div></div>').join(''); document.getElementById('syncSummary').textContent='Авто: '+toAdd.length+', требуют решения: '+conflicts.length; saveAll(); openModal('syncModal');}else{saveAll();renderKbjuTable();alert('Перенесено: '+toAdd.length+' продуктов.');} }
 function setSyncDecision(i,d){ _syncDecisions[i].decision=d; document.getElementById('sync-dec-'+i).textContent=d==='new'?'→ Добавить новым':'→ Заменить'; }
 function applySyncDecisions(){ const today=new Date().toLocaleDateString('ru-RU'); _syncDecisions.forEach(d=>{if(d.decision==='replace'){const ex=kbjuTable[d.existingName];if(ex&&d.price){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:d.price});}}else{kbjuTable[d.newName]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:d.price?[{date:today,price:d.price}]:[]};}}); saveAll(); renderKbjuTable(); closeModal('syncModal'); }
+
+function openPasteKbju(){ document.getElementById('pasteKbjuArea').value=''; openModal('pasteKbjuModal'); }
+function applyPasteKbju(){
+  const lines=document.getElementById('pasteKbjuArea').value.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const today=new Date().toLocaleDateString('ru-RU');
+  let added=0,updated=0;
+  lines.forEach(line=>{
+    if(/^(название|name|продукт|#)/i.test(line)) return;
+    const parts=line.split(/\t|;/);
+    const name=parts[0]?.trim(); if(!name) return;
+    const proteins=parseFloat(parts[1])||0, fats=parseFloat(parts[2])||0;
+    const carbs=parseFloat(parts[3])||0, calories=parseFloat(parts[4])||0;
+    const price=parseFloat(parts[5])||null;
+    if(kbjuTable[name]){
+      if(proteins||fats||carbs||calories){ kbjuTable[name].proteins=proteins; kbjuTable[name].fats=fats; kbjuTable[name].carbs=carbs; kbjuTable[name].calories=calories; }
+      if(price){ if(!kbjuTable[name].priceHistory) kbjuTable[name].priceHistory=[]; const last=kbjuTable[name].priceHistory.length?kbjuTable[name].priceHistory[kbjuTable[name].priceHistory.length-1].price:null; if(last!==price) kbjuTable[name].priceHistory.push({date:today,price}); }
+      updated++;
+    } else {
+      kbjuTable[name]={proteins,fats,carbs,calories,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};
+      added++;
+    }
+  });
+  saveAll(); renderKbjuTable(); closeModal('pasteKbjuModal');
+  alert('Готово! Добавлено: '+added+', обновлено: '+updated);
+}
+
 function loadKbjuFile(){
   // Format: one product per line, tab or comma separated
   // Name[tab]proteins[tab]fats[tab]carbs[tab]calories
@@ -784,5 +901,23 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 document.addEventListener('DOMContentLoaded', init);
 </script>
+
+<!-- Paste КБЖУ modal -->
+<div id="pasteKbjuModal" class="modal-overlay">
+  <div class="modal-box" style="max-width:600px;width:95%;">
+    <div class="modal-title">Вставить список КБЖУ</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">
+      Формат (по одному на строку, разделитель — Tab или точка с запятой):<br>
+      <code style="color:var(--accent)">Название продукта[Tab]Белки[Tab]Жиры[Tab]Углеводы[Tab]Ккал</code><br>
+      Если продукт уже есть в таблице — обновятся только КБЖУ. Если нет — создастся новая строка.
+    </div>
+    <textarea id="pasteKbjuArea" style="width:100%;height:280px;background:var(--bg-primary);border:1px solid var(--border);border-radius:5px;padding:10px;color:var(--text-primary);font-size:12px;line-height:1.8;resize:vertical;font-family:'Segoe UI',Arial,sans-serif;" placeholder="Яйца куриные&#9;12.7&#9;10.9&#9;0.7&#9;157&#10;Гречка&#9;12.6&#9;3.3&#9;62.1&#9;313&#10;..."></textarea>
+    <div class="modal-btns">
+      <button class="control-btn" onclick="applyPasteKbju()">Применить</button>
+      <button class="control-btn secondary" onclick="closeModal('pasteKbjuModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
