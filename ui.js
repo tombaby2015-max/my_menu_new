@@ -71,8 +71,539 @@ function buildDayTabs() {
   DOM.dayTabs.appendChild(frag);
 }
 
-// ════════════════════════════════════════════════════════════════
-// МЕНЮ — карточки приёмов пищи
+// ── Меню — рендер таблицы ────────────────────────────────────────
+function renderMenuDay(day) {
+  const dd = menuData[day] || {};
+  const tbody = DOM.menuWrap;
+  tbody.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  let dayT = { p: 0, f: 0, c: 0, k: 0 };
+
+  MEALS.forEach(meal => {
+    const md   = dd[meal];
+    const ings = md ? md.ingredients : [];
+    const time = mealTimes[meal] || '--:--';
+    const rs   = ings.length + 2;
+
+    // ROW 1: time + meal + dish + first ingredient
+    const row1 = document.createElement('tr');
+    row1.className = 'meal-group-row';
+
+    // Время
+    const tdTime = document.createElement('td');
+    tdTime.className = 'td-time-cell col-time';
+    tdTime.rowSpan = rs;
+    tdTime.addEventListener('click', e => showTimeDp(e, meal));
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time-val';
+    timeSpan.textContent = time;
+    tdTime.appendChild(timeSpan);
+
+    // Приём пищи
+    const tdMeal = document.createElement('td');
+    tdMeal.className = 'col-meal';
+    tdMeal.rowSpan = rs;
+    tdMeal.style.cssText = 'vertical-align:middle;text-align:center;position:relative;';
+    tdMeal.textContent = meal;
+    const btnSave = document.createElement('button');
+    btnSave.className = 'btn-save-meal';
+    btnSave.textContent = '★';
+    btnSave.addEventListener('click', () => saveMealRecipe(day, meal));
+    tdMeal.appendChild(btnSave);
+
+    // Блюдо
+    const tdDish = document.createElement('td');
+    tdDish.className = 'col-dish';
+    tdDish.rowSpan = rs;
+    tdDish.style.cssText = 'vertical-align:middle;position:relative;';
+    tdDish.textContent = (md && md.dish) ? md.dish : '';
+    const btnPencil = document.createElement('button');
+    btnPencil.className = 'btn-pencil';
+    btnPencil.title = 'Переименовать блюдо';
+    btnPencil.textContent = '✎';
+    btnPencil.addEventListener('click', () => openRenameDish(day, meal));
+    tdDish.appendChild(btnPencil);
+
+    // Рецепт
+    const tdRecipe = document.createElement('td');
+    tdRecipe.className = 'col-recipe';
+    tdRecipe.rowSpan = rs;
+    tdRecipe.style.cssText = 'vertical-align:top;padding-top:7px;';
+    tdRecipe.textContent = (md && md.recipe) ? md.recipe : '';
+
+    row1.appendChild(tdTime);
+    row1.appendChild(tdMeal);
+    row1.appendChild(tdDish);
+
+    const firstIng = ings[0];
+    if (firstIng) {
+      dayT.p += firstIng.proteins || 0;
+      dayT.f += firstIng.fats    || 0;
+      dayT.c += firstIng.carbs   || 0;
+      dayT.k += firstIng.calories || 0;
+      appendIngCells(row1, firstIng, 0, day, meal);
+    } else {
+      ['col-ing','col-w','col-num','col-num','col-num','col-kcal'].forEach(cls => {
+        const td = document.createElement('td');
+        td.className = cls;
+        row1.appendChild(td);
+      });
+    }
+    row1.appendChild(tdRecipe);
+    frag.appendChild(row1);
+
+    // Остальные строки ингредиентов
+    let mealT = {
+      p: firstIng ? firstIng.proteins  || 0 : 0,
+      f: firstIng ? firstIng.fats      || 0 : 0,
+      c: firstIng ? firstIng.carbs     || 0 : 0,
+      k: firstIng ? firstIng.calories  || 0 : 0
+    };
+
+    for (let i = 1; i < ings.length; i++) {
+      const ing  = ings[i];
+      const rowI = document.createElement('tr');
+      appendIngCells(rowI, ing, i, day, meal);
+      mealT.p += ing.proteins || 0;
+      mealT.f += ing.fats     || 0;
+      mealT.c += ing.carbs    || 0;
+      mealT.k += ing.calories || 0;
+      dayT.p  += ing.proteins || 0;
+      dayT.f  += ing.fats     || 0;
+      dayT.c  += ing.carbs    || 0;
+      dayT.k  += ing.calories || 0;
+      frag.appendChild(rowI);
+    }
+
+    // Строка итого + кнопка добавить
+    const rowTotal = document.createElement('tr');
+    rowTotal.className = 'meal-total-row';
+
+    const tdAdd = document.createElement('td');
+    tdAdd.className = 'col-ing';
+    tdAdd.style.textAlign = 'left';
+    const btnAdd = document.createElement('button');
+    btnAdd.className = 'btn-add-ing';
+    btnAdd.textContent = '+';
+    btnAdd.title = 'Добавить ингредиент';
+    btnAdd.addEventListener('click', () => openPS(day, meal));
+    const itogoSpan = document.createElement('span');
+    itogoSpan.style.cssText = 'color:var(--text2);font-size:11px;margin-left:8px;';
+    itogoSpan.textContent = 'Итого:';
+    tdAdd.appendChild(btnAdd);
+    tdAdd.appendChild(itogoSpan);
+
+    const tdTW = document.createElement('td'); tdTW.className = 'col-w';
+    const tdTP = document.createElement('td'); tdTP.className = 'col-num'; tdTP.textContent = n1(mealT.p);
+    const tdTF = document.createElement('td'); tdTF.className = 'col-num'; tdTF.textContent = n1(mealT.f);
+    const tdTC = document.createElement('td'); tdTC.className = 'col-num'; tdTC.textContent = n1(mealT.c);
+    const tdTK = document.createElement('td'); tdTK.className = 'col-kcal'; tdTK.textContent = n1(mealT.k);
+    rowTotal.appendChild(tdAdd);
+    rowTotal.appendChild(tdTW);
+    rowTotal.appendChild(tdTP);
+    rowTotal.appendChild(tdTF);
+    rowTotal.appendChild(tdTC);
+    rowTotal.appendChild(tdTK);
+    frag.appendChild(rowTotal);
+
+    // Разделитель между приёмами
+    const spacer = document.createElement('tr');
+    spacer.className = 'meal-spacer';
+    const spacerTd = document.createElement('td');
+    spacerTd.colSpan = 10;
+    spacer.appendChild(spacerTd);
+    frag.appendChild(spacer);
+  });
+
+  // Итого за день
+  const rowDay = document.createElement('tr');
+  rowDay.className = 'day-total-row';
+  const tdDL = document.createElement('td'); tdDL.colSpan = 5; tdDL.style.textAlign = 'right'; tdDL.textContent = 'ИТОГО ЗА ДЕНЬ:';
+  const tdDP = document.createElement('td'); tdDP.className = 'col-num'; tdDP.textContent = n1(dayT.p);
+  const tdDF = document.createElement('td'); tdDF.className = 'col-num'; tdDF.textContent = n1(dayT.f);
+  const tdDC = document.createElement('td'); tdDC.className = 'col-num'; tdDC.textContent = n1(dayT.c);
+  const tdDK = document.createElement('td'); tdDK.className = 'col-kcal'; tdDK.textContent = n1(dayT.k);
+  rowDay.append(tdDL, tdDP, tdDF, tdDC, tdDK);
+  frag.appendChild(rowDay);
+
+  tbody.appendChild(frag);
+}
+
+// ── Ячейки одного ингредиента ─────────────────────────────────────
+function appendIngCells(row, ing, i, day, meal) {
+  const nf = ing.status === 'not_found';
+
+  const tdIng = document.createElement('td');
+  tdIng.className = 'col-ing';
+  const ingWrap = document.createElement('div');
+  ingWrap.className = 'ing-wrap';
+  const ingName = document.createElement('span');
+  ingName.textContent = ing.originalName || ing.name;
+  const btn = document.createElement('button');
+  if (nf || ing.status === 'partial') {
+    btn.className = 'btn-q';
+    btn.textContent = '?';
+    btn.title = 'Найти замену';
+    btn.addEventListener('click', e => showSug(e, day, meal, i));
+  } else {
+    btn.className = 'btn-x';
+    btn.textContent = '×';
+    btn.title = 'Удалить';
+    btn.addEventListener('click', () => delIng(day, meal, i));
+  }
+  ingWrap.appendChild(ingName);
+  ingWrap.appendChild(btn);
+  tdIng.appendChild(ingWrap);
+  if (nf) tdIng.classList.add('not-found-bg');
+
+  const tdW = document.createElement('td');
+  tdW.className = 'col-w';
+  const inp = document.createElement('input');
+  inp.className = 'w-inp';
+  inp.type = 'number';
+  inp.value = ing.weight;
+  inp.addEventListener('change', () => updW(day, meal, i, inp.value));
+  tdW.appendChild(inp);
+
+  const tdP = document.createElement('td'); tdP.className = 'col-num';  tdP.textContent = n1(ing.proteins);
+  const tdF = document.createElement('td'); tdF.className = 'col-num';  tdF.textContent = n1(ing.fats);
+  const tdC = document.createElement('td'); tdC.className = 'col-num';  tdC.textContent = n1(ing.carbs);
+  const tdK = document.createElement('td'); tdK.className = 'col-kcal'; tdK.textContent = n1(ing.calories);
+
+  row.appendChild(tdIng);
+  row.appendChild(tdW);
+  row.appendChild(tdP);
+  row.appendChild(tdF);
+  row.appendChild(tdC);
+  row.appendChild(tdK);
+}
+
+// ── КБЖУ — рендер таблицы ────────────────────────────────────────
+function renderKbju() {
+  const q   = (DOM.kbjuSearch?.value || '').toLowerCase();
+  let act   = Object.entries(kbjuTable).filter(([n, d]) => !d.archived && (!q || n.toLowerCase().includes(q)));
+  let arc   = Object.entries(kbjuTable).filter(([n, d]) =>  d.archived && (!q || n.toLowerCase().includes(q)));
+
+  if (kSortKey) {
+    const sf = (a, b) => {
+      const va = kSortKey === 'name' ? a[0] : (a[1][kSortKey] || 0);
+      const vb = kSortKey === 'name' ? b[0] : (b[1][kSortKey] || 0);
+      return kSortDir * (va < vb ? -1 : va > vb ? 1 : 0);
+    };
+    act.sort(sf); arc.sort(sf);
+  }
+
+  const frag = document.createDocumentFragment();
+
+  const buildRow = ([name, d], i, isA) => {
+    const h    = d.priceHistory || [];
+    const cur  = h.length ? h[h.length - 1] : null;
+    const prev = h.length > 1 ? h[h.length - 2].price : null;
+    let bc = 'eq', sym = '=';
+    if (cur && prev !== null) {
+      if (cur.price > prev)      { bc = 'up'; sym = '↑'; }
+      else if (cur.price < prev) { bc = 'dn'; sym = '↓'; }
+    }
+    const tr = document.createElement('tr');
+    if (isA) tr.style.opacity = '0.6';
+
+    const tdN  = document.createElement('td'); tdN.style.textAlign  = 'center'; tdN.style.color = 'var(--text2)'; tdN.textContent = i + 1;
+    const tdNm = document.createElement('td'); tdNm.style.textAlign = 'left';   tdNm.textContent = name;
+    const tdP  = document.createElement('td'); tdP.style.textAlign  = 'center'; tdP.textContent = n1(d.proteins);
+    const tdF  = document.createElement('td'); tdF.style.textAlign  = 'center'; tdF.textContent = n1(d.fats);
+    const tdC  = document.createElement('td'); tdC.style.textAlign  = 'center'; tdC.textContent = n1(d.carbs);
+    const tdK  = document.createElement('td'); tdK.style.textAlign  = 'center'; tdK.textContent = n1(d.calories);
+
+    const tdPr  = document.createElement('td');
+    const pcDiv = document.createElement('div'); pcDiv.className = 'price-cell';
+    const prSpan = document.createElement('span'); prSpan.textContent = cur ? cur.price.toLocaleString('ru-RU') + ' ֏' : '—';
+    pcDiv.appendChild(prSpan);
+    if (h.length) {
+      const badge = document.createElement('span'); badge.className = 'p-badge ' + bc; badge.title = 'История'; badge.textContent = sym;
+      badge.addEventListener('click', () => showPH(name));
+      pcDiv.appendChild(badge);
+    }
+    if (cur) {
+      const dt = document.createElement('span'); dt.className = 'p-date'; dt.textContent = cur.date; pcDiv.appendChild(dt);
+    }
+    tdPr.appendChild(pcDiv);
+
+    const tdAct = document.createElement('td'); tdAct.style.cssText = 'display:flex;gap:5px;';
+    const btnEdit = document.createElement('button'); btnEdit.className = 'ctrl-btn sec'; btnEdit.style.cssText = 'padding:2px 7px;font-size:12px;'; btnEdit.textContent = 'Ред.';
+    btnEdit.addEventListener('click', () => openAddProd(name));
+    const btnArc  = document.createElement('button'); btnArc.className  = 'ctrl-btn sec'; btnArc.style.cssText  = 'padding:2px 7px;font-size:12px;'; btnArc.textContent  = isA ? '↩' : 'Арх.';
+    btnArc.addEventListener('click', () => togArc(name));
+    tdAct.appendChild(btnEdit); tdAct.appendChild(btnArc);
+
+    tr.append(tdN, tdNm, tdP, tdF, tdC, tdK, tdPr, tdAct);
+    return tr;
+  };
+
+  act.forEach((e, i) => frag.appendChild(buildRow(e, i, false)));
+  if (arc.length) {
+    const hdrRow = document.createElement('tr'); hdrRow.className = 'arc-hdr';
+    const hdrTd  = document.createElement('td'); hdrTd.colSpan = 8; hdrTd.textContent = 'Архив (' + arc.length + ')';
+    hdrRow.appendChild(hdrTd); frag.appendChild(hdrRow);
+    arc.forEach((e, i) => frag.appendChild(buildRow(e, i, true)));
+  }
+
+  DOM.kbjuBody.innerHTML = '';
+  DOM.kbjuBody.appendChild(frag);
+}
+
+// ── Сохранённые рецепты ──────────────────────────────────────────
+function renderSaved() {
+  const c = DOM.savedGroups;
+  c.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  Object.entries(savedRecipes).forEach(([g, recs]) => {
+    const wrap = document.createElement('div'); wrap.className = 'saved-group';
+    const hdr  = document.createElement('div'); hdr.className = 'saved-group-hdr';
+    const h3   = document.createElement('h3');  h3.textContent = g + ' ';
+    const cnt  = document.createElement('span'); cnt.style.cssText = 'color:var(--text2);font-weight:normal;'; cnt.textContent = '(' + recs.length + ')';
+    h3.appendChild(cnt);
+    const arr  = document.createElement('span'); arr.textContent = '▶';
+    hdr.appendChild(h3); hdr.appendChild(arr);
+
+    const body = document.createElement('div');
+    body.className = 'saved-group-body collapsed';
+    hdr.addEventListener('click', () => {
+      const cl = body.classList.toggle('collapsed');
+      arr.style.transform = cl ? '' : 'rotate(90deg)';
+    });
+
+    if (recs.length) {
+      const rfrag = document.createDocumentFragment();
+      recs.forEach((r, i) => {
+        const t = r.ingredients.reduce((a, x) => ({
+          p: a.p+(x.proteins||0), f: a.f+(x.fats||0), c: a.c+(x.carbs||0), k: a.k+(x.calories||0)
+        }), { p:0,f:0,c:0,k:0 });
+        const card  = document.createElement('div'); card.className = 'recipe-card';
+        const h4    = document.createElement('h4');  h4.textContent = r.name;
+        const kbju  = document.createElement('div'); kbju.className = 'rc-kbju';
+        kbju.textContent = 'Б '+n1(t.p)+' / Ж '+n1(t.f)+' / У '+n1(t.c)+' / '+n1(t.k)+' ккал';
+        const ings  = document.createElement('div'); ings.className = 'rc-ings';
+        ings.textContent = r.ingredients.map(x => (x.originalName||x.name)+' — '+x.weight+'г').join('\n');
+        ings.style.whiteSpace = 'pre-line';
+        const btnMenu = document.createElement('button'); btnMenu.className = 'btn-to-menu'; btnMenu.textContent = '+ В меню';
+        btnMenu.addEventListener('click', () => openAtm(g, i));
+        const btnDel  = document.createElement('button'); btnDel.className = 'ctrl-btn red';
+        btnDel.style.cssText = 'width:100%;font-size:12px;padding:5px;';
+        btnDel.textContent = 'Удалить';
+        btnDel.addEventListener('click', () => delSaved(g, i));
+        card.append(h4, kbju, ings, btnMenu, btnDel);
+        rfrag.appendChild(card);
+      });
+      body.appendChild(rfrag);
+    } else {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:12px;color:var(--text2);font-size:12px;';
+      empty.textContent = 'Нет рецептов';
+      body.appendChild(empty);
+    }
+    wrap.append(hdr, body);
+    frag.appendChild(wrap);
+  });
+  c.appendChild(frag);
+}
+
+// ── Стоимость ────────────────────────────────────────────────────
+function renderCosts(rows, grand) {
+  const frag = document.createDocumentFragment();
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    [r.name, Math.round(r.grams)+' г', r.pack, r.buy,
+     r.cost ? Math.round(r.cost).toLocaleString('ru-RU')+' ֏' : '—'
+    ].forEach((val, ci) => {
+      const td = document.createElement('td'); td.textContent = val;
+      if (ci===1||ci===2||ci===3) td.style.color = 'var(--text2)';
+      if (ci===4) { td.style.fontWeight='bold'; td.style.color='var(--accent)'; }
+      tr.appendChild(td);
+    });
+    frag.appendChild(tr);
+  });
+  const trTot = document.createElement('tr'); trTot.className = 'cost-total';
+  const tdLbl = document.createElement('td'); tdLbl.colSpan=4; tdLbl.style.textAlign='right'; tdLbl.textContent='ИТОГО:';
+  const tdVal = document.createElement('td'); tdVal.textContent = Math.round(grand).toLocaleString('ru-RU')+' ֏';
+  trTot.append(tdLbl, tdVal);
+  frag.appendChild(trTot);
+  DOM.costBody.innerHTML = '';
+  DOM.costBody.appendChild(frag);
+}
+
+// ── Список продуктов из парсинга (заметки) ───────────────────────
+function renderNotesLists() {
+  const wrap = DOM.notesListWrap; if (!wrap) return;
+  const stored = loadNotesLists();
+  wrap.innerHTML = '';
+  if (!stored.length) return;
+  const frag = document.createDocumentFragment();
+  stored.forEach((e, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;margin:0 6px 6px 0;cursor:pointer;font-size:12px;';
+    div.addEventListener('click', () => viewNotesList(i));
+    const lbl = document.createElement('span'); lbl.textContent = '📋 '+e.label;
+    const del = document.createElement('span'); del.style.cssText='color:var(--text2);margin-left:4px;cursor:pointer;'; del.textContent='×';
+    del.addEventListener('click', ev => { ev.stopPropagation(); deleteNotesList(i); renderNotesLists(); });
+    div.append(lbl, del);
+    frag.appendChild(div);
+  });
+  wrap.appendChild(frag);
+}
+
+// ── Продукты из парсинга ─────────────────────────────────────────
+function fmtUnit(row) {
+  const ppu = row.pricePerUnit; if (!ppu||ppu<=0) return '';
+  const m = row.weightMeasure||'';
+  let u='кг';
+  if (m==='ML'||m==='L') u='л';
+  else if (m==='PCS'||m==='PIECE'||m==='EA') u='шт.';
+  return '1 '+u+' / '+Math.round(ppu).toLocaleString('ru-RU')+' ֏';
+}
+function fmtPrice(v) { if(!v) return '—'; return Math.round(v).toLocaleString('ru-RU')+' ֏'; }
+
+function renderProdTable() {
+  const tbody = DOM.prodBody;
+  tbody.innerHTML = '';
+  const groups = {};
+  _parsedRows.forEach((row,i) => {
+    if (!groups[row.catId]) groups[row.catId]={name:row.catName,rows:[]};
+    groups[row.catId].rows.push({...row,idx:i});
+  });
+  const frag = document.createDocumentFragment();
+  Object.entries(groups).forEach(([catId,g]) => {
+    const hdr = document.createElement('tr'); hdr.className='cat-hdr-row'; hdr.dataset.catid=catId;
+    const tdH = document.createElement('td'); tdH.colSpan=10; tdH.textContent=g.name+' ('+g.rows.length+')';
+    hdr.appendChild(tdH);
+    hdr.addEventListener('click', () => {
+      hdr.classList.toggle('open');
+      const isOpen = hdr.classList.contains('open');
+      tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]').forEach(r=>r.classList.toggle('hidden',!isOpen));
+    });
+    frag.appendChild(hdr);
+    g.rows.forEach(row => {
+      const tr = document.createElement('tr'); tr.className='prod-row hidden'; tr.dataset.catid=catId;
+      const tdCat=document.createElement('td');
+      const tdPh=document.createElement('td'); tdPh.style.cssText='padding:4px 6px;';
+      const thumb=document.createElement('div'); thumb.className='photo-thumb';
+      if (row.photo) {
+        thumb.textContent='🖼';
+        const popup=document.createElement('div'); popup.className='photo-popup';
+        const img=document.createElement('img'); img.src=row.photo; img.alt=''; img.loading='lazy'; img.decoding='async';
+        img.width=150; img.height=150; img.style.cssText='object-fit:contain;border-radius:5px;display:block;';
+        popup.appendChild(img); thumb.appendChild(popup);
+      } else {
+        thumb.style.cssText='cursor:default;font-size:10px;color:var(--text2);'; thumb.textContent='—';
+      }
+      tdPh.appendChild(thumb);
+      const tdNm=document.createElement('td'); tdNm.style.textAlign='left'; tdNm.textContent=row.name;
+      const tdPr=document.createElement('td'); tdPr.className='td-price'; tdPr.textContent=fmtPrice(row.price);
+      if(row.discPct){const badge=document.createElement('span');badge.className='discount-badge';badge.textContent='-'+row.discPct+'%';tdPr.appendChild(badge);}
+      const tdOr=document.createElement('td'); tdOr.className='td-orig'; tdOr.textContent=row.origPrice?fmtPrice(row.origPrice):'';
+      const tdKg=document.createElement('td'); tdKg.className='td-kg'; tdKg.textContent=fmtUnit(row);
+      tr.append(tdCat,tdPh,tdNm,tdPr,tdOr,tdKg);
+      ['snack','breakfast','lunch','dinner'].forEach(m=>{
+        const td=document.createElement('td'); td.style.textAlign='center';
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.className='cb-m';
+        cb.dataset.idx=row.idx; cb.dataset.meal=m;
+        cb.addEventListener('change',updLists);
+        td.appendChild(cb); tr.appendChild(td);
+      });
+      frag.appendChild(tr);
+    });
+  });
+  tbody.innerHTML='';
+  tbody.appendChild(frag);
+}
+
+// ── История цен ──────────────────────────────────────────────────
+function showPH(name) {
+  const d=kbjuTable[name]; if(!d?.priceHistory?.length) return;
+  document.getElementById('phTitle').textContent='История цен: '+name;
+  const h=d.priceHistory,cv=document.getElementById('phCanvas'),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,0,W,H);
+  const prices=h.map(x=>x.price),mn=Math.min(...prices),mx=Math.max(...prices),rng=mx-mn||1;
+  const pd={l:44,r:14,t:14,b:26},iW=W-pd.l-pd.r,iH=H-pd.t-pd.b;
+  ctx.strokeStyle='#404040'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pd.t+(iH/4)*i;
+    ctx.beginPath();ctx.moveTo(pd.l,y);ctx.lineTo(W-pd.r,y);ctx.stroke();
+    ctx.fillStyle='#b0b0b0';ctx.font='10px Segoe UI';ctx.fillText(Math.round(mx-(rng/4)*i),2,y+4);
+  }
+  if(h.length>1){
+    ctx.strokeStyle='#4a9eff';ctx.lineWidth=2;ctx.beginPath();
+    h.forEach((x,i)=>{const px=pd.l+(i/(h.length-1))*iW,py=pd.t+(1-(x.price-mn)/rng)*iH;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});
+    ctx.stroke();
+  }
+  h.forEach((x,i)=>{
+    const px=pd.l+(h.length>1?i/(h.length-1):0.5)*iW;
+    const py=pd.t+(h.length>1?(1-(x.price-mn)/rng):0.5)*iH;
+    ctx.fillStyle='#4a9eff';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
+  });
+  const phList=document.getElementById('phList'); phList.innerHTML='';
+  const lf=document.createDocumentFragment();
+  h.slice().reverse().forEach(x=>{
+    const div=document.createElement('div'); div.textContent=x.date+': ';
+    const s=document.createElement('strong'); s.style.color='var(--accent)'; s.textContent=x.price.toLocaleString('ru-RU')+' ֏';
+    div.appendChild(s); lf.appendChild(div);
+  });
+  phList.appendChild(lf);
+  openModal('priceHistModal');
+}
+
+// ── Выбор продукта (модал) ───────────────────────────────────────
+function filterPS() {
+  const q=DOM.psInput.value.toLowerCase();
+  const frag=document.createDocumentFragment();
+  Object.entries(kbjuTable)
+    .filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q)))
+    .forEach(([name,d])=>{
+      const tr=document.createElement('tr');
+      tr.addEventListener('click',()=>pickProd(name));
+      const tdN=document.createElement('td'); tdN.style.textAlign='left'; tdN.textContent=name;
+      [d.proteins,d.fats,d.carbs,d.calories].forEach(v=>{
+        const td=document.createElement('td'); td.textContent=n1(v); tr.appendChild(td);
+      });
+      tr.insertBefore(tdN,tr.firstChild);
+      frag.appendChild(tr);
+    });
+  DOM.psBody.innerHTML='';
+  DOM.psBody.appendChild(frag);
+}
+
+// ── Модальные окна ───────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Просмотр сохранённого списка продуктов ───────────────────────
+function viewNotesList(i) {
+  const stored=loadNotesLists();
+  const e=stored[i]; if(!e) return;
+  document.getElementById('nlmTitle').textContent=e.label;
+  const body=document.getElementById('nlmBody'); body.innerHTML='';
+  const sections=[
+    {label:'Перекус',items:e.snack},{label:'Завтрак',items:e.breakfast},
+    {label:'Обед',items:e.lunch},{label:'Ужин',items:e.dinner},
+  ];
+  const frag=document.createDocumentFragment();
+  sections.forEach(s=>{
+    const div=document.createElement('div');
+    const hdr=document.createElement('strong'); hdr.style.color='var(--accent)'; hdr.textContent=s.label;
+    const content=document.createElement('div'); content.textContent=s.items.map(n=>'• '+n).join('\n'); content.style.whiteSpace='pre-line';
+    div.append(hdr,document.createElement('br'),content);
+    frag.appendChild(div);
+  });
+  const divAll=document.createElement('div'); divAll.style.gridColumn='span 2';
+  const hdrAll=document.createElement('strong'); hdrAll.style.color='var(--accent)'; hdrAll.textContent='Общий список';
+  const allContent=document.createElement('div'); allContent.textContent=e.all.map(n=>'• '+n).join('\n'); allContent.style.whiteSpace='pre-line';
+  divAll.append(hdrAll,document.createElement('br'),allContent);
+  frag.appendChild(divAll);
+  body.appendChild(frag);
+  openModal('notesListModal');
+}// ════════════════════════════════════════════════════════════════
+// МЕНЮ — таблица (визуально как rowspan, технически без него)
 // ════════════════════════════════════════════════════════════════
 
 function renderMenuDay(day) {
@@ -83,13 +614,25 @@ function renderMenuDay(day) {
   const frag = document.createDocumentFragment();
   let dayT = { p: 0, f: 0, c: 0, k: 0 };
 
+  // Шапка таблицы
+  const thead = document.createElement('div');
+  thead.className = 'mtable-head';
+  thead.innerHTML = '';
+  ['Время','Приём пищи','Блюдо','Состав блюда','Вес, г','Б','Ж','У','Ккал','Приготовление'].forEach((t,i) => {
+    const th = document.createElement('div');
+    th.className = 'mth col-' + ['time','meal','dish','ing','w','num','num','num','kcal','recipe'][i];
+    th.textContent = t;
+    thead.appendChild(th);
+  });
+  frag.appendChild(thead);
+
   MEALS.forEach(meal => {
     const md   = dd[meal];
     const ings = (md && md.ingredients) ? md.ingredients : [];
     const time = mealTimes[meal] || '--:--';
+    const rows = Math.max(ings.length, 1);
 
-    // Итоги приёма пищи
-    const mealT = { p: 0, f: 0, c: 0, k: 0 };
+    const mealT = { p:0, f:0, c:0, k:0 };
     ings.forEach(ing => {
       mealT.p += ing.proteins  || 0;
       mealT.f += ing.fats      || 0;
@@ -98,197 +641,163 @@ function renderMenuDay(day) {
     });
     dayT.p += mealT.p; dayT.f += mealT.f; dayT.c += mealT.c; dayT.k += mealT.k;
 
-    // ── Карточка приёма пищи ──────────────────────────────────
-    const card = document.createElement('div');
-    card.className = 'meal-card';
+    // Блок одного приёма пищи
+    const mealBlock = document.createElement('div');
+    mealBlock.className = 'meal-block';
 
-    // ── Шапка карточки ────────────────────────────────────────
-    const header = document.createElement('div');
-    header.className = 'meal-card-header';
+    // Левая часть (время, приём, блюдо, рецепт) — фиксированная высота = все строки + итого
+    const leftCol = document.createElement('div');
+    leftCol.className = 'meal-left';
 
     // Время
-    const timeBtn = document.createElement('div');
-    timeBtn.className = 'meal-time';
-    timeBtn.textContent = time;
-    timeBtn.title = 'Изменить время';
-    timeBtn.addEventListener('click', e => showTimeDp(e, meal));
+    const tdTime = document.createElement('div');
+    tdTime.className = 'mcell col-time meal-left-time';
+    tdTime.title = 'Изменить время';
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'time-val';
+    timeSpan.textContent = time;
+    tdTime.appendChild(timeSpan);
+    tdTime.addEventListener('click', e => showTimeDp(e, meal));
 
-    // Название приёма пищи
-    const mealName = document.createElement('div');
-    mealName.className = 'meal-name';
-    mealName.textContent = meal;
-
-    // Кнопка сохранить как рецепт
+    // Приём пищи
+    const tdMeal = document.createElement('div');
+    tdMeal.className = 'mcell col-meal meal-left-meal';
+    tdMeal.textContent = meal;
     const btnSave = document.createElement('button');
-    btnSave.className = 'meal-save-btn';
+    btnSave.className = 'btn-save-meal';
     btnSave.textContent = '★';
     btnSave.title = 'Сохранить как рецепт';
     btnSave.addEventListener('click', () => saveMealRecipe(day, meal));
+    tdMeal.appendChild(btnSave);
 
-    // Название блюда + карандаш
-    const dishWrap = document.createElement('div');
-    dishWrap.className = 'meal-dish-wrap';
-
-    const dishName = document.createElement('span');
-    dishName.className = 'meal-dish-name';
-    dishName.textContent = (md && md.dish) ? md.dish : '';
-
+    // Блюдо
+    const tdDish = document.createElement('div');
+    tdDish.className = 'mcell col-dish meal-left-dish';
+    const dishSpan = document.createElement('span');
+    dishSpan.textContent = (md && md.dish) ? md.dish : '';
     const btnPencil = document.createElement('button');
-    btnPencil.className = 'meal-dish-edit';
+    btnPencil.className = 'btn-pencil';
     btnPencil.textContent = '✎';
     btnPencil.title = 'Переименовать блюдо';
     btnPencil.addEventListener('click', () => openRenameDish(day, meal));
+    tdDish.appendChild(dishSpan);
+    tdDish.appendChild(btnPencil);
 
-    dishWrap.appendChild(dishName);
-    dishWrap.appendChild(btnPencil);
+    leftCol.appendChild(tdTime);
+    leftCol.appendChild(tdMeal);
+    leftCol.appendChild(tdDish);
 
-    // КБЖУ итого приёма — в шапке справа
-    const mealTotals = document.createElement('div');
-    mealTotals.className = 'meal-header-totals';
-    [
-      { label: 'Б',    val: mealT.p },
-      { label: 'Ж',    val: mealT.f },
-      { label: 'У',    val: mealT.c },
-      { label: 'ккал', val: mealT.k },
-    ].forEach(({ label, val }) => {
-      const chip = document.createElement('span');
-      chip.className = 'meal-total-chip' + (label === 'ккал' ? ' chip-kcal' : '');
-      const lbl = document.createElement('span'); lbl.className = 'chip-label'; lbl.textContent = label;
-      const num = document.createElement('span'); num.className = 'chip-val';   num.textContent = n1(val);
-      chip.appendChild(lbl); chip.appendChild(num);
-      mealTotals.appendChild(chip);
-    });
+    // Средняя часть — строки ингредиентов
+    const midCol = document.createElement('div');
+    midCol.className = 'meal-mid';
 
-    header.appendChild(timeBtn);
-    header.appendChild(mealName);
-    header.appendChild(btnSave);
-    header.appendChild(dishWrap);
-    header.appendChild(mealTotals);
-    card.appendChild(header);
-
-    // ── Рецепт (если есть) ────────────────────────────────────
+    // Строка "Приготовление" — если есть рецепт, показываем перед ингредиентами
     if (md && md.recipe) {
       const recipeRow = document.createElement('div');
-      recipeRow.className = 'meal-recipe-row';
+      recipeRow.className = 'meal-recipe-full-row';
       const recipeLabel = document.createElement('span');
-      recipeLabel.className = 'meal-recipe-label';
-      recipeLabel.textContent = 'Приготовление:';
+      recipeLabel.className = 'recipe-prefix';
+      recipeLabel.textContent = 'Приготовление: ';
       const recipeText = document.createElement('span');
-      recipeText.className = 'meal-recipe-text';
       recipeText.textContent = md.recipe;
       recipeRow.appendChild(recipeLabel);
       recipeRow.appendChild(recipeText);
-      card.appendChild(recipeRow);
+      midCol.appendChild(recipeRow);
     }
 
-    // ── Таблица ингредиентов ──────────────────────────────────
-    const tableWrap = document.createElement('div');
-    tableWrap.className = 'meal-table-wrap';
-
-    const table = document.createElement('table');
-    table.className = 'meal-ing-table';
-
-    // Заголовок таблицы ингредиентов
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    [
-      { text: 'Состав блюда', cls: 'col-ing'  },
-      { text: 'Вес, г',       cls: 'col-w'    },
-      { text: 'Б',            cls: 'col-num'  },
-      { text: 'Ж',            cls: 'col-num'  },
-      { text: 'У',            cls: 'col-num'  },
-      { text: 'Ккал',         cls: 'col-kcal' },
-    ].forEach(col => {
-      const th = document.createElement('th');
-      th.textContent = col.text;
-      th.className   = col.cls;
-      headRow.appendChild(th);
+    // Подзаголовок столбцов (Состав блюда / Вес / Б / Ж / У / Ккал)
+    const subHead = document.createElement('div');
+    subHead.className = 'meal-subhead';
+    ['Состав блюда','Вес, г','Б','Ж','У','Ккал'].forEach((t,i) => {
+      const th = document.createElement('div');
+      th.className = 'msth col-' + ['ing','w','num','num','num','kcal'][i];
+      th.textContent = t;
+      subHead.appendChild(th);
     });
-    thead.appendChild(headRow);
-    table.appendChild(thead);
+    midCol.appendChild(subHead);
 
-    // Тело таблицы — строки ингредиентов
-    const tbody = document.createElement('tbody');
-
+    // Строки ингредиентов
     if (ings.length === 0) {
-      const emptyRow = document.createElement('tr');
-      const emptyTd  = document.createElement('td');
-      emptyTd.colSpan = 6;
-      emptyTd.className = 'meal-empty-hint';
-      emptyTd.textContent = 'Нажмите + чтобы добавить ингредиент';
-      emptyRow.appendChild(emptyTd);
-      tbody.appendChild(emptyRow);
+      const emptyRow = document.createElement('div');
+      emptyRow.className = 'ing-row';
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'mcell col-ing';
+      emptyCell.style.color = 'var(--text3)';
+      emptyCell.style.fontStyle = 'italic';
+      emptyCell.textContent = 'Нажмите + чтобы добавить ингредиент';
+      emptyRow.appendChild(emptyCell);
+      ['col-w','col-num','col-num','col-num','col-kcal'].forEach(cls => {
+        const c = document.createElement('div'); c.className = 'mcell ' + cls;
+        emptyRow.appendChild(c);
+      });
+      midCol.appendChild(emptyRow);
     } else {
       ings.forEach((ing, i) => {
-        tbody.appendChild(buildIngRow(ing, i, day, meal));
+        midCol.appendChild(buildIngRow(ing, i, day, meal));
       });
     }
 
     // Строка итого + кнопка добавить
-    const footRow = document.createElement('tr');
-    footRow.className = 'ing-foot-row';
+    const footRow = document.createElement('div');
+    footRow.className = 'ing-row ing-foot-row';
 
-    const tdAddWrap = document.createElement('td');
-    tdAddWrap.className = 'col-ing';
+    const tdAdd = document.createElement('div');
+    tdAdd.className = 'mcell col-ing';
     const btnAdd = document.createElement('button');
     btnAdd.className = 'btn-add-ing';
     btnAdd.textContent = '+ Добавить';
-    btnAdd.title = 'Добавить ингредиент';
     btnAdd.addEventListener('click', () => openPS(day, meal));
-    tdAddWrap.appendChild(btnAdd);
+    tdAdd.appendChild(btnAdd);
 
-    const tdW = document.createElement('td'); tdW.className = 'col-w';
-    const tdP = document.createElement('td'); tdP.className = 'col-num';  tdP.textContent = n1(mealT.p);
-    const tdF = document.createElement('td'); tdF.className = 'col-num';  tdF.textContent = n1(mealT.f);
-    const tdC = document.createElement('td'); tdC.className = 'col-num';  tdC.textContent = n1(mealT.c);
-    const tdK = document.createElement('td'); tdK.className = 'col-kcal'; tdK.textContent = n1(mealT.k);
+    const tdFW  = document.createElement('div'); tdFW.className  = 'mcell col-w';
+    const tdFItogo = document.createElement('div'); tdFItogo.className = 'mcell col-ing foot-label'; tdFItogo.textContent = 'Итого:';
 
-    footRow.appendChild(tdAddWrap);
-    footRow.appendChild(tdW);
-    footRow.appendChild(tdP);
-    footRow.appendChild(tdF);
-    footRow.appendChild(tdC);
-    footRow.appendChild(tdK);
-    tbody.appendChild(footRow);
+    const tdFP  = document.createElement('div'); tdFP.className  = 'mcell col-num'; tdFP.textContent = n1(mealT.p);
+    const tdFF  = document.createElement('div'); tdFF.className  = 'mcell col-num'; tdFF.textContent = n1(mealT.f);
+    const tdFC  = document.createElement('div'); tdFC.className  = 'mcell col-num'; tdFC.textContent = n1(mealT.c);
+    const tdFK  = document.createElement('div'); tdFK.className  = 'mcell col-kcal'; tdFK.textContent = n1(mealT.k);
 
-    table.appendChild(tbody);
-    tableWrap.appendChild(table);
-    card.appendChild(tableWrap);
-    frag.appendChild(card);
+    footRow.appendChild(tdAdd);
+    footRow.appendChild(tdFW);
+    footRow.appendChild(tdFP);
+    footRow.appendChild(tdFF);
+    footRow.appendChild(tdFC);
+    footRow.appendChild(tdFK);
+    midCol.appendChild(footRow);
+
+    // Правая часть — Приготовление (колонка справа как в оригинале)
+    const rightCol = document.createElement('div');
+    rightCol.className = 'meal-right col-recipe';
+    rightCol.textContent = (md && md.recipe) ? md.recipe : '';
+
+    mealBlock.appendChild(leftCol);
+    mealBlock.appendChild(midCol);
+    mealBlock.appendChild(rightCol);
+    frag.appendChild(mealBlock);
   });
 
-  // ── Итого за день ─────────────────────────────────────────────
-  const dayTotal = document.createElement('div');
-  dayTotal.className = 'day-total-bar';
-  const dayLabel = document.createElement('span');
-  dayLabel.className = 'day-total-label';
-  dayLabel.textContent = 'Всего за день:';
-  dayTotal.appendChild(dayLabel);
-  [
-    { label: 'Белки', val: dayT.p },
-    { label: 'Жиры',  val: dayT.f },
-    { label: 'Углев', val: dayT.c },
-    { label: 'Ккал',  val: dayT.k },
-  ].forEach(({ label, val }) => {
-    const chip = document.createElement('span');
-    chip.className = 'day-total-chip';
-    const lbl = document.createElement('span'); lbl.className = 'chip-label'; lbl.textContent = label;
-    const num = document.createElement('span'); num.className = 'chip-val chip-val-lg'; num.textContent = n1(val);
-    chip.appendChild(lbl); chip.appendChild(num);
-    dayTotal.appendChild(chip);
-  });
-  frag.appendChild(dayTotal);
+  // Итого за день
+  const dayRow = document.createElement('div');
+  dayRow.className = 'mtable-day-total';
+  const dayLbl = document.createElement('div'); dayLbl.className = 'day-total-lbl'; dayLbl.textContent = 'Итого за день:';
+  const dayP   = document.createElement('div'); dayP.className   = 'day-total-val'; dayP.textContent = 'Б ' + n1(dayT.p);
+  const dayF   = document.createElement('div'); dayF.className   = 'day-total-val'; dayF.textContent = 'Ж ' + n1(dayT.f);
+  const dayC   = document.createElement('div'); dayC.className   = 'day-total-val'; dayC.textContent = 'У ' + n1(dayT.c);
+  const dayK   = document.createElement('div'); dayK.className   = 'day-total-val day-total-kcal'; dayK.textContent = n1(dayT.k) + ' ккал';
+  dayRow.append(dayLbl, dayP, dayF, dayC, dayK);
+  frag.appendChild(dayRow);
+
   wrap.appendChild(frag);
 }
 
 // ── Строка ингредиента ────────────────────────────────────────────
 function buildIngRow(ing, i, day, meal) {
   const nf  = ing.status === 'not_found';
-  const row = document.createElement('tr');
-  row.className = nf ? 'ing-row not-found-bg' : 'ing-row';
+  const row = document.createElement('div');
+  row.className = 'ing-row' + (nf ? ' not-found-bg' : '');
 
-  const tdIng   = document.createElement('td');
-  tdIng.className = 'col-ing';
+  const tdIng   = document.createElement('div');
+  tdIng.className = 'mcell col-ing';
   const ingWrap = document.createElement('div');
   ingWrap.className = 'ing-wrap';
   const ingName = document.createElement('span');
@@ -302,7 +811,7 @@ function buildIngRow(ing, i, day, meal) {
     btn.addEventListener('click', e => showSug(e, day, meal, i));
   } else {
     btn.className = 'btn-x';
-    btn.textContent = '✕';
+    btn.textContent = '×';
     btn.title = 'Удалить';
     btn.addEventListener('click', () => delIng(day, meal, i));
   }
@@ -310,8 +819,8 @@ function buildIngRow(ing, i, day, meal) {
   ingWrap.appendChild(btn);
   tdIng.appendChild(ingWrap);
 
-  const tdW = document.createElement('td');
-  tdW.className = 'col-w';
+  const tdW = document.createElement('div');
+  tdW.className = 'mcell col-w';
   const inp = document.createElement('input');
   inp.className = 'w-inp';
   inp.type  = 'number';
@@ -319,10 +828,10 @@ function buildIngRow(ing, i, day, meal) {
   inp.addEventListener('change', () => updW(day, meal, i, inp.value));
   tdW.appendChild(inp);
 
-  const tdP = document.createElement('td'); tdP.className = 'col-num';  tdP.textContent = n1(ing.proteins);
-  const tdF = document.createElement('td'); tdF.className = 'col-num';  tdF.textContent = n1(ing.fats);
-  const tdC = document.createElement('td'); tdC.className = 'col-num';  tdC.textContent = n1(ing.carbs);
-  const tdK = document.createElement('td'); tdK.className = 'col-kcal'; tdK.textContent = n1(ing.calories);
+  const tdP = document.createElement('div'); tdP.className = 'mcell col-num';  tdP.textContent = n1(ing.proteins);
+  const tdF = document.createElement('div'); tdF.className = 'mcell col-num';  tdF.textContent = n1(ing.fats);
+  const tdC = document.createElement('div'); tdC.className = 'mcell col-num';  tdC.textContent = n1(ing.carbs);
+  const tdK = document.createElement('div'); tdK.className = 'mcell col-kcal'; tdK.textContent = n1(ing.calories);
 
   row.appendChild(tdIng);
   row.appendChild(tdW);
