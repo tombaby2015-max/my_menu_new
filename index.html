@@ -76,10 +76,11 @@ input[type=number]{-moz-appearance:textfield;}
 #menuTable tbody td{padding:6px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg3);}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
 
-.meal-group-row td{background:var(--bg4)!important;border-top:2px solid var(--border2)!important;}
-.meal-total-row td{background:var(--bg4)!important;border-top:1px solid var(--border2)!important;font-weight:600;color:var(--text2);}
+.meal-group-row td{background:var(--bg3)!important;border-top:none!important;}
+.meal-total-row td{background:var(--bg4)!important;border-top:1px solid var(--border)!important;font-weight:600;color:var(--text2);}
+.meal-tbody:first-child tr:first-child td,.meal-tbody tr:first-child td{border-top:1px solid var(--border2);}
 .day-total-row td{background:var(--accentDim)!important;color:var(--accentL)!important;font-weight:700;border-top:2px solid var(--accent)!important;}
-.meal-spacer td{height:5px;background:var(--bg)!important;border:none!important;}
+.meal-spacer-tbody td{height:6px;padding:0!important;background:var(--bg2)!important;border:none!important;}
 .col-time{min-width:55px;width:55px;}
 .col-meal{min-width:80px;width:80px;position:relative;}
 .col-dish{min-width:100px;text-align:left!important;position:relative;}
@@ -814,58 +815,70 @@ function renderMenuDay(day){
 
   MEALS.forEach(meal=>{
     const md=dd[meal], ings=md?md.ingredients:[], time=mealTimes[meal]||'--:--';
-    const mealId=`${esc(day)}_${esc(meal)}`;
 
-    // ── Each ingredient gets its own row; first row also has time/meal/dish/recipe cells with rowspan ──
-    // We render using a wrapper approach: time+meal+dish+recipe span all ingredient rows + 2 (header+total)
-    const rs=ings.length+2; // rowspan: 1 blank header row + ingredient rows + 1 total row
+    // Each meal = one <tbody> block — this is key for spacing
+    html += '<tbody class="meal-tbody">';
 
-    // ROW 1: time | meal | dish | [first ing or empty] | w | b | j | u | k | recipe
-    const firstIng=ings[0];
-    html+=`<tr class="meal-group-row">
-      <td class="td-time-cell col-time" rowspan="${rs}" onclick="showTimeDp(event,'${esc(meal)}')"><span class="time-val">${time}</span></td>
-      <td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
-      <td class="col-dish" rowspan="${rs}" style="vertical-align:middle;position:relative;">${md&&md.dish?md.dish:''}
-        <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать блюдо">✎</button>
-      </td>
-      ${firstIng?renderIngCell(firstIng,0,day,meal):`<td class="col-ing" style="color:var(--text2);font-size:11px;"></td><td class="col-w"></td><td class="col-num"></td><td class="col-num"></td><td class="col-num"></td><td class="col-kcal"></td>`}
-      <td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:7px;">${md&&md.recipe?md.recipe:''}</td>
-    </tr>`;
-    if(firstIng){dayT.p+=firstIng.proteins||0;dayT.f+=firstIng.fats||0;dayT.c+=firstIng.carbs||0;dayT.k+=firstIng.calories||0;}
-
-    // Remaining ingredient rows
-    let mealT={p:firstIng?firstIng.proteins||0:0, f:firstIng?firstIng.fats||0:0, c:firstIng?firstIng.carbs||0:0, k:firstIng?firstIng.calories||0:0};
-    for(let i=1;i<ings.length;i++){
-      const ing=ings[i];
-      html+=`<tr>${renderIngCell(ing,i,day,meal)}</tr>`;
-      mealT.p+=ing.proteins||0;mealT.f+=ing.fats||0;mealT.c+=ing.carbs||0;mealT.k+=ing.calories||0;
-      dayT.p+=ing.proteins||0;dayT.f+=ing.fats||0;dayT.c+=ing.carbs||0;dayT.k+=ing.calories||0;
+    // Ingredient rows
+    if(ings.length===0){
+      // Empty meal — single row
+      html += `<tr class="meal-group-row">
+        <td class="col-time td-time-cell" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center"><span class="time-val">${time}</span></td>
+        <td class="col-meal" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
+        <td class="col-dish" style="vertical-align:middle;position:relative;">${md&&md.dish?md.dish:''}
+          <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать блюдо">✎</button>
+        </td>
+        <td class="col-ing" colspan="6"></td>
+        <td class="col-recipe" style="vertical-align:middle;">${md&&md.recipe?md.recipe:''}</td>
+      </tr>`;
+    } else {
+      let mealT={p:0,f:0,c:0,k:0};
+      ings.forEach((ing,i)=>{
+        mealT.p+=ing.proteins||0; mealT.f+=ing.fats||0; mealT.c+=ing.carbs||0; mealT.k+=ing.calories||0;
+        dayT.p+=ing.proteins||0;  dayT.f+=ing.fats||0;  dayT.c+=ing.carbs||0;  dayT.k+=ing.calories||0;
+        if(i===0){
+          // First ingredient row — also has Time, Meal, Dish, Recipe cells
+          html += `<tr class="meal-group-row">
+            <td class="col-time td-time-cell" rowspan="${ings.length+1}" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center;vertical-align:middle;"><span class="time-val">${time}</span></td>
+            <td class="col-meal" rowspan="${ings.length+1}" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
+            <td class="col-dish" rowspan="${ings.length+1}" style="vertical-align:middle;position:relative;">${md&&md.dish?md.dish:''}
+              <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать блюдо">✎</button>
+            </td>
+            ${renderIngCell(ing,0,day,meal)}
+            <td class="col-recipe" rowspan="${ings.length+1}" style="vertical-align:top;padding-top:7px;font-size:11px;color:var(--text2);">${md&&md.recipe?md.recipe:''}</td>
+          </tr>`;
+        } else {
+          html += `<tr>${renderIngCell(ing,i,day,meal)}</tr>`;
+        }
+      });
+      // Totals row — rowspan cells (Time/Meal/Dish/Recipe) continue into this row
+      html += `<tr class="meal-total-row">
+        <td style="text-align:right;padding-right:6px;position:relative;">
+          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить ингредиент" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
+          <span style="color:var(--text2);font-size:12px;">Итого:</span>
+        </td>
+        <td class="col-w"></td>
+        <td class="col-num">${n1(mealT.p)}</td>
+        <td class="col-num">${n1(mealT.f)}</td>
+        <td class="col-num">${n1(mealT.c)}</td>
+        <td class="col-kcal">${n1(mealT.k)}</td>
+      </tr>`;
     }
 
-    // Total row — has + button on left of "Итого:"
-    html+=`<tr class="meal-total-row">
-      <td style="text-align:right;padding-right:4px;position:relative;">
-        <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить ингредиент" style="position:absolute;left:4px;bottom:50%;transform:translateY(50%);">+</button>
-        <span style="color:var(--text2);">Итого:</span>
-      </td>
-      <td></td>
-      <td class="col-num">${n1(mealT.p)}</td>
-      <td class="col-num">${n1(mealT.f)}</td>
-      <td class="col-num">${n1(mealT.c)}</td>
-      <td class="col-kcal">${n1(mealT.k)}</td>
-    </tr>
-    <tr class="meal-spacer"><td colspan="10"></td></tr>`;
+    html += '</tbody>';
+    // Spacer between meal blocks — a separate tbody so it always shows
+    html += '<tbody class="meal-spacer-tbody"><tr><td colspan="10" style="height:6px;padding:0;background:var(--bg);border:none;"></td></tr></tbody>';
   });
 
   // Day total
-  html+=`<tr class="day-total-row">
-    <td colspan="5" style="text-align:right;padding-right:8px;">ВСЕГО ЗА ДЕНЬ:</td>
+  html += `<tbody><tr class="day-total-row">
+    <td colspan="5" style="text-align:right;padding-right:10px;font-size:12px;letter-spacing:.3px;">ИТОГО ЗА ДЕНЬ:</td>
+    <td class="col-w"></td>
     <td class="col-num">${n1(dayT.p)}</td>
     <td class="col-num">${n1(dayT.f)}</td>
     <td class="col-num">${n1(dayT.c)}</td>
     <td class="col-kcal">${n1(dayT.k)}</td>
-    <td></td>
-  </tr>`;
+  </tr></tbody>`;
 
   tb.innerHTML=html;
 }
