@@ -58,7 +58,7 @@ input[type=number]{-moz-appearance:textfield;}
 .sync-btn:hover{border-color:var(--accentL);color:var(--accentL);}
 
 /* ── DAY TABS ── */
-#dayTabsWrap{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border2);padding:8px 16px 0;display:none;}
+#dayTabsWrap{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border2);padding:8px 16px 0;}
 #dayTabs{display:flex;gap:5px;}
 .day-btn{padding:9px 0;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex:1;text-align:center;letter-spacing:.2px;}
 .day-btn:hover{color:var(--text);background:var(--bg3);}
@@ -760,6 +760,7 @@ function showBadge(t,c){
 function init(){
   loadAll();
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dayTabsWrap').style.display='block';
   buildDayTabs();
   renderMenuDay(curDay);
   renderKbju();
