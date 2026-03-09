@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Меню на неделю</title>
 
-<!-- CSP: только свои ресурсы + Google Fonts + Worker API -->
+<!-- CSP: базовая защита без блокировки inline-обработчиков -->
 <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src * data:; connect-src 'self' https://my-menu.belovolov-email.workers.dev https://apishopv2.yerevan-city.am;">
+  content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src * data:; connect-src 'self' https://my-menu.belovolov-email.workers.dev https://apishopv2.yerevan-city.am;">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -56,22 +56,8 @@
 
   <!-- ═══ МЕНЮ ═══ -->
   <div id="sec-menu" class="section active">
-    <div id="tableWrap">
-      <table id="menuTable">
-        <thead><tr>
-          <th class="col-time">Время</th>
-          <th class="col-meal">Приём пищи</th>
-          <th class="col-dish">Блюдо</th>
-          <th class="col-ing">Состав блюда</th>
-          <th class="col-w">Вес, г</th>
-          <th class="col-num">Б</th>
-          <th class="col-num">Ж</th>
-          <th class="col-num">У</th>
-          <th class="col-kcal">Ккал</th>
-          <th class="col-recipe">Приготовление</th>
-        </tr></thead>
-        <tbody id="menuBody"></tbody>
-      </table>
+    <div id="menuWrap">
+      <!-- Карточки приёмов пищи генерируются JavaScript в renderMenuDay() -->
     </div>
   </div>
 
