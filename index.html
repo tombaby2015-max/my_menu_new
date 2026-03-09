@@ -13,7 +13,7 @@
   --bg3:       #2a2b32;
   --bg4:       #32333c;
   --bg5:       #3c3d48;
-  --th-bg:     #404250;
+  --th-bg:     #1e1f26;
   --th-text:   #ffffff;
   --text:      #e8eaf0;
   --text2:     #9499b0;
@@ -22,8 +22,8 @@
   --accent2:   #3b82f6;
   --accentL:   #93c5fd;
   --accentDim: rgba(96,165,250,.18);
-  --border:    #3a3b45;
-  --border2:   #484958;
+  --border:    #4a4c5a;
+  --border2:   #585a6a;
   --green:     #4ade80;
   --red:       #f87171;
   --yellow:    #fbbf24;
@@ -53,7 +53,7 @@ input[type=number]{-moz-appearance:textfield;}
 .sync-btn:hover{border-color:var(--accentL);color:var(--accentL);}
 
 /* ── DAY TABS ── */
-#dayTabsWrap{flex-shrink:0;background:var(--bg3);border-bottom:none;padding:8px 16px 0;}
+#dayTabsWrap{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 16px 0;margin:0;}
 #dayTabs{display:flex;gap:5px;}
 .day-btn{padding:9px 0;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex:1;text-align:center;letter-spacing:.2px;}
 .day-btn:hover{color:var(--text);background:var(--bg3);}
@@ -72,7 +72,7 @@ input[type=number]{-moz-appearance:textfield;}
 #sec-menu{overflow:hidden;flex-direction:column;}
 #tableWrap{flex:1;overflow-y:auto;overflow-x:auto;padding:0 0 16px 0;}
 #menuTable{width:100%;border-collapse:collapse;font-size:13px;}
-#menuTable thead th{background:var(--th-bg);color:var(--th-text);padding:9px 7px;text-align:center;border:1px solid var(--border);white-space:nowrap;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:15;}
+#menuTable thead th{background:var(--th-bg);color:var(--th-text);padding:9px 7px;text-align:center;border:1px solid var(--border);border-top:none;white-space:nowrap;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:15;}
 #menuTable tbody td{padding:6px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg3);}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
 
@@ -152,13 +152,13 @@ input[type=number]{-moz-appearance:textfield;}
 .prog-bar{height:3px;background:var(--border);flex-shrink:0;}
 .prog-fill{height:100%;background:var(--accent);transition:width .3s;width:0%;}
 .parse-status{font-size:11px;color:var(--text2);padding:3px 14px;flex-shrink:0;}
-.screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--th-bg);border-bottom:1px solid var(--border2);flex-shrink:0;}
+.screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--th-bg);border-bottom:none;flex-shrink:0;}
 .screen-nav h3{font-size:11px;font-weight:600;color:var(--th-text);text-transform:uppercase;letter-spacing:.7px;}
 .screen-nav-hint{font-size:11px;color:var(--text2);}
 
 /* Screen 2 — Products table */
-.prod-screen-inner{flex:1;overflow:auto;padding:0 14px 14px;background:var(--bg);}
-.prod-table thead{background:var(--bg3);}
+.prod-screen-inner{flex:1;overflow:auto;padding:0;background:var(--bg);}
+.prod-table thead{background:var(--th-bg);}
 .prod-table thead th{top:0;position:sticky;}
 /* same for menu table - prevent row bleed through */
 #tableWrap{position:relative;}
@@ -169,7 +169,7 @@ input[type=number]{-moz-appearance:textfield;}
 .photo-thumb:hover .photo-popup{display:block;}
 .photo-popup img{width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;}
 .prod-table{width:100%;border-collapse:collapse;font-size:12px;}
-.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);border-top:1px solid var(--border);border-bottom:2px solid var(--accent);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);border-top:none;border-bottom:2px solid var(--accent);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
 .prod-table td{padding:5px 6px;border:1px solid var(--border);}
 .prod-table tr.prod-row:nth-child(odd){background:var(--bg3);}
 .prod-table tr.prod-row:nth-child(even){background:var(--bg4);}
