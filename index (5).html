@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Меню на неделю</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Base layers — warm dark charcoal, not pure black */
+  --bg:      #111214;
+  --bg2:     #18191d;
+  --bg3:     #1f2025;
+  --bg4:     #26272e;
+  --bg5:     #2e3038;
+  /* Text */
+  --text:    #e8e9ed;
+  --text2:   #7e8094;
+  --text3:   #52546a;
+  /* Accent — warm amber/gold */
+  --accent:  #e8a045;
+  --accent2: #d4903a;
+  --accentL: #f0b865;
+  --accentDim: rgba(232,160,69,.15);
+  /* Borders */
+  --border:  #2a2b33;
+  --border2: #35363f;
+  /* Status */
+  --green:   #3fb27f;
+  --red:     #e05252;
+  --yellow:  #e8a045;
+  /* Effects */
+  --card-shadow: 0 2px 12px rgba(0,0,0,.5);
+  --glow: 0 0 20px rgba(232,160,69,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:13px;line-height:1.4;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
+
+/* ── TOPBAR ── */
+#topbar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border2);flex-shrink:0;position:relative;z-index:200;box-shadow:0 1px 0 rgba(232,160,69,.08);}
+#sectionsBtn{width:34px;height:34px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:border-color .2s,background .2s;}
+#sectionsBtn:hover{border-color:var(--accentL);background:var(--bg4);}
+#sectionsBtn svg{width:17px;height:17px;stroke:var(--text2);stroke-width:2;fill:none;}
+#sectionsBtn:hover svg{stroke:var(--accentL);}
+.s-tip{position:absolute;left:42px;top:50%;transform:translateY(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;}
+#sectionsBtn:hover .s-tip{opacity:1;}
+#navDropdown{position:absolute;top:50px;left:16px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:5px;min-width:230px;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.6),var(--glow);display:none;}
+#navDropdown.open{display:block;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;transition:background .15s,color .15s;}
+.nav-item:hover{background:var(--bg4);color:var(--text);}
+.nav-item.active{background:var(--accentDim);color:var(--accentL);border-left:2px solid var(--accent);}
+#topDate{font-size:12px;color:var(--text2);}
+.sync-btn{margin-left:auto;background:transparent;border:1px solid var(--border2);border-radius:7px;color:var(--text2);padding:5px 11px;cursor:pointer;font-size:11px;transition:border-color .2s,color .2s;}
+.sync-btn:hover{border-color:var(--accentL);color:var(--accentL);}
+
+/* ── DAY TABS ── */
+#dayTabsWrap{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border2);padding:8px 16px 0;}
+#dayTabs{display:flex;gap:5px;}
+.day-btn{padding:9px 0;border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;border-radius:8px 8px 0 0;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;flex:1;text-align:center;letter-spacing:.2px;}
+.day-btn:hover{color:var(--text);background:var(--bg3);}
+.day-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg3);font-weight:600;}
+
+/* ── MAIN / SECTIONS ── */
+#main{flex:1;overflow:hidden;}
+.section{display:none;height:100%;flex-direction:column;}
+.section.active{display:flex;}
+.sec-inner{flex:1;overflow-y:auto;padding:16px 20px;}
+.sec-title{font-size:16px;font-weight:700;color:var(--accentL);margin-bottom:14px;letter-spacing:.3px;text-transform:uppercase;}
+
+/* ── MENU TABLE ── */
+#sec-menu{overflow:hidden;display:flex;flex-direction:column;}
+#tableWrap{flex:1;overflow-y:auto;overflow-x:auto;padding:8px 16px 16px;}
+#menuTable{width:100%;border-collapse:collapse;font-size:13px;}
+#menuTable thead th{background:var(--bg3);color:var(--text2);padding:9px 7px;text-align:center;border:1px solid var(--border);white-space:nowrap;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:15;box-shadow:0 2px 0 var(--accent);}
+#menuTable tbody td{padding:6px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg2);}
+#menuTable tbody tr:nth-child(even) td{background:var(--bg3);}
+
+.meal-group-row td{background:var(--bg3)!important;border-top:2px solid var(--border2)!important;}
+.meal-total-row td{background:var(--bg3)!important;border-top:1px solid var(--accent)!important;font-weight:600;color:var(--accentL);}
+.day-total-row td{background:var(--accentDim)!important;color:var(--accentL)!important;font-weight:700;border-top:2px solid var(--accent)!important;}
+.meal-spacer td{height:5px;background:var(--bg)!important;border:none!important;}
+.col-time{min-width:55px;width:55px;}
+.col-meal{min-width:80px;width:80px;position:relative;}
+.col-dish{min-width:100px;text-align:left!important;position:relative;}
+.col-ing{text-align:left!important;min-width:130px;}
+.col-w{min-width:58px;width:58px;}
+.col-num{min-width:40px;width:40px;}
+.col-kcal{min-width:48px;width:48px;}
+.col-recipe{text-align:left!important;min-width:160px;font-size:11px;color:var(--text2);}
+.ing-wrap{display:flex;align-items:center;justify-content:space-between;gap:3px;}
+.w-inp{width:50px;padding:2px 4px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);text-align:center;font-size:12px;}
+.w-inp:focus{outline:none;border-color:var(--accent);}
+.btn-x{width:16px;height:16px;border:1px solid var(--border);border-radius:50%;background:transparent;color:var(--text2);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-x:hover{border-color:var(--red);color:var(--red);}
+.btn-q{width:16px;height:16px;border:1px solid var(--yellow);border-radius:50%;background:transparent;color:var(--yellow);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;}
+.btn-q:hover{background:var(--yellow);color:#000;}
+.not-found-bg{background:rgba(244,67,54,.12)!important;}
+.not-found-bg .ing-wrap span{color:var(--red);}
+.btn-pencil{width:16px;height:16px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;position:absolute;left:4px;bottom:4px;}
+.btn-pencil:hover{border-color:var(--accent);color:var(--accent);}
+.btn-add-ing{width:20px;height:20px;background:var(--accent);color:#111;border:none;border-radius:4px;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-weight:700;}
+.btn-add-ing:hover{background:var(--accentL);}
+.btn-save-meal{opacity:0;width:15px;height:15px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;position:absolute;left:4px;bottom:4px;transition:all .15s;}
+.col-meal:hover .btn-save-meal{opacity:1;}
+.btn-save-meal:hover{border-color:var(--green);color:var(--green);}
+.td-time-cell{cursor:pointer;}
+.time-val{padding:2px 5px;border-radius:3px;display:inline-block;transition:background .15s;}
+.td-time-cell:hover .time-val{background:var(--accent);color:white;}
+
+/* ── DROPDOWN POPUP ── */
+.dp{position:fixed;background:var(--bg);border:1px solid var(--border);border-radius:5px;z-index:1000;max-height:200px;overflow-y:auto;min-width:120px;box-shadow:0 4px 12px rgba(0,0,0,.4);}
+.dp-i{padding:6px 11px;cursor:pointer;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);}
+.dp-i:last-child{border-bottom:none;}
+.dp-i:hover{background:var(--accent);color:white;}
+
+/* ── PARSE: TikTok snap scroll ── */
+#sec-parse{overflow:hidden;}
+#parseScroller{flex:1;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;}
+.parse-screen{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;overflow:hidden;}
+
+/* Screen 1 — Catalog */
+.cat-screen-inner{flex:1;display:flex;gap:14px;padding:14px;overflow:hidden;}
+.cat-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;flex:1;box-shadow:var(--card-shadow);}
+.cat-panel-hdr{padding:10px 14px;font-weight:600;font-size:11px;color:var(--accent);background:var(--bg3);border-bottom:1px solid var(--border2);letter-spacing:.6px;text-transform:uppercase;flex-shrink:0;}
+.cat-panel-body{flex:1;overflow-y:auto;}
+.cat-row{display:flex;align-items:center;padding:8px 12px;cursor:pointer;gap:7px;transition:background .1s;border-bottom:1px solid var(--border);}
+.cat-row:hover{background:var(--bg4);}
+.cat-tog{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:9px;flex-shrink:0;transition:transform .2s;}
+.cat-tog.open{transform:rotate(90deg);color:var(--accent);}
+.cat-ck{width:14px;height:14px;border:2px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.cat-ck:hover{border-color:var(--accent);}
+.cat-ck.on{background:var(--accent);border-color:var(--accent);}
+.cat-ck.on::after{content:'✓';color:white;font-size:9px;font-weight:700;}
+.cat-nm{flex:1;font-size:13px;}
+.cat-ch{display:none;background:var(--bg);}
+.cat-ch.open{display:block;}
+.cat-ch .cat-row{padding-left:28px;}
+.cat-ch .cat-ch .cat-row{padding-left:44px;}
+.load-row{padding:9px 13px;color:var(--text2);font-size:12px;display:flex;align-items:center;gap:7px;}
+.spin{width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sel-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;width:220px;flex-shrink:0;box-shadow:var(--card-shadow);}
+.sel-tag{display:flex;align-items:center;gap:7px;padding:6px 9px;background:var(--bg);border:1px solid var(--border);border-radius:5px;margin:5px;}
+.sel-tag .tn{flex:1;font-size:12px;}
+.sel-tag .tr{cursor:pointer;color:var(--text2);font-size:15px;line-height:1;}
+.sel-tag .tr:hover{color:var(--red);}
+.sel-empty{padding:24px;text-align:center;color:var(--text2);font-size:12px;}
+.btn-exp{margin:8px;padding:9px;background:var(--accentDim);color:var(--accentL);border:1px solid rgba(232,160,69,.25);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;width:calc(100% - 16px);transition:all .15s;}
+.btn-exp:hover{background:var(--accent);color:#111;border-color:var(--accent);}
+.btn-exp:disabled{background:transparent;color:var(--text3);cursor:not-allowed;border:1px solid var(--border);}
+.prog-bar{height:3px;background:var(--border);flex-shrink:0;}
+.prog-fill{height:100%;background:var(--accent);transition:width .3s;width:0%;}
+.parse-status{font-size:11px;color:var(--text2);padding:3px 14px;flex-shrink:0;}
+.screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--bg3);border-bottom:1px solid var(--border2);flex-shrink:0;}
+.screen-nav h3{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;}
+.screen-nav-hint{font-size:11px;color:var(--text2);}
+
+/* Screen 2 — Products table */
+.prod-screen-inner{flex:1;overflow:auto;padding:0 14px 14px;background:var(--bg);}
+.prod-table thead{background:var(--bg3);}
+.prod-table thead th{top:0;position:sticky;}
+/* same for menu table - prevent row bleed through */
+#tableWrap{position:relative;}
+.discount-badge{display:inline-block;background:var(--red);color:white;font-size:10px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:4px;}
+.photo-thumb{width:28px;height:28px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;position:relative;transition:border-color .15s;}
+.photo-thumb:hover{border-color:var(--accent);}
+.photo-popup{display:none;position:absolute;left:34px;top:50%;transform:translateY(-50%);z-index:999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;}
+.photo-thumb:hover .photo-popup{display:block;}
+.photo-popup img{width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;}
+.prod-table{width:100%;border-collapse:collapse;font-size:12px;}
+.prod-table th{background:var(--bg3);color:var(--text2);padding:8px 6px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);border-top:1px solid var(--border);border-bottom:2px solid var(--accent);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.prod-table td{padding:5px 6px;border:1px solid var(--border);}
+.prod-table tr.prod-row:nth-child(odd){background:var(--bg2);}
+.prod-table tr.prod-row:nth-child(even){background:var(--bg3);}
+.cat-hdr-row td{background:var(--bg4)!important;color:var(--accentL)!important;font-weight:700;cursor:pointer;font-size:12px;padding:7px 10px;border-top:2px solid var(--border2)!important;letter-spacing:.2px;}
+.cat-hdr-row td:first-child::before{content:'▶ ';font-size:10px;}
+.cat-hdr-row.open td:first-child::before{content:'▼ ';}
+.prod-row.hidden{display:none;}
+.cb-m{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;}
+.td-orig{color:var(--text2);text-decoration:line-through;font-size:11px;white-space:nowrap;}
+.td-kg{color:var(--text2);font-size:11px;white-space:nowrap;}
+.td-price{white-space:nowrap;font-weight:600;}
+
+/* Screen 3 — Lists */
+.lists-screen-inner{flex:1;display:flex;gap:14px;padding:14px;overflow:hidden;}
+.lists-left{display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;}
+.lists-right{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:0;}
+.list-block{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--card-shadow);}
+.list-block-hdr{padding:9px 13px;background:var(--bg3);border-bottom:1px solid var(--border2);font-weight:600;font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;}
+.list-block-body{flex:1;overflow-y:auto;padding:8px 10px;min-height:60px;}
+.list-block-body ul{list-style:none;}
+.list-block-body li{font-size:12px;line-height:1.9;color:var(--text2);}
+.list-block-btns{display:flex;gap:5px;padding:6px 8px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.btn-dl{flex:1;padding:5px 7px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-weight:normal;transition:all .15s;}
+.btn-dl:hover{border-color:var(--accentL);color:var(--accentL);}
+.btn-notes{flex:1;padding:5px 7px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s;}
+.btn-notes:hover{border-color:var(--accentL);color:var(--accentL);}
+.lists-right .list-block{flex:1;}
+
+/* ── SAVED RECIPES ── */
+.saved-group{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:var(--card-shadow);}
+.saved-group-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .15s;}
+.saved-group-hdr:hover{background:var(--bg3);}
+.saved-group-hdr h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);}
+.saved-group-body{padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.saved-group-body.collapsed{display:none;}
+.recipe-card{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.recipe-card h4{font-size:13px;font-weight:bold;margin-bottom:5px;}
+.rc-kbju{font-size:11px;color:var(--text2);margin-bottom:6px;}
+.rc-ings{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px;}
+.btn-to-menu{width:100%;padding:6px;background:var(--accentDim);color:var(--accentL);border:1px solid rgba(232,160,69,.3);border-radius:5px;cursor:pointer;font-size:12px;margin-bottom:5px;font-weight:500;transition:all .15s;}
+.btn-to-menu:hover{background:var(--accent);color:#111;border-color:var(--accent);}
+
+/* ── KBJU TABLE ── */
+.kbju-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.kbju-tbl th{background:var(--bg3);color:var(--text2);padding:9px 7px;text-align:center;border:1px solid var(--border);border-bottom:2px solid var(--accent);cursor:pointer;user-select:none;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
+.kbju-tbl th:hover{background:var(--bg4);color:var(--accentL);}
+.kbju-tbl td{padding:6px 7px;border:1px solid var(--border);background:var(--bg2);}
+.kbju-tbl tr:nth-child(even):not(.arc-hdr) td{background:var(--bg3);}
+.arc-hdr td{background:var(--bg)!important;color:var(--text2);font-style:italic;font-size:12px;padding:7px 9px;}
+.price-cell{display:flex;align-items:center;gap:5px;}
+.p-badge{width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:bold;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.p-badge.up{background:rgba(244,67,54,.12);border:1px solid var(--red);color:var(--red);}
+.p-badge.dn{background:rgba(76,175,80,.12);border:1px solid var(--green);color:var(--green);}
+.p-badge.eq{background:var(--bg2);border:1px solid var(--border);color:var(--text2);}
+.p-date{font-size:10px;color:var(--text2);}
+
+/* ── COST TABLE ── */
+.cost-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;}
+.cost-tbl th{background:var(--bg3);color:var(--text2);padding:9px 9px;text-align:left;border:1px solid var(--border);border-bottom:2px solid var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
+.cost-tbl td{padding:7px 9px;border:1px solid var(--border);background:var(--bg2);}
+.cost-tbl tr:nth-child(even) td{background:var(--bg3);}
+.cost-total td{background:var(--accentDim)!important;color:var(--accentL)!important;font-weight:700;border-top:2px solid var(--accent)!important;}
+
+/* ── FORMS / MODALS ── */
+.ctrl-btn{padding:7px 15px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:12px;font-weight:400;transition:all .15s;letter-spacing:.2px;}
+.ctrl-btn:hover{background:var(--accentDim);color:var(--accentL);border-color:var(--accent);}
+.ctrl-btn.sec{background:transparent;border:1px solid var(--border);color:var(--text3);}
+.ctrl-btn.sec:hover{border-color:var(--accent);color:var(--accent);}
+.ctrl-btn.red{background:transparent;border:1px solid rgba(224,82,82,.4);color:var(--red);}
+.ctrl-btn.red:hover{background:rgba(224,82,82,.15);border-color:var(--red);}
+.ctrl-btn.prim{background:var(--accent);color:#111;border-color:var(--accent);font-weight:600;}
+.ctrl-btn.prim:hover{background:var(--accentL);}
+.ctrl-btn:disabled{background:transparent;color:var(--text3);cursor:not-allowed;border:1px solid var(--border);}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal-box{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:26px;min-width:340px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:var(--card-shadow);}
+.modal-title{font-size:16px;font-weight:700;color:var(--accentL);margin-bottom:18px;text-align:center;letter-spacing:.3px;}
+.fg{margin-bottom:11px;}
+.fl{font-size:12px;color:var(--text2);margin-bottom:3px;display:block;}
+.fi{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'Segoe UI',Arial,sans-serif;font-size:13px;width:100%;}
+.fi:focus{outline:none;border-color:var(--accentL);}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.m-btns{display:flex;gap:9px;justify-content:center;margin-top:18px;}
+#psInput{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 9px;color:var(--text);font-size:13px;margin-bottom:9px;}
+#psInput:focus{outline:none;border-color:var(--accent);}
+#psWrap{max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:5px;}
+.ps-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.ps-tbl th{background:var(--accent);color:white;padding:7px 9px;text-align:center;border:1px solid var(--border);position:sticky;top:0;}
+.ps-tbl td{padding:5px 9px;border:1px solid var(--border);cursor:pointer;}
+.ps-tbl tr:hover td{background:var(--accent);color:white;}
+#recipeTA{width:100%;height:280px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:11px;color:var(--text);font-family:'Segoe UI',Arial,sans-serif;font-size:13px;line-height:1.7;resize:vertical;}
+#recipeTA:focus{outline:none;border-color:var(--accent);}
+.tmpl{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:12px;font-size:12px;line-height:1.9;color:var(--text2);}
+.tmpl .kw{color:var(--accent);font-weight:bold;}
+#notesArea{flex:1;width:100%;min-height:280px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:16px;color:var(--text);font-family:'Segoe UI',Arial,sans-serif;font-size:14px;line-height:1.8;resize:none;}
+#notesArea:focus{outline:none;border-color:var(--accent);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text2);}
+
+/* ── MOBILE ── */
+@media(max-width:900px){
+  #tableWrap{padding:8px 8px 12px;}
+  #menuTable{font-size:11px;}
+  #menuTable th,#menuTable td{padding:4px 3px;font-size:10px;}
+  .col-recipe{display:none;}
+  .cat-screen-inner,.lists-screen-inner{flex-direction:column;}
+  .sel-panel{width:100%;max-height:160px;}
+  .lists-right{width:100%;}
+  .saved-group-body{grid-template-columns:1fr 1fr!important;}
+  .fgrid{grid-template-columns:1fr;}
+}
+@media(max-width:560px){
+  .col-num{display:none;}
+  .saved-group-body{grid-template-columns:1fr!important;}
+  #menuTable{font-size:10px;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="sectionsBtn" onclick="toggleNav()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <span class="s-tip">Разделы</span>
+  </div>
+  <div id="topDate"></div>
+  <button class="sync-btn" onclick="doSync()">☁ Синхронизировать</button>
+</div>
+
+<div id="navDropdown">
+  <div class="nav-item active" data-sec="menu"    onclick="goSec('menu')">📅 Главное окно меню</div>
+  <div class="nav-item"        data-sec="parse"   onclick="goSec('parse')">🛒 Парсинг продуктов</div>
+  <div class="nav-item"        data-sec="recipes" onclick="goSec('recipes')">📥 Загрузка рецептов</div>
+  <div class="nav-item"        data-sec="saved"   onclick="goSec('saved')">💾 Сохранённые рецепты</div>
+  <div class="nav-item"        data-sec="cost"    onclick="goSec('cost')">💰 Стоимость рецептов</div>
+  <div class="nav-item"        data-sec="kbju"    onclick="goSec('kbju')">📊 Таблица КБЖУ</div>
+  <div class="nav-item"        data-sec="notes"   onclick="goSec('notes')">📝 Заметки</div>
+</div>
+
+<div id="dayTabsWrap">
+  <div id="dayTabs"></div>
+</div>
+
+<div id="main">
+
+  <!-- ═══ MENU ═══ -->
+  <div id="sec-menu" class="section active">
+    <div id="tableWrap">
+      <table id="menuTable">
+        <thead><tr>
+          <th class="col-time">Время</th>
+          <th class="col-meal">Приём пищи</th>
+          <th class="col-dish">Блюдо</th>
+          <th class="col-ing">Состав блюда</th>
+          <th class="col-w">Вес, г</th>
+          <th class="col-num">Б</th>
+          <th class="col-num">Ж</th>
+          <th class="col-num">У</th>
+          <th class="col-kcal">Ккал</th>
+          <th class="col-recipe">Приготовление</th>
+        </tr></thead>
+        <tbody id="menuBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ PARSE ═══ -->
+  <div id="sec-parse" class="section">
+    <div id="parseScroller">
+
+      <!-- Screen 1: Catalog -->
+      <div class="parse-screen">
+        <div class="screen-nav">
+          <h3>🗂 Область 1 — Каталог</h3>
+          <span class="screen-nav-hint">Прокрутите вниз → товары</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
+        <div class="parse-status" id="parseStatus"></div>
+        <div class="cat-screen-inner">
+          <div class="cat-panel">
+            <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
+            <div class="cat-panel-body" id="catalogPanel">
+              <div class="load-row"><div class="spin"></div> Загрузка...</div>
+            </div>
+          </div>
+          <div class="sel-panel">
+            <div class="cat-panel-hdr">✅ Выбранные категории</div>
+            <div class="cat-panel-body" id="selectedPanel">
+              <div class="sel-empty">Отметьте категории слева</div>
+            </div>
+            <button class="btn-exp" id="exportBtn" onclick="exportData()" disabled>⬇ Выгрузить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: Products table -->
+      <div class="parse-screen">
+        <div class="screen-nav">
+          <h3>📋 Область 2 — Товары</h3>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="parsedCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
+            <span class="screen-nav-hint">↑ каталог · ↓ корзина</span>
+          </div>
+        </div>
+        <div class="prod-screen-inner">
+          <table class="prod-table" id="prodTable">
+            <thead><tr>
+              <th style="text-align:left;min-width:100px">Категория</th>
+              <th style="width:34px">Фото</th>
+              <th style="text-align:left;min-width:160px">Название</th>
+              <th style="white-space:nowrap">Цена</th>
+              <th style="white-space:nowrap">До скидки</th>
+              <th style="white-space:nowrap">1 ед.</th>
+              <th style="width:50px">Пер.</th>
+              <th style="width:50px">Завт.</th>
+              <th style="width:50px">Обед</th>
+              <th style="width:50px">Ужин</th>
+            </tr></thead>
+            <tbody id="prodBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Screen 3: Lists / basket -->
+      <div class="parse-screen">
+        <div class="screen-nav">
+          <h3>🧺 Область 3 — Корзина</h3>
+          <span class="screen-nav-hint">↑ назад к товарам</span>
+        </div>
+        <div class="lists-screen-inner">
+          <div class="lists-left">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;">
+              <div class="list-block">
+                <div class="list-block-hdr">Перекус</div>
+                <div class="list-block-body"><ul id="lst-snack"></ul></div>
+                <div class="list-block-btns">
+                  <button class="btn-dl" onclick="dlList('snack','Перекус')">⬇ Скачать</button>
+                </div>
+              </div>
+              <div class="list-block">
+                <div class="list-block-hdr">Завтрак</div>
+                <div class="list-block-body"><ul id="lst-breakfast"></ul></div>
+                <div class="list-block-btns">
+                  <button class="btn-dl" onclick="dlList('breakfast','Завтрак')">⬇ Скачать</button>
+                </div>
+              </div>
+              <div class="list-block">
+                <div class="list-block-hdr">Обед</div>
+                <div class="list-block-body"><ul id="lst-lunch"></ul></div>
+                <div class="list-block-btns">
+                  <button class="btn-dl" onclick="dlList('lunch','Обед')">⬇ Скачать</button>
+                </div>
+              </div>
+              <div class="list-block">
+                <div class="list-block-hdr">Ужин</div>
+                <div class="list-block-body"><ul id="lst-dinner"></ul></div>
+                <div class="list-block-btns">
+                  <button class="btn-dl" onclick="dlList('dinner','Ужин')">⬇ Скачать</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="lists-right">
+            <div class="list-block" style="flex:1;">
+              <div class="list-block-hdr">Общий список</div>
+              <div class="list-block-body"><ul id="lst-all"></ul></div>
+              <div class="list-block-btns" style="flex-direction:column;gap:5px;">
+                <button class="btn-dl" onclick="dlList('all','Общий_список')">⬇ Скачать</button>
+                <button class="btn-dl" onclick="saveListToNotes('all','Общий список')">📝 В заметки</button>
+                <button class="btn-dl" onclick="transferToKbju()">↗ В таблицу КБЖУ</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /parseScroller -->
+  </div><!-- /sec-parse -->
+
+  <!-- ═══ RECIPES ═══ -->
+  <div id="sec-recipes" class="section">
+    <div class="sec-inner">
+      <div class="sec-title">Загрузка рецептов</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        <div>
+          <label class="fl" style="font-size:13px;margin-bottom:7px;">Вставьте рецепты из буфера</label>
+          <textarea id="recipeTA" placeholder="Вставьте рецепты..."></textarea>
+          <div style="display:flex;gap:9px;margin-top:10px;">
+            <button class="ctrl-btn" onclick="parseRecipes()">Загрузить в меню</button>
+            <button class="ctrl-btn sec" onclick="document.getElementById('recipeTA').value=''">Очистить</button>
+          </div>
+          <div id="recipeLog" style="margin-top:9px;font-size:12px;line-height:1.8;"></div>
+        </div>
+        <div>
+          <label class="fl" style="font-size:13px;margin-bottom:7px;">Шаблон формата</label>
+          <div class="tmpl">
+            <span class="kw">===</span><br>
+            <span class="kw">Завтрак</span><br>
+            <span class="kw">Понедельник</span><br>
+            Омлет с овощами<br>
+            <span class="kw">Состав:</span><br>
+            Яйца – 100 г<br>
+            Кабачки – 100 г<br>
+            <span class="kw">КБЖУ:</span> 360 Ккал <span style="color:var(--text2);font-size:11px;">(игнорируется)</span><br>
+            <span class="kw">Приготовление:</span><br>
+            Обжарить на сковороде...<br>
+            <span class="kw">===</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SAVED ═══ -->
+  <div id="sec-saved" class="section">
+    <div class="sec-inner">
+      <div class="sec-title">Сохранённые рецепты</div>
+      <div id="savedGroups"></div>
+    </div>
+  </div>
+
+  <!-- ═══ COST ═══ -->
+  <div id="sec-cost" class="section">
+    <div class="sec-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="sec-title" style="margin-bottom:0;">Стоимость на неделю</div>
+        <button class="ctrl-btn" onclick="calcCosts()">Пересчитать</button>
+      </div>
+      <table class="cost-tbl"><thead><tr>
+        <th>Продукт</th><th>Нужно (г)</th><th>Упаковка/тип</th><th>К покупке</th><th>Стоимость</th>
+      </tr></thead><tbody id="costBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ═══ KBJU ═══ -->
+  <div id="sec-kbju" class="section">
+    <div class="sec-inner">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:9px;">
+        <div class="sec-title" style="margin-bottom:0;">Таблица КБЖУ</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;">
+          <input id="kbjuSearch" type="text" placeholder="Поиск..." class="fi" style="width:180px;" oninput="renderKbju()">
+          <button class="ctrl-btn sec" onclick="loadKbjuFile()" title="Загрузить .txt/.csv">📂 Файл</button>
+          <button class="ctrl-btn sec" onclick="openModal('pasteKbjuModal')" title="Вставить список с КБЖУ">📋 Вставить КБЖУ</button>
+          <button class="ctrl-btn" onclick="openAddProd(null)">+ Добавить</button>
+        </div>
+      </div>
+      <div style="overflow:auto;">
+        <table class="kbju-tbl">
+          <thead><tr>
+            <th>№</th>
+            <th onclick="sortK('name')" style="text-align:left;cursor:pointer;">Продукт ⇅</th>
+            <th onclick="sortK('proteins')">Б ⇅</th>
+            <th onclick="sortK('fats')">Ж ⇅</th>
+            <th onclick="sortK('carbs')">У ⇅</th>
+            <th onclick="sortK('calories')">Ккал ⇅</th>
+            <th>Цена</th>
+            <th>Действие</th>
+          </tr></thead>
+          <tbody id="kbjuBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NOTES ═══ -->
+  <div id="sec-notes" class="section">
+    <div class="sec-inner" style="display:flex;flex-direction:column;">
+      <div class="sec-title">Заметки</div>
+      <div id="notesListWrap" style="margin-bottom:10px;"></div>
+      <textarea id="notesArea" placeholder="Ваши личные заметки..." oninput="saveNotes()"></textarea>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add/Edit product -->
+<div id="addProdModal" class="modal-ov">
+  <div class="modal-box">
+    <div class="modal-title" id="addProdTitle">Добавить продукт</div>
+    <div class="fg"><label class="fl">Название</label><input id="npN" class="fi" type="text" placeholder="Яйца"></div>
+    <div class="fgrid">
+      <div class="fg"><label class="fl">Белки (г/100г)</label><input id="npB" class="fi" type="number" step="0.1"></div>
+      <div class="fg"><label class="fl">Жиры (г/100г)</label><input id="npJ" class="fi" type="number" step="0.1"></div>
+      <div class="fg"><label class="fl">Углеводы (г/100г)</label><input id="npU" class="fi" type="number" step="0.1"></div>
+      <div class="fg"><label class="fl">Ккал (на 100г)</label><input id="npK" class="fi" type="number" step="0.1"></div>
+    </div>
+    <div class="fg"><label class="fl">Тип цены</label>
+      <select id="npPT" class="fi" onchange="togglePackRow()">
+        <option value="kg">За 1 кг (весовой)</option>
+        <option value="pack">За упаковку</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Цена (֏)</label><input id="npP" class="fi" type="number" step="1"></div>
+    <div class="fg" id="npPR" style="display:none;"><label class="fl">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="saveProd()">Сохранить</button>
+      <button class="ctrl-btn red" id="npDel" style="display:none;" onclick="delProd()">Удалить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('addProdModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Price history -->
+<div id="priceHistModal" class="modal-ov">
+  <div class="modal-box">
+    <div class="modal-title" id="phTitle">История цен</div>
+    <canvas id="phCanvas" width="440" height="180" style="width:100%;border-radius:5px;background:var(--bg);display:block;"></canvas>
+    <div id="phList" style="margin-top:10px;font-size:12px;line-height:2;color:var(--text2);max-height:140px;overflow-y:auto;"></div>
+    <div class="m-btns"><button class="ctrl-btn sec" onclick="closeModal('priceHistModal')">Закрыть</button></div>
+  </div>
+</div>
+
+<!-- Product select for menu -->
+<div id="prodSelModal" class="modal-ov">
+  <div class="modal-box" style="max-width:620px;width:95%;">
+    <div class="modal-title">Выбрать ингредиент</div>
+    <input id="psInput" type="text" placeholder="Поиск продукта..." oninput="filterPS()">
+    <div id="psWrap">
+      <table class="ps-tbl">
+        <thead><tr><th style="text-align:left">Продукт</th><th>Б</th><th>Ж</th><th>У</th><th>Ккал</th></tr></thead>
+        <tbody id="psBody"></tbody>
+      </table>
+    </div>
+    <div class="m-btns"><button class="ctrl-btn sec" onclick="closeModal('prodSelModal')">Отмена</button></div>
+  </div>
+</div>
+
+<!-- Rename dish -->
+<div id="renameDishModal" class="modal-ov">
+  <div class="modal-box" style="max-width:380px;">
+    <div class="modal-title">Переименовать блюдо</div>
+    <div class="fg"><input id="rdInput" class="fi" type="text" placeholder="Название блюда"></div>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="confirmRenameDish()">Сохранить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('renameDishModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add to menu from saved -->
+<div id="atmModal" class="modal-ov">
+  <div class="modal-box">
+    <div class="modal-title">Добавить в меню</div>
+    <p id="atmName" style="text-align:center;color:var(--text2);margin-bottom:14px;"></p>
+    <div class="fgrid">
+      <div class="fg"><label class="fl">День</label>
+        <select id="atmDay" class="fi">
+          <option>Понедельник</option><option>Вторник</option><option>Среда</option>
+          <option>Четверг</option><option>Пятница</option><option>Суббота</option><option>Воскресенье</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Приём пищи</label>
+        <select id="atmMeal" class="fi">
+          <option>Завтрак</option><option>1й перекус</option><option>Обед</option>
+          <option>2й перекус</option><option>Ужин</option><option>3й перекус</option>
+        </select>
+      </div>
+    </div>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="confirmAtm()">Добавить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('atmModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync conflicts -->
+<div id="syncConflModal" class="modal-ov">
+  <div class="modal-box">
+    <div class="modal-title">Синхронизация с КБЖУ</div>
+    <div id="scConflicts"></div>
+    <div id="scSummary" style="font-size:12px;color:var(--text2);margin-top:9px;"></div>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="applySyncDec()">Применить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('syncConflModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Paste КБЖУ -->
+<div id="pasteKbjuModal" class="modal-ov">
+  <div class="modal-box" style="max-width:580px;width:95%;">
+    <div class="modal-title">Вставить список КБЖУ</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:9px;">
+      Формат: <code style="color:var(--accent)">Название[Tab]Б[Tab]Ж[Tab]У[Tab]Ккал</code><br>
+      По одному продукту на строку. Если продукт уже есть — обновятся КБЖУ.
+    </div>
+    <textarea id="pasteKbjuArea" class="fi" style="height:260px;resize:vertical;" placeholder="Яйца куриные&#9;12.7&#9;10.9&#9;0.7&#9;157&#10;Гречка&#9;12.6&#9;3.3&#9;62.1&#9;313"></textarea>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="applyPasteKbju()">Применить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('pasteKbjuModal')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notes list item view -->
+<div id="notesListModal" class="modal-ov">
+  <div class="modal-box" style="max-width:700px;width:95%;">
+    <div class="modal-title" id="nlmTitle">Список продуктов</div>
+    <div id="nlmBody" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+    <div class="m-btns"><button class="ctrl-btn sec" onclick="closeModal('notesListModal')">Закрыть</button></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// CONSTANTS & STATE
+// ══════════════════════════════════════════════════════════════════
+const DAYS  = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+const MEALS = ['Завтрак','1й перекус','Обед','2й перекус','Ужин','3й перекус'];
+const WORKER_URL = 'https://my-menu.belovolov-email.workers.dev';
+
+let menuData={}, kbjuTable={}, mealTimes={}, savedRecipes={Завтрак:[],Перекус:[],Обед:[],Ужин:[]}, notes='';
+let _parsedRows=[], _parsedCats=[];
+let curDay='Понедельник', kSortKey=null, kSortDir=1;
+let _editProd=null, _psTarget=null, _atmRec=null, _syncDec=[], _renameTarget=null;
+
+// ══════════════════════════════════════════════════════════════════
+// STORAGE — localStorage + KV
+// ══════════════════════════════════════════════════════════════════
+let _kvTimer=null;
+function saveAll(){
+  localStorage.setItem('menuData',JSON.stringify(menuData));
+  localStorage.setItem('kbjuTable',JSON.stringify(kbjuTable));
+  localStorage.setItem('mealTimes',JSON.stringify(mealTimes));
+  localStorage.setItem('savedRecipes',JSON.stringify(savedRecipes));
+  localStorage.setItem('notes',notes);
+  clearTimeout(_kvTimer);
+  _kvTimer=setTimeout(syncToKV,1500);
+}
+function loadAll(){
+  try{menuData=JSON.parse(localStorage.getItem('menuData')||'{}')}catch(e){}
+  try{kbjuTable=JSON.parse(localStorage.getItem('kbjuTable')||'{}')}catch(e){}
+  try{mealTimes=JSON.parse(localStorage.getItem('mealTimes')||'{}')}catch(e){}
+  try{savedRecipes=JSON.parse(localStorage.getItem('savedRecipes')||'{"Завтрак":[],"Перекус":[],"Обед":[],"Ужин":[]}')}catch(e){}
+  notes=localStorage.getItem('notes')||'';
+}
+async function syncToKV(){
+  try{
+    await fetch(WORKER_URL+'/kv/app_data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({menuData,kbjuTable,mealTimes,savedRecipes,notes})});
+    showBadge('✓ Сохранено в облаке','#4caf50');
+  }catch(e){showBadge('⚠ Только локально','#ff9800');}
+}
+async function loadFromKV(){
+  try{
+    const r=await fetch(WORKER_URL+'/kv/app_data');
+    const res=await r.json();
+    if(res.found&&res.data){
+      const d=res.data;
+      if(d.menuData&&Object.keys(d.menuData).length>=Object.keys(menuData).length) menuData=d.menuData;
+      if(d.kbjuTable&&Object.keys(d.kbjuTable).length>=Object.keys(kbjuTable).length) kbjuTable=d.kbjuTable;
+      if(d.mealTimes&&Object.keys(d.mealTimes).length>=Object.keys(mealTimes).length) mealTimes=d.mealTimes;
+      if(d.savedRecipes) savedRecipes=d.savedRecipes;
+      if(d.notes&&d.notes.length>=notes.length) notes=d.notes;
+      localStorage.setItem('menuData',JSON.stringify(menuData));
+      localStorage.setItem('kbjuTable',JSON.stringify(kbjuTable));
+      localStorage.setItem('mealTimes',JSON.stringify(mealTimes));
+      localStorage.setItem('savedRecipes',JSON.stringify(savedRecipes));
+      localStorage.setItem('notes',notes);
+      showBadge('✓ Загружено из облака','#4a9eff');
+      return true;
+    }
+  }catch(e){showBadge('⚠ Офлайн','#ff9800');}
+  return false;
+}
+async function doSync(){
+  const ok=await loadFromKV();
+  if(ok){renderMenuDay(curDay);renderKbju();renderSaved();document.getElementById('notesArea').value=notes;}
+}
+function showBadge(t,c){
+  let b=document.getElementById('syncBadge');
+  if(!b){b=document.createElement('div');b.id='syncBadge';b.style.cssText='position:fixed;bottom:14px;right:16px;padding:5px 13px;border-radius:20px;font-size:12px;z-index:9999;transition:opacity .5s;pointer-events:none;';document.body.appendChild(b);}
+  b.style.background=c;b.style.color='#fff';b.style.opacity='1';b.textContent=t;
+  setTimeout(()=>{b.style.opacity='0';},3000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+function init(){
+  loadAll();
+  document.getElementById('topDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('dayTabsWrap').style.display='block';
+  buildDayTabs();
+  renderMenuDay(curDay);
+  renderKbju();
+  renderSaved();
+  renderNotesLists();
+  document.getElementById('notesArea').value=notes;
+  loadFromKV().then(ok=>{
+    if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;}
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#navDropdown')&&!e.target.closest('#sectionsBtn')) document.getElementById('navDropdown').classList.remove('open');
+    if(!e.target.closest('.dp')&&!e.target.closest('.btn-q')&&!e.target.closest('.td-time-cell')) document.querySelectorAll('.dp').forEach(d=>d.remove());
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));document.querySelectorAll('.dp').forEach(d=>d.remove());}
+  });
+  document.querySelectorAll('.modal-ov').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════════════════════════
+function toggleNav(){document.getElementById('navDropdown').classList.toggle('open');}
+function goSec(sec){
+  document.getElementById('navDropdown').classList.remove('open');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.sec===sec));
+  document.getElementById('dayTabsWrap').style.display=sec==='menu'?'block':'none';
+  if(sec==='cost') calcCosts();
+  if(sec==='kbju') renderKbju();
+  if(sec==='saved') renderSaved();
+  if(sec==='parse'&&!window._catLoaded){loadTopCats();window._catLoaded=true;}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DAY TABS
+// ══════════════════════════════════════════════════════════════════
+function buildDayTabs(){
+  const t=document.getElementById('dayTabs'); t.innerHTML='';
+  DAYS.forEach(d=>{
+    const b=document.createElement('button'); b.className='day-btn'+(d===curDay?' active':'');
+    b.textContent=d; b.onclick=()=>{curDay=d;document.querySelectorAll('.day-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderMenuDay(d);};
+    t.appendChild(b);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// MENU RENDER
+// ══════════════════════════════════════════════════════════════════
+function renderMenuDay(day){
+  const dd=menuData[day]||{}, tb=document.getElementById('menuBody');
+  let html='', dayT={p:0,f:0,c:0,k:0};
+
+  MEALS.forEach(meal=>{
+    const md=dd[meal], ings=md?md.ingredients:[], time=mealTimes[meal]||'--:--';
+    const mealId=`${esc(day)}_${esc(meal)}`;
+
+    // ── Each ingredient gets its own row; first row also has time/meal/dish/recipe cells with rowspan ──
+    // We render using a wrapper approach: time+meal+dish+recipe span all ingredient rows + 2 (header+total)
+    const rs=ings.length+2; // rowspan: 1 blank header row + ingredient rows + 1 total row
+
+    // ROW 1: time | meal | dish | [first ing or empty] | w | b | j | u | k | recipe
+    const firstIng=ings[0];
+    html+=`<tr class="meal-group-row">
+      <td class="td-time-cell col-time" rowspan="${rs}" onclick="showTimeDp(event,'${esc(meal)}')"><span class="time-val">${time}</span></td>
+      <td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
+      <td class="col-dish" rowspan="${rs}" style="vertical-align:middle;position:relative;">${md&&md.dish?md.dish:''}
+        <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать блюдо">✎</button>
+      </td>
+      ${firstIng?renderIngCell(firstIng,0,day,meal):`<td class="col-ing" style="color:var(--text2);font-size:11px;"></td><td class="col-w"></td><td class="col-num"></td><td class="col-num"></td><td class="col-num"></td><td class="col-kcal"></td>`}
+      <td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:7px;">${md&&md.recipe?md.recipe:''}</td>
+    </tr>`;
+    if(firstIng){dayT.p+=firstIng.proteins||0;dayT.f+=firstIng.fats||0;dayT.c+=firstIng.carbs||0;dayT.k+=firstIng.calories||0;}
+
+    // Remaining ingredient rows
+    let mealT={p:firstIng?firstIng.proteins||0:0, f:firstIng?firstIng.fats||0:0, c:firstIng?firstIng.carbs||0:0, k:firstIng?firstIng.calories||0:0};
+    for(let i=1;i<ings.length;i++){
+      const ing=ings[i];
+      html+=`<tr>${renderIngCell(ing,i,day,meal)}</tr>`;
+      mealT.p+=ing.proteins||0;mealT.f+=ing.fats||0;mealT.c+=ing.carbs||0;mealT.k+=ing.calories||0;
+      dayT.p+=ing.proteins||0;dayT.f+=ing.fats||0;dayT.c+=ing.carbs||0;dayT.k+=ing.calories||0;
+    }
+
+    // Total row — has + button on left of "Итого:"
+    html+=`<tr class="meal-total-row">
+      <td style="text-align:right;padding-right:4px;position:relative;">
+        <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить ингредиент" style="position:absolute;left:4px;bottom:50%;transform:translateY(50%);">+</button>
+        <span style="color:var(--text2);">Итого:</span>
+      </td>
+      <td></td>
+      <td class="col-num">${n1(mealT.p)}</td>
+      <td class="col-num">${n1(mealT.f)}</td>
+      <td class="col-num">${n1(mealT.c)}</td>
+      <td class="col-kcal">${n1(mealT.k)}</td>
+    </tr>
+    <tr class="meal-spacer"><td colspan="10"></td></tr>`;
+  });
+
+  // Day total
+  html+=`<tr class="day-total-row">
+    <td colspan="5" style="text-align:right;padding-right:8px;">ВСЕГО ЗА ДЕНЬ:</td>
+    <td class="col-num">${n1(dayT.p)}</td>
+    <td class="col-num">${n1(dayT.f)}</td>
+    <td class="col-num">${n1(dayT.c)}</td>
+    <td class="col-kcal">${n1(dayT.k)}</td>
+    <td></td>
+  </tr>`;
+
+  tb.innerHTML=html;
+}
+
+function renderIngCell(ing,i,day,meal){
+  const nf=ing.status==='not_found';
+  return `<td class="col-ing${nf?' not-found-bg':''}">
+    <div class="ing-wrap">
+      <span>${ing.originalName||ing.name}</span>
+      ${nf||ing.status==='partial'
+        ?`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`
+        :`<button class="btn-x" onclick="delIng('${esc(day)}','${esc(meal)}',${i})">✕</button>`}
+    </div>
+  </td>
+  <td class="col-w"><input class="w-inp" type="number" value="${ing.weight}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
+  <td class="col-num">${n1(ing.proteins)}</td>
+  <td class="col-num">${n1(ing.fats)}</td>
+  <td class="col-num">${n1(ing.carbs)}</td>
+  <td class="col-kcal">${n1(ing.calories)}</td>`;
+}
+
+function n1(v){if(!v)return '—';return (Math.round(v*10)/10).toFixed(1);}
+function esc(s){return (s||'').replace(/'/g,"\\'");}
+
+function updW(day,meal,idx,val){
+  const w=parseFloat(val)||0, ing=menuData[day]?.[meal]?.ingredients?.[idx]; if(!ing)return;
+  ing.weight=w;
+  if(kbjuTable[ing.name]){const k=kbjuTable[ing.name],r=w/100;ing.proteins=k.proteins*r;ing.fats=k.fats*r;ing.carbs=k.carbs*r;ing.calories=k.calories*r;}
+  saveAll();renderMenuDay(curDay);
+}
+function delIng(day,meal,idx){
+  if(!confirm('Удалить ингредиент?'))return;
+  menuData[day][meal].ingredients.splice(idx,1);saveAll();renderMenuDay(curDay);
+}
+
+// Time dropdown
+function showTimeDp(e,meal){
+  e.stopPropagation();document.querySelectorAll('.dp').forEach(d=>d.remove());
+  const dp=document.createElement('div');dp.className='dp';dp.style.minWidth='75px';
+  for(let h=5;h<=23;h++){const t=String(h).padStart(2,'0')+':00',it=document.createElement('div');it.className='dp-i';it.textContent=t;it.onclick=ev=>{ev.stopPropagation();mealTimes[meal]=t;saveAll();renderMenuDay(curDay);dp.remove();};dp.appendChild(it);}
+  const bl=document.createElement('div');bl.className='dp-i';bl.textContent='--:--';bl.onclick=ev=>{ev.stopPropagation();mealTimes[meal]='';saveAll();renderMenuDay(curDay);dp.remove();};dp.appendChild(bl);
+  const r=e.currentTarget.getBoundingClientRect();dp.style.left=r.left+'px';dp.style.top=(r.bottom+3)+'px';document.body.appendChild(dp);
+}
+
+// Suggestions dropdown
+function showSug(e,day,meal,idx){
+  e.stopPropagation();document.querySelectorAll('.dp').forEach(d=>d.remove());
+  const ing=menuData[day][meal].ingredients[idx],term=(ing.originalName||ing.name).toLowerCase();
+  let m=Object.keys(kbjuTable).filter(p=>p.toLowerCase().includes(term)||term.includes(p.toLowerCase())||p.split(/\s+/).some(w=>w.length>2&&term.includes(w.toLowerCase())));
+  if(!m.length)m=Object.keys(kbjuTable).slice(0,20);
+  const dp=document.createElement('div');dp.className='dp';
+  m.forEach(p=>{const it=document.createElement('div');it.className='dp-i';it.textContent=p;it.onclick=ev=>{ev.stopPropagation();replIng(day,meal,idx,p);dp.remove();};dp.appendChild(it);});
+  const r=e.currentTarget.getBoundingClientRect();dp.style.left=r.left+'px';dp.style.top=(r.bottom+3)+'px';document.body.appendChild(dp);
+}
+function replIng(day,meal,idx,name){
+  const ing=menuData[day][meal].ingredients[idx],k=kbjuTable[name],r=ing.weight/100;
+  Object.assign(ing,{name,originalName:name,status:'exact',suggestions:[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});
+  saveAll();renderMenuDay(curDay);
+}
+
+// Rename dish
+function openRenameDish(day,meal){
+  _renameTarget={day,meal};
+  document.getElementById('rdInput').value=menuData[day]?.[meal]?.dish||'';
+  openModal('renameDishModal');
+  setTimeout(()=>document.getElementById('rdInput').focus(),100);
+}
+function confirmRenameDish(){
+  if(!_renameTarget)return;
+  const {day,meal}=_renameTarget;
+  if(!menuData[day]) menuData[day]={};
+  if(!menuData[day][meal]) menuData[day][meal]={dish:'',ingredients:[],recipe:''};
+  menuData[day][meal].dish=document.getElementById('rdInput').value.trim();
+  saveAll();renderMenuDay(curDay);closeModal('renameDishModal');
+}
+
+// Product select modal
+function openPS(day,meal){
+  _psTarget={day,meal};
+  document.getElementById('psInput').value='';filterPS();openModal('prodSelModal');
+}
+function filterPS(){
+  const q=document.getElementById('psInput').value.toLowerCase();
+  document.getElementById('psBody').innerHTML=Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).map(([name,d])=>`<tr onclick="pickProd('${esc(name)}')"><td style="text-align:left">${name}</td><td>${n1(d.proteins)}</td><td>${n1(d.fats)}</td><td>${n1(d.carbs)}</td><td>${n1(d.calories)}</td></tr>`).join('');
+}
+function pickProd(name){
+  if(!_psTarget)return;
+  const {day,meal}=_psTarget;
+  if(!menuData[day])menuData[day]={};
+  if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
+  const k=kbjuTable[name];
+  menuData[day][meal].ingredients.push({name,originalName:name,weight:100,status:'exact',suggestions:[],proteins:k.proteins,fats:k.fats,carbs:k.carbs,calories:k.calories});
+  saveAll();renderMenuDay(curDay);closeModal('prodSelModal');
+}
+
+// Save meal recipe
+function saveMealRecipe(day,meal){
+  const md=menuData[day]?.[meal];
+  if(!md||!md.ingredients.length){alert('Нет ингредиентов');return;}
+  let group='Ужин';
+  const ml=meal.toLowerCase();
+  if(ml.includes('завтрак'))group='Завтрак';
+  else if(ml.includes('перекус'))group='Перекус';
+  else if(ml.includes('обед'))group='Обед';
+  if(!savedRecipes[group])savedRecipes[group]=[];
+  savedRecipes[group].push({id:Date.now(),name:md.dish||meal,ingredients:JSON.parse(JSON.stringify(md.ingredients)),recipe:md.recipe,meal});
+  saveAll();alert('Рецепт сохранён в "'+group+'"!');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RECIPE LOADING
+// ══════════════════════════════════════════════════════════════════
+function findKbju(name){
+  const nl=name.toLowerCase();
+  const ex=Object.keys(kbjuTable).find(k=>k.toLowerCase()===nl);
+  if(ex)return{type:'exact',name:ex};
+  const all=Object.keys(kbjuTable).filter(k=>{const kl=k.toLowerCase();return kl.includes(nl)||nl.includes(kl)||kl.split(/\s+/).some(w=>w.length>2&&nl.includes(w));});
+  return all.length?{type:'partial',name:all[0],all}:{type:'not_found'};
+}
+function parseRecipes(){
+  const text=document.getElementById('recipeTA').value.trim();if(!text){alert('Пусто!');return;}
+  const blocks=text.split(/^===\s*$/m).map(b=>b.trim()).filter(Boolean);
+  let loaded=0,skipped=0;const log=[];
+  blocks.forEach(block=>{
+    const lines=block.split('\n').map(l=>l.trim()).filter(Boolean);if(lines.length<3){skipped++;return;}
+    let li=0;
+    const meal=MEALS.find(m=>m.toLowerCase()===lines[li]?.toLowerCase());if(!meal){log.push('⚠ Приём: "'+lines[0]+'"');skipped++;return;}li++;
+    const day=DAYS.find(d=>d.toLowerCase()===lines[li]?.toLowerCase());if(!day){log.push('⚠ День: "'+lines[1]+'"');skipped++;return;}li++;
+    let dish='';if(lines[li]&&!/^(состав|кбжу|приготовление)/i.test(lines[li])){dish=lines[li];li++;}
+    let mode=null,ings=[],recipe='';
+    for(let i=li;i<lines.length;i++){
+      const l=lines[i];
+      if(/^состав\s*:/i.test(l)){mode='ing';continue;}
+      if(/^кбжу\s*:/i.test(l)){mode=null;continue;}
+      if(/^приготовление\s*:/i.test(l)){mode='recipe';continue;}
+      if(mode==='ing'){const m=l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*г?/);if(m){const nm=m[1].trim(),w=parseFloat(m[2]),f=findKbju(nm);if(f.type!=='not_found'){const k=kbjuTable[f.name],r=w/100;ings.push({name:f.name,originalName:nm,weight:w,status:f.type,suggestions:f.all||[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});}else{ings.push({name:nm,originalName:nm,weight:w,status:'not_found',suggestions:[],proteins:0,fats:0,carbs:0,calories:0});}}}
+      else if(mode==='recipe'){recipe+=(recipe?' ':'')+l;}
+    }
+    if(!menuData[day])menuData[day]={};
+    menuData[day][meal]={dish,ingredients:ings,recipe};
+    loaded++;log.push('✓ '+day+' / '+meal+(dish?' — '+dish:''));
+  });
+  saveAll();renderMenuDay(curDay);
+  document.getElementById('recipeLog').innerHTML='<span style="color:var(--green)">Загружено: '+loaded+'</span> <span style="color:var(--red)">Пропущено: '+skipped+'</span><br>'+log.map(l=>'<span style="color:'+(l.startsWith('✓')?'var(--green)':'var(--yellow)')+'">'+l+'</span>').join('<br>');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SAVED RECIPES
+// ══════════════════════════════════════════════════════════════════
+function renderSaved(){
+  const c=document.getElementById('savedGroups');c.innerHTML='';
+  Object.entries(savedRecipes).forEach(([g,recs])=>{
+    const wrap=document.createElement('div');wrap.className='saved-group';
+    const hdr=document.createElement('div');hdr.className='saved-group-hdr';
+    hdr.innerHTML='<h3>'+g+' <span style="color:var(--text2);font-weight:normal;">('+recs.length+')</span></h3><span>▶</span>';
+    const body=document.createElement('div');body.className='saved-group-body collapsed';
+    hdr.onclick=()=>{const cl=body.classList.toggle('collapsed');hdr.querySelector('span:last-child').style.transform=cl?'':'rotate(90deg)';};
+    body.innerHTML=recs.length?recs.map((r,i)=>{
+      const t=r.ingredients.reduce((a,x)=>({p:a.p+(x.proteins||0),f:a.f+(x.fats||0),c:a.c+(x.carbs||0),k:a.k+(x.calories||0)}),{p:0,f:0,c:0,k:0});
+      return '<div class="recipe-card"><h4>'+r.name+'</h4><div class="rc-kbju">Б '+n1(t.p)+' / Ж '+n1(t.f)+' / У '+n1(t.c)+' / '+n1(t.k)+' ккал</div><div class="rc-ings">'+r.ingredients.map(x=>(x.originalName||x.name)+' — '+x.weight+'г').join('<br>')+'</div><button class="btn-to-menu" onclick="openAtm(\''+g+'\','+i+')">+ В меню</button><button class="ctrl-btn red" style="width:100%;font-size:12px;padding:5px;" onclick="delSaved(\''+g+'\','+i+')">Удалить</button></div>';
+    }).join(''):'<div style="padding:12px;color:var(--text2);font-size:12px;">Нет рецептов</div>';
+    wrap.append(hdr,body);c.appendChild(wrap);
+  });
+}
+function delSaved(g,i){if(!confirm('Удалить?'))return;savedRecipes[g].splice(i,1);saveAll();renderSaved();}
+function openAtm(g,i){_atmRec={g,i};document.getElementById('atmName').textContent=savedRecipes[g][i].name;openModal('atmModal');}
+function confirmAtm(){
+  if(!_atmRec)return;
+  const r=savedRecipes[_atmRec.g][_atmRec.i],day=document.getElementById('atmDay').value,meal=document.getElementById('atmMeal').value;
+  if(!menuData[day])menuData[day]={};
+  menuData[day][meal]={dish:r.name,ingredients:JSON.parse(JSON.stringify(r.ingredients)),recipe:r.recipe};
+  saveAll();closeModal('atmModal');goSec('menu');
+  curDay=day;document.querySelectorAll('.day-btn').forEach((b,i)=>b.classList.toggle('active',DAYS[i]===day));renderMenuDay(day);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COST
+// ══════════════════════════════════════════════════════════════════
+function calcCosts(){
+  const tot={};
+  Object.values(menuData).forEach(d=>Object.values(d).forEach(m=>(m.ingredients||[]).forEach(ing=>{if(ing.status==='exact')tot[ing.name]=(tot[ing.name]||0)+(ing.weight||0);})));
+  let html='',grand=0;
+  Object.entries(tot).forEach(([name,g])=>{
+    const k=kbjuTable[name];if(!k)return;
+    let cost=0,pack='—',buy='—';
+    const cur=k.priceHistory?.length?k.priceHistory[k.priceHistory.length-1].price:null;
+    if(cur&&k.priceType==='kg'){cost=(g/1000)*cur;pack=cur.toLocaleString('ru-RU')+' ֏/кг';buy=(g/1000).toFixed(2)+' кг';}
+    else if(cur&&k.priceType==='pack'&&k.packWeight){const n=Math.ceil(g/k.packWeight);cost=n*cur;pack=k.packWeight+'г / '+cur.toLocaleString('ru-RU')+' ֏';buy=n+' шт.';}
+    grand+=cost;
+    html+='<tr><td>'+name+'</td><td style="color:var(--text2)">'+Math.round(g)+' г</td><td style="color:var(--text2)">'+pack+'</td><td style="color:var(--text2)">'+buy+'</td><td style="font-weight:bold;color:var(--accent)">'+(cost?Math.round(cost).toLocaleString('ru-RU')+' ֏':'—')+'</td></tr>';
+  });
+  html+='<tr class="cost-total"><td colspan="4" style="text-align:right;">ИТОГО:</td><td>'+Math.round(grand).toLocaleString('ru-RU')+' ֏</td></tr>';
+  document.getElementById('costBody').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// KBJU TABLE
+// ══════════════════════════════════════════════════════════════════
+function renderKbju(){
+  const q=(document.getElementById('kbjuSearch')?.value||'').toLowerCase();
+  let act=Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q)));
+  let arc=Object.entries(kbjuTable).filter(([n,d])=>d.archived&&(!q||n.toLowerCase().includes(q)));
+  if(kSortKey){const sf=(a,b)=>{const va=kSortKey==='name'?a[0]:(a[1][kSortKey]||0),vb=kSortKey==='name'?b[0]:(b[1][kSortKey]||0);return kSortDir*(va<vb?-1:va>vb?1:0);};act.sort(sf);arc.sort(sf);}
+  const row=([name,d],i,isA)=>{
+    const h=d.priceHistory||[],cur=h.length?h[h.length-1]:null,prev=h.length>1?h[h.length-2].price:null;
+    let bc='eq',sym='=';if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
+    return '<tr style="'+(isA?'opacity:.6;':'')+'"><td style="text-align:center;color:var(--text2)">'+(i+1)+'</td><td style="text-align:left">'+name+'</td><td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td><td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td><td><div class="price-cell"><span>'+(cur?cur.price.toLocaleString('ru-RU')+' ֏':'—')+'</span>'+(h.length?'<span class="p-badge '+bc+'" onclick="showPH(\''+esc(name)+'\')" title="История">'+sym+'</span>':'')+(cur?'<span class="p-date">'+cur.date+'</span>':'')+'</div></td><td style="display:flex;gap:5px;"><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="openAddProd(\''+esc(name)+'\')">Ред.</button><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="togArc(\''+esc(name)+'\')">'+(isA?'↩':'Арх.')+'</button></td></tr>';
+  };
+  let html=act.map((e,i)=>row(e,i,false)).join('');
+  if(arc.length)html+='<tr class="arc-hdr"><td colspan="8">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
+  document.getElementById('kbjuBody').innerHTML=html;
+}
+function sortK(k){kSortDir=kSortKey===k?kSortDir*-1:1;kSortKey=k;renderKbju();}
+function togArc(n){kbjuTable[n].archived=!kbjuTable[n].archived;saveAll();renderKbju();}
+function togglePackRow(){document.getElementById('npPR').style.display=document.getElementById('npPT').value==='pack'?'block':'none';}
+function openAddProd(name){
+  _editProd=name||null;
+  document.getElementById('addProdTitle').textContent=name?'Редактировать':'Добавить продукт';
+  document.getElementById('npDel').style.display=name?'inline-block':'none';
+  if(name&&kbjuTable[name]){const d=kbjuTable[name],cur=d.priceHistory?.length?d.priceHistory[d.priceHistory.length-1].price:'';document.getElementById('npN').value=name;document.getElementById('npB').value=d.proteins||'';document.getElementById('npJ').value=d.fats||'';document.getElementById('npU').value=d.carbs||'';document.getElementById('npK').value=d.calories||'';document.getElementById('npP').value=cur;document.getElementById('npPT').value=d.priceType||'kg';document.getElementById('npPW').value=d.packWeight||'';document.getElementById('npPR').style.display=d.priceType==='pack'?'block':'none';}
+  else{['npN','npB','npJ','npU','npK','npP','npPW'].forEach(id=>document.getElementById(id).value='');document.getElementById('npPT').value='kg';document.getElementById('npPR').style.display='none';}
+  openModal('addProdModal');
+}
+function saveProd(){
+  const name=document.getElementById('npN').value.trim();if(!name){alert('Введите название');return;}
+  const p=parseFloat(document.getElementById('npB').value)||0,f=parseFloat(document.getElementById('npJ').value)||0,c=parseFloat(document.getElementById('npU').value)||0,k=parseFloat(document.getElementById('npK').value)||0;
+  const price=parseFloat(document.getElementById('npP').value)||null,pt=document.getElementById('npPT').value,pw=parseFloat(document.getElementById('npPW').value)||null;
+  const today=new Date().toLocaleDateString('ru-RU');
+  if(_editProd&&_editProd!==name){kbjuTable[name]=kbjuTable[_editProd];delete kbjuTable[_editProd];}
+  if(!kbjuTable[name])kbjuTable[name]={priceHistory:[]};
+  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt});
+  if(pw)d.packWeight=pw;if(!d.priceHistory)d.priceHistory=[];
+  if(price!==null){const last=d.priceHistory.length?d.priceHistory[d.priceHistory.length-1].price:null;if(last!==price)d.priceHistory.push({date:today,price});}
+  saveAll();renderKbju();closeModal('addProdModal');
+}
+function delProd(){if(!_editProd||!confirm('Удалить "'+_editProd+'"?'))return;delete kbjuTable[_editProd];saveAll();renderKbju();closeModal('addProdModal');}
+function showPH(name){
+  const d=kbjuTable[name];if(!d?.priceHistory?.length)return;
+  document.getElementById('phTitle').textContent='История цен: '+name;
+  const h=d.priceHistory,cv=document.getElementById('phCanvas'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,W,H);
+  const prices=h.map(x=>x.price),mn=Math.min(...prices),mx=Math.max(...prices),rng=mx-mn||1;
+  const pd={l:44,r:14,t:14,b:26},iW=W-pd.l-pd.r,iH=H-pd.t-pd.b;
+  ctx.strokeStyle='#404040';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pd.t+(iH/4)*i;ctx.beginPath();ctx.moveTo(pd.l,y);ctx.lineTo(W-pd.r,y);ctx.stroke();ctx.fillStyle='#b0b0b0';ctx.font='10px Segoe UI';ctx.fillText(Math.round(mx-(rng/4)*i),2,y+4);}
+  if(h.length>1){ctx.strokeStyle='#4a9eff';ctx.lineWidth=2;ctx.beginPath();h.forEach((x,i)=>{const px=pd.l+(i/(h.length-1))*iW,py=pd.t+(1-(x.price-mn)/rng)*iH;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});ctx.stroke();}
+  h.forEach((x,i)=>{const px=pd.l+(h.length>1?i/(h.length-1):0.5)*iW,py=pd.t+(h.length>1?(1-(x.price-mn)/rng):0.5)*iH;ctx.fillStyle='#4a9eff';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();});
+  document.getElementById('phList').innerHTML=h.slice().reverse().map(x=>'<div>'+x.date+': <strong style="color:var(--accent)">'+x.price.toLocaleString('ru-RU')+' ֏</strong></div>').join('');
+  openModal('priceHistModal');
+}
+function loadKbjuFile(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.txt,.csv';
+  inp.onchange=e=>{const file=e.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=ev=>{applyKbjuText(ev.target.result);};rd.readAsText(file,'utf-8');};inp.click();
+}
+function applyPasteKbju(){applyKbjuText(document.getElementById('pasteKbjuArea').value);closeModal('pasteKbjuModal');}
+function applyKbjuText(text){
+  const lines=text.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  const today=new Date().toLocaleDateString('ru-RU');let added=0,updated=0;
+  lines.forEach(line=>{
+    if(/^(название|name|продукт|#)/i.test(line))return;
+    const pts=line.split(/\t|;/);const name=pts[0]?.trim();if(!name)return;
+    const p=parseFloat(pts[1])||0,f=parseFloat(pts[2])||0,c=parseFloat(pts[3])||0,k=parseFloat(pts[4])||0,price=parseFloat(pts[5])||null;
+    if(kbjuTable[name]){if(p||f||c||k){kbjuTable[name].proteins=p;kbjuTable[name].fats=f;kbjuTable[name].carbs=c;kbjuTable[name].calories=k;}if(price){if(!kbjuTable[name].priceHistory)kbjuTable[name].priceHistory=[];const last=kbjuTable[name].priceHistory.length?kbjuTable[name].priceHistory[kbjuTable[name].priceHistory.length-1].price:null;if(last!==price)kbjuTable[name].priceHistory.push({date:today,price});}updated++;}
+    else{kbjuTable[name]={proteins:p,fats:f,carbs:c,calories:k,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};added++;}
+  });
+  saveAll();renderKbju();alert('Добавлено: '+added+', обновлено: '+updated);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PARSE — Yerevan City
+// ══════════════════════════════════════════════════════════════════
+const parseSelected=new Map();
+
+async function apiCall(path,body){
+  const r=await fetch(WORKER_URL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function loadTopCats(){
+  const panel=document.getElementById('catalogPanel');
+  try{
+    const data=await apiCall('/api/categories',{page:1,pageSize:200});
+    const cats=data?.data?.categories||[];
+    panel.innerHTML='';
+    cats.forEach(cat=>panel.appendChild(buildCatNode(cat,0)));
+  }catch(e){panel.innerHTML='<div class="load-row" style="color:var(--red)">⚠ Ошибка: '+e.message+'</div>';}
+}
+function buildCatNode(cat,depth){
+  const wrap=document.createElement('div');wrap.dataset.id=cat.id;
+  const row=document.createElement('div');row.className='cat-row';
+  const tog=document.createElement('div');tog.className='cat-tog';tog.innerHTML='▶';
+  const ck=document.createElement('div');ck.className='cat-ck';
+  ck.onclick=e=>{e.stopPropagation();toggleCatSel(cat,ck);};
+  const nm=document.createElement('div');nm.className='cat-nm';nm.style.paddingLeft=(depth*13)+'px';nm.textContent=cat.name;
+  row.append(tog,ck,nm);wrap.appendChild(row);
+  const ch=document.createElement('div');ch.className='cat-ch';wrap.appendChild(ch);
+  let loaded=false,open=false;
+  row.onclick=async()=>{
+    open=!open;tog.classList.toggle('open',open);ch.classList.toggle('open',open);
+    if(open&&!loaded){loaded=true;ch.innerHTML='<div class="load-row"><div class="spin"></div></div>';
+      try{const d=await apiCall('/api/children',{parentId:cat.id,page:1,pageSize:100}),inner=d?.data||{},all=[...(inner.categoryWithChildren||[]),...(inner.categories||[])];
+        ch.innerHTML='';if(!all.length)ch.innerHTML='<div class="load-row" style="font-size:11px;color:var(--text2);">Конечная категория</div>';
+        else all.forEach(c=>ch.appendChild(buildCatNode(c,depth+1)));
+      }catch(e){ch.innerHTML='<div class="load-row" style="color:var(--red)">Ошибка</div>';}
+    }
+  };
+  return wrap;
+}
+function toggleCatSel(cat,el){
+  parseSelected.has(cat.id)?(parseSelected.delete(cat.id),el.classList.remove('on')):(parseSelected.set(cat.id,cat),el.classList.add('on'));
+  renderSelPanel();
+}
+function removeCatSel(id){
+  parseSelected.delete(id);
+  document.querySelectorAll(`.cat-ck[data-cid="${id}"]`).forEach(e=>e.classList.remove('on'));
+  renderSelPanel();
+}
+function renderSelPanel(){
+  const p=document.getElementById('selectedPanel'),btn=document.getElementById('exportBtn');
+  if(!parseSelected.size){p.innerHTML='<div class="sel-empty">Отметьте категории слева</div>';btn.disabled=true;return;}
+  btn.disabled=false;p.innerHTML='';
+  parseSelected.forEach((cat,id)=>{const t=document.createElement('div');t.className='sel-tag';t.innerHTML='<span class="tn">'+cat.name+'</span><span class="tr" onclick="removeCatSel('+id+')">×</span>';p.appendChild(t);});
+}
+
+async function exportData(){
+  if(!parseSelected.size)return;
+  const btn=document.getElementById('exportBtn'),fill=document.getElementById('parseProg'),msg=document.getElementById('parseStatus');
+  btn.disabled=true;btn.textContent='Загрузка...';
+  _parsedRows=[];_parsedCats=[];fill.style.width='0%';
+  const cats=[...parseSelected.values()];
+  for(let i=0;i<cats.length;i++){
+    msg.textContent='Загружаю: '+cats[i].name+'...';fill.style.width=((i/cats.length)*100)+'%';
+    try{
+      const prods=await fetchAllProds(cats[i].id);
+      prods.sort((a,b)=>{const pa=a.discountedPrice>0?a.discountedPrice:a.price||0,pb=b.discountedPrice>0?b.discountedPrice:b.price||0;return pa-pb;});
+      _parsedCats.push({cat:cats[i],prods});
+      prods.forEach(item=>{
+        const disc=item.discountedPrice>0&&item.discountedPrice<item.price;
+        _parsedRows.push({catId:cats[i].id,catName:cats[i].name,name:item.name||'',price:disc?item.discountedPrice:item.price,origPrice:disc?item.price:null,discPct:disc?Math.round(item.discountPercent):0,pricePerUnit:item.productPricePerUnit,weightMeasure:item.weightMeasure,photo:item.photo||''});
+      });
+    }catch(e){console.warn(e);}
+  }
+  fill.style.width='100%';
+  document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
+  msg.textContent='✅ Готово — '+_parsedRows.length+' товаров';
+  btn.disabled=false;btn.textContent='⬇ Выгрузить';
+  renderProdTable();
+}
+
+async function fetchAllProds(catId){
+  const body={categoryId:catId,parentId:catId,count:100,page:1,priceFrom:null,priceTo:null,countries:[],categories:[],brands:[],search:null,isDiscounted:false,sortBy:3};
+  const first=await apiCall('/api/products',body);
+  const inner=first?.data||{},pages=inner.pageCount||1;
+  let items=inner.list||[];
+  const ps=[];for(let p=2;p<=pages;p++)ps.push(apiCall('/api/products',{...body,page:p}));
+  (await Promise.all(ps)).forEach(d=>{items=items.concat(d?.data?.list||[]);});
+  return items;
+}
+
+function fmtUnit(row){
+  const ppu=row.pricePerUnit;if(!ppu||ppu<=0)return '';
+  const m=row.weightMeasure||'';
+  let u='кг';
+  if(m==='ML'||m==='L')u='л';
+  else if(m==='PCS'||m==='PIECE'||m==='EA')u='шт.';
+  return '1 '+u+' / '+Math.round(ppu).toLocaleString('ru-RU')+' ֏';
+}
+function fmtPrice(v){if(!v)return '—';return Math.round(v).toLocaleString('ru-RU')+' ֏';}
+
+function renderProdTable(){
+  const tbody=document.getElementById('prodBody');
+  tbody.innerHTML='';
+  // Group by catId
+  const groups={};
+  _parsedRows.forEach((row,i)=>{if(!groups[row.catId])groups[row.catId]={name:row.catName,rows:[]};groups[row.catId].rows.push({...row,idx:i});});
+  Object.entries(groups).forEach(([catId,g])=>{
+    // Category header row
+    const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
+    hdr.innerHTML='<td colspan="10">'+g.name+' ('+g.rows.length+')</td>';
+    hdr.onclick=()=>{
+      hdr.classList.toggle('open');
+      const isOpen=hdr.classList.contains('open');
+      tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]').forEach(r=>r.classList.toggle('hidden',!isOpen));
+    };
+    tbody.appendChild(hdr);
+    // Product rows — start hidden (collapsed)
+    g.rows.forEach(row=>{
+      const tr=document.createElement('tr');tr.className='prod-row hidden';tr.dataset.catid=catId;
+      const photo=row.photo?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${row.photo}" alt="" loading="lazy" decoding="async"/></div></div>`:`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
+      tr.innerHTML=`
+        <td></td>
+        <td style="padding:4px 6px;">${photo}</td>
+        <td style="text-align:left">${row.name}</td>
+        <td class="td-price">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td>
+        <td class="td-orig">${row.origPrice?fmtPrice(row.origPrice):''}</td>
+        <td class="td-kg">${fmtUnit(row)}</td>
+        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="snack"     onchange="updLists()"></td>
+        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="breakfast" onchange="updLists()"></td>
+        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="lunch"     onchange="updLists()"></td>
+        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="dinner"    onchange="updLists()"></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function updLists(){
+  const lists={snack:[],breakfast:[],lunch:[],dinner:[]};
+  document.querySelectorAll('.cb-m:checked').forEach(cb=>{const r=_parsedRows[parseInt(cb.dataset.idx)];if(r)lists[cb.dataset.meal].push(r.name);});
+  const all=[...new Set([...lists.snack,...lists.breakfast,...lists.lunch,...lists.dinner])];
+  document.getElementById('lst-snack').innerHTML    =lists.snack.map(n=>'<li>'+n+'</li>').join('');
+  document.getElementById('lst-breakfast').innerHTML=lists.breakfast.map(n=>'<li>'+n+'</li>').join('');
+  document.getElementById('lst-lunch').innerHTML    =lists.lunch.map(n=>'<li>'+n+'</li>').join('');
+  document.getElementById('lst-dinner').innerHTML   =lists.dinner.map(n=>'<li>'+n+'</li>').join('');
+  document.getElementById('lst-all').innerHTML      =all.map(n=>'<li>'+n+'</li>').join('');
+}
+
+function getListItems(id){
+  return [...document.getElementById('lst-'+id).querySelectorAll('li')].map(li=>li.textContent);
+}
+function todayStr(){return new Date().toLocaleDateString('ru-RU').replace(/\./g,'.');}
+function dlList(id,label){
+  const items=id==='all'?[...document.getElementById('lst-all').querySelectorAll('li')].map(l=>l.textContent):getListItems(id);
+  if(!items.length){alert('Список пуст');return;}
+  const blob=new Blob([items.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=label.replace(/\s/g,'_')+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'.')+'.txt';
+  a.click();
+}
+function saveListToNotes(id,label){
+  const snack=getListItems('snack'),breakfast=getListItems('breakfast'),lunch=getListItems('lunch'),dinner=getListItems('dinner'),all=[...new Set([...snack,...breakfast,...lunch,...dinner])];
+  const date=new Date().toLocaleDateString('ru-RU');
+  const entry={id:Date.now(),date,label:'Список продуктов из Yerevan City за '+date,snack,breakfast,lunch,dinner,all};
+  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
+  stored.push(entry);localStorage.setItem('notesLists',JSON.stringify(stored));
+  renderNotesLists();
+  goSec('notes');
+  alert('Список сохранён в заметках!');
+}
+function renderNotesLists(){
+  const wrap=document.getElementById('notesListWrap');if(!wrap)return;
+  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
+  if(!stored.length){wrap.innerHTML='';return;}
+  wrap.innerHTML=stored.map((e,i)=>'<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;margin:0 6px 6px 0;cursor:pointer;font-size:12px;" onclick="viewNotesList('+i+')">📋 '+e.label+'<span onclick="event.stopPropagation();delNotesList('+i+')" style="color:var(--text2);margin-left:4px;cursor:pointer;">×</span></div>').join('');
+}
+function viewNotesList(i){
+  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
+  const e=stored[i];if(!e)return;
+  document.getElementById('nlmTitle').textContent=e.label;
+  document.getElementById('nlmBody').innerHTML=
+    '<div><strong style="color:var(--accent)">Перекус</strong><br>'+e.snack.map(n=>'• '+n).join('<br>')+'</div>'+
+    '<div><strong style="color:var(--accent)">Завтрак</strong><br>'+e.breakfast.map(n=>'• '+n).join('<br>')+'</div>'+
+    '<div><strong style="color:var(--accent)">Обед</strong><br>'+e.lunch.map(n=>'• '+n).join('<br>')+'</div>'+
+    '<div><strong style="color:var(--accent)">Ужин</strong><br>'+e.dinner.map(n=>'• '+n).join('<br>')+'</div>'+
+    '<div style="grid-column:span 2"><strong style="color:var(--accent)">Общий список</strong><br>'+e.all.map(n=>'• '+n).join('<br>')+'</div>';
+  openModal('notesListModal');
+}
+function delNotesList(i){
+  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
+  stored.splice(i,1);localStorage.setItem('notesLists',JSON.stringify(stored));renderNotesLists();
+}
+
+function transferToKbju(){
+  const names=new Set();document.querySelectorAll('.cb-m:checked').forEach(cb=>{const r=_parsedRows[parseInt(cb.dataset.idx)];if(r)names.add(r.name);});
+  if(!names.size){alert('Отметьте продукты');return;}
+  const today=new Date().toLocaleDateString('ru-RU'),conflicts=[],toAdd=[];
+  names.forEach(name=>{
+    const pr=_parsedRows.find(r=>r.name===name),newP=pr?pr.price:null,ex=kbjuTable[name];
+    if(ex){const last=ex.priceHistory?.length?ex.priceHistory[ex.priceHistory.length-1].price:null;if(newP&&last!==newP){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:newP});}}
+    else{const sim=Object.keys(kbjuTable).find(k=>k.toLowerCase().includes(name.toLowerCase().slice(0,5))||name.toLowerCase().includes(k.toLowerCase().slice(0,5)));if(sim)conflicts.push({newName:name,existingName:sim,price:newP});else toAdd.push({name,price:newP});}
+  });
+  toAdd.forEach(({name,price})=>{kbjuTable[name]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};});
+  if(conflicts.length){
+    _syncDec=conflicts.map(c=>({...c,decision:'new'}));
+    document.getElementById('scConflicts').innerHTML=conflicts.map((c,i)=>'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:11px;margin-bottom:9px;"><p style="font-size:12px;margin-bottom:9px;">Новый: <strong style="color:var(--accent)">'+c.newName+'</strong><br>Похожий: <strong>'+c.existingName+'</strong></p><div style="display:flex;gap:7px;"><button class="ctrl-btn sec" style="font-size:12px;padding:5px 9px;" onclick="setSyncDec('+i+',\'replace\')">Заменить</button><button class="ctrl-btn" style="font-size:12px;padding:5px 9px;" onclick="setSyncDec('+i+',\'new\')">Добавить новым</button></div><div id="sd-'+i+'" style="margin-top:5px;font-size:11px;color:var(--green)"></div></div>').join('');
+    document.getElementById('scSummary').textContent='Авто: '+toAdd.length+', конфликты: '+conflicts.length;
+    saveAll();openModal('syncConflModal');
+  }else{saveAll();renderKbju();alert('Перенесено: '+toAdd.length);}
+}
+function setSyncDec(i,d){_syncDec[i].decision=d;document.getElementById('sd-'+i).textContent=d==='new'?'→ Добавить новым':'→ Заменить';}
+function applySyncDec(){
+  const today=new Date().toLocaleDateString('ru-RU');
+  _syncDec.forEach(d=>{
+    if(d.decision==='replace'){const ex=kbjuTable[d.existingName];if(ex&&d.price){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:d.price});}}
+    else{kbjuTable[d.newName]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:d.price?[{date:today,price:d.price}]:[]};}
+  });
+  saveAll();renderKbju();closeModal('syncConflModal');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════════════════════════════════
+function saveNotes(){notes=document.getElementById('notesArea').value;saveAll();}
+
+// ══════════════════════════════════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
