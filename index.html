@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Меню на неделю</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   /* Base layers — warm dark charcoal, not pure black */
@@ -33,7 +35,6 @@
   --glow: 0 0 20px rgba(232,160,69,.12);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:13px;line-height:1.4;}
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
@@ -72,18 +73,12 @@ input[type=number]{-moz-appearance:textfield;}
 
 /* ── MENU TABLE ── */
 #sec-menu{overflow:hidden;display:flex;flex-direction:column;}
-/* Amber accent line above table */
-#tableWrap::before{content:'';display:block;height:1px;background:var(--border2);margin:0 0 0 0;position:sticky;top:0;z-index:21;}
-#tableWrap{flex:1;overflow-y:auto;overflow-x:auto;padding:0 16px 16px;}
-#menuTable{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
-#menuTable thead{position:sticky;top:0;z-index:20;}
-#menuTable thead th{background:var(--bg3);color:var(--text2);padding:9px 7px;text-align:center;border-bottom:2px solid var(--accent);border-right:1px solid var(--border);white-space:nowrap;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;top:0;position:sticky;z-index:15;}
-/* Cover the gap above sticky header so scrolled rows don't show */
-#menuTable thead tr::before{content:'';position:sticky;top:0;left:0;right:0;height:12px;background:var(--bg2);display:block;z-index:16;}
-#menuTable thead th:first-child{border-left:1px solid var(--border);border-radius:6px 0 0 0;}
-#menuTable thead th:last-child{border-radius:0 6px 0 0;}
-#menuTable tbody td{padding:6px 6px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg2);}
-#menuTable tbody td:first-child{border-left:1px solid var(--border);}
+#tableWrap{flex:1;overflow-y:auto;overflow-x:auto;padding:8px 16px 16px;}
+#menuTable{width:100%;border-collapse:collapse;font-size:13px;}
+#menuTable thead th{background:var(--bg3);color:var(--text2);padding:9px 7px;text-align:center;border:1px solid var(--border);white-space:nowrap;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:15;box-shadow:0 2px 0 var(--accent);}
+#menuTable tbody td{padding:6px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg2);}
+#menuTable tbody tr:nth-child(even) td{background:var(--bg3);}
+
 .meal-group-row td{background:var(--bg3)!important;border-top:2px solid var(--border2)!important;}
 .meal-total-row td{background:var(--bg3)!important;border-top:1px solid var(--accent)!important;font-weight:600;color:var(--accentL);}
 .day-total-row td{background:var(--accentDim)!important;color:var(--accentL)!important;font-weight:700;border-top:2px solid var(--accent)!important;}
