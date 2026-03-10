@@ -77,7 +77,6 @@ input[type=number]{-moz-appearance:textfield;}
 #menuTable tbody td.col-ing,#menuTable tbody td.col-recipe{text-align:left;}
 #menuTable tbody td.col-dish{text-align:center;}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
-#menuTable tbody tr td[style*="rgba(160"]{background:rgba(160,35,35,.55)!important;color:#fff!important;}
 
 .meal-group-row td{border-top:none;}
 .meal-total-row td{background:var(--bg5)!important;border:1px solid var(--border2)!important;border-top:3px solid #9a9cb0!important;font-weight:700;color:#ffffff!important;font-size:13px;}
@@ -101,8 +100,6 @@ input[type=number]{-moz-appearance:textfield;}
 .btn-q{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--yellow);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;transition:all .15s;}
 .btn-q:hover{border-color:var(--yellow);background:rgba(251,191,36,.1);}
 .btn-q:hover{background:var(--yellow);color:#000;}
-.not-found-bg{background:rgba(180,40,40,.40)!important;color:#ffffff!important;}
-.not-found-bg .ing-wrap span{color:var(--red);}
 .btn-pencil{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;position:absolute;left:4px;bottom:4px;}
 .btn-pencil:hover{border-color:var(--accent);color:var(--accent);}
 .btn-add-ing{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-weight:400;line-height:1;}
@@ -917,10 +914,17 @@ function renderIngCell(ing,i,day,meal){
   const status=ing.status||'exact';
   const isNotFound=status==='not_found';
   const isPartial=status==='partial';
-  const isRed=isNotFound||isPartial;
   const nameDisp=ing.originalName||ing.name;
-  const redStyle=isRed?'background:rgba(160,35,35,.55)!important;color:#fff!important;':'';
-  const redInput=isRed?'style="background:rgba(130,25,25,.6)!important;color:#fff!important;"':'';
+
+  // Only col-ing cell gets colored — other cells always normal
+  let ingStyle='', ingColor='inherit';
+  if(isPartial){
+    ingStyle='background:rgba(180,150,0,.55)!important;';
+    ingColor='#111';
+  } else if(isNotFound){
+    ingStyle='background:rgba(160,35,35,.60)!important;';
+    ingColor='#fff';
+  }
 
   let actionBtn='';
   if(isPartial){
@@ -929,17 +933,17 @@ function renderIngCell(ing,i,day,meal){
     actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
   }
 
-  return `<td class="col-ing" style="${redStyle}">
+  return `<td class="col-ing" style="${ingStyle}">
     <div class="ing-wrap">
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isRed?'#fff':'inherit'};">${nameDisp}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${ingColor};">${nameDisp}</span>
       ${actionBtn}
     </div>
   </td>
-  <td class="col-w" style="${redStyle}"><input class="w-inp" type="number" value="${ing.weight}" ${redInput} onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
-  <td class="col-num" style="${redStyle}">${n1(ing.proteins)}</td>
-  <td class="col-num" style="${redStyle}">${n1(ing.fats)}</td>
-  <td class="col-num" style="${redStyle}">${n1(ing.carbs)}</td>
-  <td class="col-kcal" style="${redStyle}">${n1(ing.calories)}</td>`;
+  <td class="col-w"><input class="w-inp" type="number" value="${ing.weight}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
+  <td class="col-num">${n1(ing.proteins)}</td>
+  <td class="col-num">${n1(ing.fats)}</td>
+  <td class="col-num">${n1(ing.carbs)}</td>
+  <td class="col-kcal">${n1(ing.calories)}</td>`;
 }
 
 
@@ -1185,6 +1189,37 @@ function openAddProd(name){
   else{['npN','npB','npJ','npU','npK','npP','npPW'].forEach(id=>document.getElementById(id).value='');document.getElementById('npPT').value='kg';document.getElementById('npPR').style.display='none';}
   openModal('addProdModal');
 }
+
+function reEvalStatuses(){
+  // Re-check status of every ingredient in menuData against current kbjuTable
+  DAYS.forEach(day=>{
+    if(!menuData[day])return;
+    MEALS.forEach(meal=>{
+      const md=menuData[day][meal];
+      if(!md||!md.ingredients)return;
+      md.ingredients.forEach(ing=>{
+        const f=findKbju(ing.originalName||ing.name);
+        if(f.type==='exact'){
+          const k=kbjuTable[f.name], r=ing.weight/100;
+          ing.name=f.name;
+          ing.status='exact';
+          ing.suggestions=[];
+          ing.proteins=k.proteins*r;
+          ing.fats=k.fats*r;
+          ing.carbs=k.carbs*r;
+          ing.calories=k.calories*r;
+        } else if(f.type==='partial'){
+          ing.status='partial';
+          ing.suggestions=f.all||[];
+        }
+        // not_found stays as-is
+      });
+    });
+  });
+  saveAll();
+  renderMenuDay(curDay);
+}
+
 function saveProd(){
   const name=document.getElementById('npN').value.trim();if(!name){alert('Введите название');return;}
   const p=parseFloat(document.getElementById('npB').value)||0,f=parseFloat(document.getElementById('npJ').value)||0,c=parseFloat(document.getElementById('npU').value)||0,k=parseFloat(document.getElementById('npK').value)||0;
@@ -1195,7 +1230,7 @@ function saveProd(){
   const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt});
   if(pw)d.packWeight=pw;if(!d.priceHistory)d.priceHistory=[];
   if(price!==null){const last=d.priceHistory.length?d.priceHistory[d.priceHistory.length-1].price:null;if(last!==price)d.priceHistory.push({date:today,price});}
-  saveAll();renderKbju();closeModal('addProdModal');
+  saveAll();renderKbju();reEvalStatuses();closeModal('addProdModal');
 }
 function delProd(){if(!_editProd||!confirm('Удалить "'+_editProd+'"?'))return;delete kbjuTable[_editProd];saveAll();renderKbju();closeModal('addProdModal');}
 function showPH(name){
