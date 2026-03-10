@@ -525,6 +525,7 @@ input[type=number]{-moz-appearance:textfield;}
           <button class="ctrl-btn sec" onclick="loadKbjuFile()" title="Загрузить .txt/.csv">📂 Файл</button>
           <button class="ctrl-btn sec" onclick="openModal('pasteKbjuModal')" title="Вставить список с КБЖУ">📋 Вставить КБЖУ</button>
           <button class="ctrl-btn" onclick="openAddProd(null)">+ Добавить</button>
+          <button class="ctrl-btn sec" id="btnSelectKbju" onclick="toggleKbjuSelect()">Выбрать</button>
         </div>
       </div>
       <div style="overflow:auto;">
@@ -537,7 +538,7 @@ input[type=number]{-moz-appearance:textfield;}
             <th onclick="sortK('carbs')">У ⇅</th>
             <th onclick="sortK('calories')">Ккал ⇅</th>
             <th>Цена</th>
-            <th>Действие</th>
+            <th id="thAction" style="white-space:nowrap;">Действие <button id="btnDeleteSelected" class="ctrl-btn" style="display:none;padding:2px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);margin-left:4px;" onclick="deleteSelectedKbju()">Удалить</button></th>
           </tr></thead>
           <tbody id="kbjuBody"></tbody>
         </table>
@@ -1172,7 +1173,12 @@ function renderKbju(){
   const row=([name,d],i,isA)=>{
     const h=d.priceHistory||[],cur=h.length?h[h.length-1]:null,prev=h.length>1?h[h.length-2].price:null;
     let bc='eq',sym='=';if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
-    return '<tr style="'+(isA?'opacity:.6;':'')+'"><td style="text-align:center;color:var(--text2)">'+(i+1)+'</td><td style="text-align:left">'+name+'</td><td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td><td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td><td><div class="price-cell"><span>'+(cur?cur.price.toLocaleString('ru-RU')+' ֏':'—')+'</span>'+(h.length?'<span class="p-badge '+bc+'" onclick="showPH(\''+esc(name)+'\')" title="История">'+sym+'</span>':'')+(cur?'<span class="p-date">'+cur.date+'</span>':'')+'</div></td><td style="display:flex;gap:5px;"><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="openAddProd(\''+esc(name)+'\')">Ред.</button><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="togArc(\''+esc(name)+'\')">'+(isA?'↩':'Арх.')+'</button></td></tr>';
+    const actionCell=_kbjuSelectMode
+      ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+esc(name)+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
+      :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="openAddProd(\''+esc(name)+'\')">Ред.</button><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="togArc(\''+esc(name)+'\')">'+(isA?'↩':'Арх.')+'</button></td>';
+    return '<tr style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'" '
+      +(_kbjuSelectMode?'onclick="this.querySelector(\'.kbju-sel-cb\').checked=!this.querySelector(\'.kbju-sel-cb\').checked"':'')+
+      '><td style="text-align:center;color:var(--text2)">'+(i+1)+'</td><td style="text-align:left">'+name+'</td><td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td><td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td><td><div class="price-cell"><span>'+(cur?cur.price.toLocaleString('ru-RU')+' ֏':'—')+'</span>'+(h.length?'<span class="p-badge '+bc+'" onclick="event.stopPropagation();showPH(\''+esc(name)+'\');" title="История">'+sym+'</span>':'')+(cur?'<span class="p-date">'+cur.date+'</span>':'')+'</div></td>'+actionCell+'</tr>';
   };
   let html=act.map((e,i)=>row(e,i,false)).join('');
   if(arc.length)html+='<tr class="arc-hdr"><td colspan="8">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
@@ -1585,6 +1591,27 @@ function saveEditRecipe(){
   if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
   menuData[day][meal].recipe=document.getElementById('editRecipeTA').value.trim();
   saveAll();renderMenuDay(curDay);closeModal('editRecipeModal');
+}
+
+
+let _kbjuSelectMode=false;
+
+function toggleKbjuSelect(){
+  _kbjuSelectMode=!_kbjuSelectMode;
+  const btn=document.getElementById('btnSelectKbju');
+  const delBtn=document.getElementById('btnDeleteSelected');
+  btn.style.background=_kbjuSelectMode?'var(--accent)':'';
+  btn.style.color=_kbjuSelectMode?'#fff':'';
+  delBtn.style.display=_kbjuSelectMode?'inline-block':'none';
+  renderKbju();
+}
+
+function deleteSelectedKbju(){
+  const checked=document.querySelectorAll('.kbju-sel-cb:checked');
+  if(!checked.length){alert('Ничего не выбрано');return;}
+  if(!confirm('Удалить '+checked.length+' продукт(ов)?'))return;
+  checked.forEach(cb=>{ delete kbjuTable[cb.dataset.name]; });
+  saveAll();renderKbju();
 }
 
 </script>
