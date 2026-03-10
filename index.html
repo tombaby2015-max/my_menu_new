@@ -1009,8 +1009,9 @@ function filterPS(){
   const tbody=document.getElementById('psBody');
   tbody.innerHTML='';
   Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).forEach(([name,d])=>{
-    const price=d.price!=null?d.price+'₽':'—';
-    const unit=d.priceType==='per_pack'&&d.packWeight?d.packWeight+'г':'кг';
+    const _ph=d.priceHistory,_lp=_ph&&_ph.length?_ph[_ph.length-1].price:null;
+    const price=_lp!=null?_lp+'₽':'—';
+    const unit=d.priceType==='pack'&&d.packWeight?d.packWeight+'г':'кг';
     const tr=document.createElement('tr');
     tr.dataset.name=name;
     tr.style.cursor='pointer';
@@ -1514,8 +1515,9 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
     list.innerHTML='';
     (filtered.slice(0,60)).forEach(p=>{
       const kb=kbjuTable[p]||{};
-      const price=kb.price!=null?kb.price+'₽':'—';
-      const unit=kb.priceType==='per_pack'&&kb.packWeight?`${kb.packWeight}г`:'кг';
+      const _ph2=kb.priceHistory,_lp2=_ph2&&_ph2.length?_ph2[_ph2.length-1].price:null;
+      const price=_lp2!=null?_lp2+'₽':'—';
+      const unit=kb.priceType==='pack'&&kb.packWeight?`${kb.packWeight}г`:'кг';
       const row=document.createElement('div'); row.className='dp-i dp-product-row';
       row.innerHTML=`<span class="dp-pname">${p}</span>
         <span class="dp-pmeta">Б${n1(kb.proteins)} Ж${n1(kb.fats)} У${n1(kb.carbs)} К${n1(kb.calories)} · ${price}/${unit}</span>`;
