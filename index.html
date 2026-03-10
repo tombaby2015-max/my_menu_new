@@ -9,11 +9,11 @@
 <style>
 :root {
   --bg:        #1c1d21;
-  --bg2:       #444551;
-  --bg3:       #4b4c59;
-  --bg4:       #535463;
-  --bg5:       #3c3d48;
-  --th-bg:     #3f4047;
+  --bg2:       #323339;
+  --bg3:       #393a41;
+  --bg4:       #41424b;
+  --bg5:       #474854;
+  --th-bg:     #2d2e35;
   --th-text:   #ffffff;
   --text:      #e8eaf0;
   --text2:     #9499b0;
@@ -22,8 +22,8 @@
   --accent2:   #3b82f6;
   --accentL:   #93c5fd;
   --accentDim: rgba(96,165,250,.18);
-  --border:    #4a4c5a;
-  --border2:   #585a6a;
+  --border:    #6e7080;
+  --border2:   #80828f;
   --green:     #4ade80;
   --red:       #f87171;
   --yellow:    #fbbf24;
@@ -79,7 +79,7 @@ input[type=number]{-moz-appearance:textfield;}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
 
 .meal-group-row td{background:var(--bg3)!important;border-top:none!important;}
-.meal-total-row td{background:var(--bg4)!important;border:1px solid var(--border2)!important;border-top:2px solid var(--border2)!important;font-weight:700;color:#ffffff!important;}
+.meal-total-row td{background:var(--bg5)!important;border:1px solid var(--border2)!important;border-top:2px solid var(--border2)!important;font-weight:700;color:#ffffff!important;font-size:13px;}
 .meal-tbody:first-child tr:first-child td,.meal-tbody tr:first-child td{border-top:1px solid var(--border2);}
 .day-total-row td{background:var(--bg2)!important;color:#ffffff!important;font-weight:700;}
 .meal-spacer-tbody td{height:6px;padding:0!important;background:var(--bg2)!important;border:none!important;}
@@ -853,7 +853,7 @@ function renderMenuDay(day){
         ${timeCell}${mealCell}${dishCell}
         <td class="col-ing" style="position:relative;vertical-align:bottom;text-align:right;padding:4px 8px 6px 4px;">
           <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;bottom:6px;">+</button>
-          <span style="color:var(--text2);font-size:12px;">Итого:</span>
+          <span style="font-weight:700;color:#fff;font-size:12px;">Итого:</span>
         </td>
         <td class="col-w" style="vertical-align:bottom;padding-bottom:6px;"></td>
         <td class="col-num" style="vertical-align:bottom;padding-bottom:6px;"></td>
@@ -878,7 +878,7 @@ function renderMenuDay(day){
       html+=`<tr class="meal-total-row">
         <td class="col-ing" style="text-align:right;padding-right:8px;position:relative;">
           <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
-          <span>Итого:</span>
+          <span style="font-weight:700;color:#fff;">Итого:</span>
         </td>
         <td class="col-w"></td>
         <td class="col-num">${n1(mealT.p)}</td>
@@ -889,7 +889,7 @@ function renderMenuDay(day){
     }
 
     html+='</tbody>';
-    html+='<tbody class="meal-spacer-tbody"><tr><td colspan="10" style="height:6px;padding:0;background:var(--bg2);border:none;"></td></tr></tbody>';
+    html+='<tbody class="meal-spacer-tbody"><tr><td colspan="10" style="height:6px;padding:0;background:var(--bg);border:none;"></td></tr></tbody>';
   });
 
   // Day total row
