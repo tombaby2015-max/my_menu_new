@@ -104,7 +104,7 @@ input[type=number]{-moz-appearance:textfield;}
 .btn-pencil:hover{border-color:var(--accent);color:var(--accent);}
 .btn-add-ing{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-weight:400;line-height:1;}
 .btn-add-ing:hover{border-color:var(--accent);color:var(--accent);}
-.btn-save-meal{opacity:1;width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;}
+.btn-save-meal{position:absolute;left:4px;bottom:4px;width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;}
 .btn-save-meal:hover{border-color:var(--green);color:var(--green);}
 .td-time-cell{cursor:pointer;}
 .time-val{padding:2px 5px;border-radius:3px;display:inline-block;transition:background .15s;}
@@ -827,31 +827,37 @@ function renderMenuDay(day){
 
     html+='<tbody class="meal-tbody">';
 
-    const mealCell=`<td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0 22px 0;">
-        <span>${meal}</span>
-      </div>
-      <button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')" style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);">★</button>
-    </td>`;
-    const dishCell=`<td class="col-dish" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
-      <span>${dish}</span>
-      <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;bottom:4px;">✎</button>
-    </td>`;
+    // Time cell
     const timeCell=`<td class="col-time td-time-cell" rowspan="${rs}" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center;vertical-align:middle;"><span class="time-val">${time}</span></td>`;
+
+    // Meal cell — name centered vertically, star at bottom-left
+    const mealCell=`<td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
+      ${meal}
+      <button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button>
+    </td>`;
+
+    // Dish cell — name centered, pencil at bottom-left
+    const dishCell=`<td class="col-dish" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
+      ${dish}
+      <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')">✎</button>
+    </td>`;
+
+    // Recipe cell
     const recCell=`<td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:6px;color:var(--text);">${recipe}</td>`;
 
     if(ings.length===0){
+      // Empty meal — + and "Итого:" at bottom of cell
       html+=`<tr class="meal-group-row">
         ${timeCell}${mealCell}${dishCell}
-        <td class="col-ing" style="vertical-align:middle;text-align:right;padding-right:8px;">
-          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить" style="float:left;margin-top:2px;">+</button>
+        <td class="col-ing" style="position:relative;vertical-align:bottom;text-align:right;padding:4px 8px 6px 4px;">
+          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;bottom:6px;">+</button>
           <span style="color:var(--text2);font-size:12px;">Итого:</span>
         </td>
-        <td class="col-w"></td>
-        <td class="col-num"></td>
-        <td class="col-num"></td>
-        <td class="col-num"></td>
-        <td class="col-kcal"></td>
+        <td class="col-w" style="vertical-align:bottom;padding-bottom:6px;"></td>
+        <td class="col-num" style="vertical-align:bottom;padding-bottom:6px;"></td>
+        <td class="col-num" style="vertical-align:bottom;padding-bottom:6px;"></td>
+        <td class="col-num" style="vertical-align:bottom;padding-bottom:6px;"></td>
+        <td class="col-kcal" style="vertical-align:bottom;padding-bottom:6px;"></td>
         ${recCell}
       </tr>`;
     } else {
@@ -859,17 +865,17 @@ function renderMenuDay(day){
       ings.forEach((ing,i)=>{
         const p=ing.proteins||0,f=ing.fats||0,c=ing.carbs||0,k=ing.calories||0;
         mealT.p+=p; mealT.f+=f; mealT.c+=c; mealT.k+=k;
-        dayT.p+=p;  dayT.f+=f;  dayT.c+=c;  dayT.k+=k;
+        dayT.p+=p; dayT.f+=f; dayT.c+=c; dayT.k+=k;
         if(i===0){
           html+=`<tr class="meal-group-row">${timeCell}${mealCell}${dishCell}${renderIngCell(ing,i,day,meal)}${recCell}</tr>`;
         } else {
           html+=`<tr>${renderIngCell(ing,i,day,meal)}</tr>`;
         }
       });
-      // Totals row
+      // Totals row — "Итого:" right-aligned
       html+=`<tr class="meal-total-row">
         <td class="col-ing" style="text-align:right;padding-right:8px;position:relative;">
-          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
+          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
           <span>Итого:</span>
         </td>
         <td class="col-w"></td>
@@ -884,16 +890,18 @@ function renderMenuDay(day){
     html+='<tbody class="meal-spacer-tbody"><tr><td colspan="10" style="height:6px;padding:0;background:var(--bg2);border:none;"></td></tr></tbody>';
   });
 
-  // Day total: in col-dish + col-w merged, then B F C K, no borders on time/meal/ing/recipe
+  // Day total: "ИТОГО ЗА ДЕНЬ:" spans col-ing+col-w (colspan=2), then B F C K, no borders on outer cells
   html+=`<tbody><tr class="day-total-row">
-    <td class="col-time" style="border:none;background:transparent;"></td>
-    <td class="col-meal" style="border:none;background:transparent;"></td>
-    <td class="col-dish col-w-merged" colspan="2" style="text-align:right;padding-right:8px;font-size:12px;font-weight:700;white-space:nowrap;border:2px solid var(--border2);">ИТОГО ЗА ДЕНЬ:</td>
-    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.p)}</td>
-    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.f)}</td>
-    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.c)}</td>
-    <td class="col-kcal" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.k)}</td>
-    <td class="col-recipe" style="border:none;background:transparent;"></td>
+    <td style="border:none;background:transparent;"></td>
+    <td style="border:none;background:transparent;"></td>
+    <td style="border:none;background:transparent;"></td>
+    <td class="col-ing" style="text-align:right;padding-right:8px;font-weight:700;font-size:12px;white-space:nowrap;border:2px solid var(--border2);">ИТОГО ЗА ДЕНЬ:</td>
+    <td style="border:none;background:transparent;"></td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;color:#fff;">${n1(dayT.p)}</td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;color:#fff;">${n1(dayT.f)}</td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;color:#fff;">${n1(dayT.c)}</td>
+    <td class="col-kcal" style="border:2px solid var(--border2);font-weight:700;color:#fff;">${n1(dayT.k)}</td>
+    <td style="border:none;background:transparent;"></td>
   </tr></tbody>`;
 
   tb.innerHTML=html;
