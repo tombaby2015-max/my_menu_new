@@ -72,14 +72,14 @@ input[type=number]{-moz-appearance:textfield;}
 #sec-menu{overflow:hidden;flex-direction:column;}
 #tableWrap{flex:1;overflow-y:auto;overflow-x:auto;padding:0 14px 16px 14px;}
 #menuTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
-#menuTable thead th{background:var(--th-bg);color:var(--th-text);padding:9px 4px;text-align:center;vertical-align:middle;border:1px solid var(--border);border-top:none;white-space:normal;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:15;overflow:hidden;}
+#menuTable thead th{background:var(--th-bg);color:var(--th-text);padding:6px 4px;text-align:center;vertical-align:middle;border:1px solid var(--border);border-top:none;white-space:normal;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:15;overflow:hidden;line-height:1.3;}
 #menuTable tbody td{padding:6px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;color:var(--text);font-weight:normal;background:var(--bg3);}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
 
 .meal-group-row td{background:var(--bg3)!important;border-top:none!important;}
-.meal-total-row td{background:var(--bg4)!important;border-top:1px solid var(--border)!important;font-weight:600;color:var(--text)!important;}
+.meal-total-row td{background:var(--bg4)!important;border:1px solid var(--border2)!important;border-top:2px solid var(--border2)!important;font-weight:700;color:#ffffff!important;}
 .meal-tbody:first-child tr:first-child td,.meal-tbody tr:first-child td{border-top:1px solid var(--border2);}
-.day-total-row td{background:var(--bg3)!important;color:#ffffff!important;font-weight:700;border-top:2px solid var(--accent)!important;}
+.day-total-row td{background:var(--bg2)!important;color:#ffffff!important;font-weight:700;}
 .meal-spacer-tbody td{height:6px;padding:0!important;background:var(--bg2)!important;border:none!important;}
 .col-time{width:4%;min-width:40px;}
 .col-meal{width:6%;min-width:60px;position:relative;}
@@ -93,18 +93,18 @@ input[type=number]{-moz-appearance:textfield;}
 .w-inp{width:50px;padding:2px 4px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);text-align:center;font-size:12px;}
 .w-inp:focus{outline:none;border-color:var(--accent);}
 .btn-x{display:none;}
-.btn-act{width:16px;height:16px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.btn-act{width:18px;height:18px;border:1px solid var(--border2);border-radius:50%;background:transparent;color:var(--text2);cursor:pointer;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
 .btn-act:hover{border-color:var(--red);color:var(--red);}
-.btn-q{width:16px;height:16px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--yellow);cursor:pointer;font-size:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;transition:all .15s;}
+.btn-q{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--yellow);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:bold;transition:all .15s;}
 .btn-q:hover{border-color:var(--yellow);background:rgba(251,191,36,.1);}
 .btn-q:hover{background:var(--yellow);color:#000;}
-.not-found-bg{background:rgba(244,67,54,.12)!important;}
+.not-found-bg{background:rgba(180,40,40,.40)!important;color:#ffffff!important;}
 .not-found-bg .ing-wrap span{color:var(--red);}
-.btn-pencil{width:16px;height:16px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;position:absolute;left:4px;bottom:4px;}
+.btn-pencil{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;position:absolute;left:4px;bottom:4px;}
 .btn-pencil:hover{border-color:var(--accent);color:var(--accent);}
 .btn-add-ing{width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-weight:400;line-height:1;}
 .btn-add-ing:hover{border-color:var(--accent);color:var(--accent);}
-.btn-save-meal{opacity:1;width:16px;height:16px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:9px;display:inline-flex;align-items:center;justify-content:center;position:absolute;left:4px;bottom:4px;transition:all .15s;}
+.btn-save-meal{opacity:1;width:18px;height:18px;border:1px solid var(--border2);border-radius:3px;background:transparent;color:var(--text2);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;}
 .btn-save-meal:hover{border-color:var(--green);color:var(--green);}
 .td-time-cell{cursor:pointer;}
 .time-val{padding:2px 5px;border-radius:3px;display:inline-block;transition:background .15s;}
@@ -823,26 +823,36 @@ function renderMenuDay(day){
     const md=dd[meal], ings=md?md.ingredients:[], time=mealTimes[meal]||'--:--';
     const dish=md&&md.dish?md.dish:'';
     const recipe=md&&md.recipe?md.recipe:'';
-    const rs=ings.length>0?ings.length+1:1; // rowspan for time/meal/dish/recipe
+    const rs=ings.length>0?ings.length+1:1;
 
     html+='<tbody class="meal-tbody">';
 
+    const mealCell=`<td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0 22px 0;">
+        <span>${meal}</span>
+      </div>
+      <button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')" style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);">★</button>
+    </td>`;
+    const dishCell=`<td class="col-dish" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">
+      <span>${dish}</span>
+      <button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" style="position:absolute;left:4px;bottom:4px;">✎</button>
+    </td>`;
+    const timeCell=`<td class="col-time td-time-cell" rowspan="${rs}" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center;vertical-align:middle;"><span class="time-val">${time}</span></td>`;
+    const recCell=`<td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:6px;color:var(--text);">${recipe}</td>`;
+
     if(ings.length===0){
-      // Empty meal — show all column borders, + button visible
       html+=`<tr class="meal-group-row">
-        <td class="col-time td-time-cell" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center;vertical-align:middle;"><span class="time-val">${time}</span></td>
-        <td class="col-meal" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
-        <td class="col-dish" style="vertical-align:middle;position:relative;">${dish}<button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать">✎</button></td>
-        <td class="col-ing" style="position:relative;vertical-align:middle;">
-          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить ингредиент" style="position:absolute;left:4px;bottom:4px;">+</button>
-          <span style="color:var(--text2);font-size:11px;padding-left:6px;">Итого:</span>
+        ${timeCell}${mealCell}${dishCell}
+        <td class="col-ing" style="vertical-align:middle;text-align:right;padding-right:8px;">
+          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить" style="float:left;margin-top:2px;">+</button>
+          <span style="color:var(--text2);font-size:12px;">Итого:</span>
         </td>
         <td class="col-w"></td>
-        <td class="col-num">—</td>
-        <td class="col-num">—</td>
-        <td class="col-num">—</td>
-        <td class="col-kcal">—</td>
-        <td class="col-recipe" style="vertical-align:middle;color:var(--text);">${recipe}</td>
+        <td class="col-num"></td>
+        <td class="col-num"></td>
+        <td class="col-num"></td>
+        <td class="col-kcal"></td>
+        ${recCell}
       </tr>`;
     } else {
       let mealT={p:0,f:0,c:0,k:0};
@@ -851,21 +861,15 @@ function renderMenuDay(day){
         mealT.p+=p; mealT.f+=f; mealT.c+=c; mealT.k+=k;
         dayT.p+=p;  dayT.f+=f;  dayT.c+=c;  dayT.k+=k;
         if(i===0){
-          html+=`<tr class="meal-group-row">
-            <td class="col-time td-time-cell" rowspan="${rs}" onclick="showTimeDp(event,'${esc(meal)}')" style="text-align:center;vertical-align:middle;"><span class="time-val">${time}</span></td>
-            <td class="col-meal" rowspan="${rs}" style="vertical-align:middle;text-align:center;position:relative;">${meal}<button class="btn-save-meal" onclick="saveMealRecipe('${esc(day)}','${esc(meal)}')">★</button></td>
-            <td class="col-dish" rowspan="${rs}" style="vertical-align:middle;position:relative;">${dish}<button class="btn-pencil" onclick="openRenameDish('${esc(day)}','${esc(meal)}')" title="Переименовать">✎</button></td>
-            ${renderIngCell(ing,i,day,meal)}
-            <td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:6px;color:var(--text);">${recipe}</td>
-          </tr>`;
+          html+=`<tr class="meal-group-row">${timeCell}${mealCell}${dishCell}${renderIngCell(ing,i,day,meal)}${recCell}</tr>`;
         } else {
           html+=`<tr>${renderIngCell(ing,i,day,meal)}</tr>`;
         }
       });
-      // Totals row (rowspan cells continue here)
+      // Totals row
       html+=`<tr class="meal-total-row">
         <td class="col-ing" style="text-align:right;padding-right:8px;position:relative;">
-          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить ингредиент" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
+          <button class="btn-add-ing" onclick="openPS('${esc(day)}','${esc(meal)}')" title="Добавить" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);">+</button>
           <span>Итого:</span>
         </td>
         <td class="col-w"></td>
@@ -880,34 +884,44 @@ function renderMenuDay(day){
     html+='<tbody class="meal-spacer-tbody"><tr><td colspan="10" style="height:6px;padding:0;background:var(--bg2);border:none;"></td></tr></tbody>';
   });
 
-  // Day total — colspan=3 covers Time+Meal+Dish, then Ing col, then W, B, F, C, K
+  // Day total: in col-dish + col-w merged, then B F C K, no borders on time/meal/ing/recipe
   html+=`<tbody><tr class="day-total-row">
-    <td class="col-time" style="text-align:right;"></td>
-    <td class="col-meal" style="text-align:right;"></td>
-    <td class="col-dish" style="text-align:right;font-size:11px;font-weight:700;padding-right:6px;white-space:nowrap;">ИТОГО ЗА ДЕНЬ:</td>
-    <td class="col-ing"></td>
-    <td class="col-w"></td>
-    <td class="col-num">${n1(dayT.p)}</td>
-    <td class="col-num">${n1(dayT.f)}</td>
-    <td class="col-num">${n1(dayT.c)}</td>
-    <td class="col-kcal">${n1(dayT.k)}</td>
-    <td class="col-recipe"></td>
+    <td class="col-time" style="border:none;background:transparent;"></td>
+    <td class="col-meal" style="border:none;background:transparent;"></td>
+    <td class="col-dish col-w-merged" colspan="2" style="text-align:right;padding-right:8px;font-size:12px;font-weight:700;white-space:nowrap;border:2px solid var(--border2);">ИТОГО ЗА ДЕНЬ:</td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.p)}</td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.f)}</td>
+    <td class="col-num" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.c)}</td>
+    <td class="col-kcal" style="border:2px solid var(--border2);font-weight:700;">${n1(dayT.k)}</td>
+    <td class="col-recipe" style="border:none;background:transparent;"></td>
   </tr></tbody>`;
 
   tb.innerHTML=html;
 }
 
+
 function renderIngCell(ing,i,day,meal){
-  const nf=ing.status==='not_found'||ing.status==='partial';
+  const status=ing.status||'exact';
+  const isNotFound=status==='not_found';
+  const isPartial=status==='partial';
   const nameDisp=ing.originalName||ing.name;
-  // ! button with mini popup for delete/replace
-  const actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
-  const qBtn=nf?`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`:'';
-  return `<td class="col-ing${nf?' not-found-bg':''}">
+
+  // Red bg for not_found AND partial — white text
+  const cellClass=`col-ing${(isNotFound||isPartial)?' not-found-bg':''}`;
+
+  // Buttons: ? only for partial, ! only for exact (found), nothing extra for not_found
+  let actionBtn='';
+  if(isPartial){
+    actionBtn=`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`;
+  } else if(!isNotFound){
+    // exact — show ! circle for delete/replace
+    actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
+  }
+
+  return `<td class="${cellClass}">
     <div class="ing-wrap">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nameDisp}</span>
       ${actionBtn}
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${nameDisp}</span>
-      ${qBtn}
     </div>
   </td>
   <td class="col-w"><input class="w-inp" type="number" value="${ing.weight}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
