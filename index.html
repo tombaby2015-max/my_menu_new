@@ -297,6 +297,12 @@ input[type=number]{-moz-appearance:textfield;}
 .dp-product-row:hover{background:var(--accentDim);}
 .dp-pname{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
 .dp-pmeta{font-size:10px;color:var(--text2);white-space:nowrap;}
+
+.fill-cand-row{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);}
+.fill-cand-row:hover{border-color:var(--accent);}
+.fill-cand-name{flex:1;font-size:13px;color:var(--text);}
+.fill-cand-kbju{font-size:11px;color:var(--text2);white-space:nowrap;}
+
 </style>
 </head>
 <body>
@@ -526,6 +532,7 @@ input[type=number]{-moz-appearance:textfield;}
           <button class="ctrl-btn sec" onclick="openModal('pasteKbjuModal')" title="Вставить список с КБЖУ">📋 Вставить КБЖУ</button>
           <button class="ctrl-btn" onclick="openAddProd(null)">+ Добавить</button>
           <button class="ctrl-btn sec" id="btnSelectKbju" onclick="toggleKbjuSelect()">Выбрать</button>
+          <button class="ctrl-btn sec" onclick="startFillKbju()" title="Автозаполнение КБЖУ из базы">🔍 Заполнить КБЖУ</button>
         </div>
       </div>
       <div style="overflow:auto;">
@@ -1614,6 +1621,113 @@ function deleteSelectedKbju(){
   saveAll();renderKbju();
 }
 
+
+const FOODS_DB={"Говядина сырая":{"proteins":18.9,"fats":12.4,"carbs":0.0,"calories":187},"Говядина варёная":{"proteins":25.8,"fats":16.8,"carbs":0.0,"calories":254},"Говядина тушёная":{"proteins":14.3,"fats":17.4,"carbs":0.0,"calories":214},"Свинина сырая":{"proteins":16.4,"fats":27.8,"carbs":0.0,"calories":316},"Свинина варёная":{"proteins":22.6,"fats":31.6,"carbs":0.0,"calories":375},"Баранина сырая":{"proteins":15.6,"fats":16.3,"carbs":0.0,"calories":209},"Баранина варёная":{"proteins":20.8,"fats":15.3,"carbs":0.0,"calories":220},"Курица сырая":{"proteins":18.2,"fats":18.4,"carbs":0.7,"calories":238},"Курица варёная":{"proteins":25.2,"fats":7.4,"carbs":0.0,"calories":170},"Куриная грудка сырая":{"proteins":23.6,"fats":1.9,"carbs":0.4,"calories":113},"Куриная грудка варёная":{"proteins":29.8,"fats":1.8,"carbs":0.5,"calories":137},"Куриная грудка запечённая":{"proteins":26.0,"fats":3.0,"carbs":0.0,"calories":130},"Куриное бедро сырое":{"proteins":17.0,"fats":18.3,"carbs":0.0,"calories":231},"Куриное бедро варёное":{"proteins":21.3,"fats":11.0,"carbs":0.0,"calories":185},"Куриная голень сырая":{"proteins":19.0,"fats":9.4,"carbs":0.0,"calories":158},"Куриная голень варёная":{"proteins":21.6,"fats":7.9,"carbs":0.0,"calories":160},"Куриные крылья сырые":{"proteins":17.4,"fats":15.1,"carbs":0.0,"calories":203},"Индейка сырая":{"proteins":19.2,"fats":4.1,"carbs":0.0,"calories":113},"Индейка варёная":{"proteins":25.3,"fats":4.9,"carbs":0.0,"calories":149},"Индейка грудка сырая":{"proteins":21.6,"fats":1.4,"carbs":0.4,"calories":102},"Кролик сырой":{"proteins":21.2,"fats":11.0,"carbs":0.0,"calories":183},"Кролик тушёный":{"proteins":24.6,"fats":12.9,"carbs":0.0,"calories":212},"Утка сырая":{"proteins":15.8,"fats":38.0,"carbs":0.0,"calories":405},"Печень говяжья":{"proteins":17.4,"fats":3.1,"carbs":5.3,"calories":125},"Печень куриная":{"proteins":20.4,"fats":5.9,"carbs":1.4,"calories":140},"Печень свиная":{"proteins":18.8,"fats":3.6,"carbs":4.7,"calories":130},"Сердце говяжье":{"proteins":15.0,"fats":3.0,"carbs":0.0,"calories":87},"Сердце куриное":{"proteins":15.8,"fats":10.8,"carbs":0.8,"calories":159},"Язык говяжий":{"proteins":13.6,"fats":12.1,"carbs":0.0,"calories":163},"Фарш говяжий":{"proteins":17.2,"fats":20.0,"carbs":0.0,"calories":254},"Фарш свиной":{"proteins":15.0,"fats":26.0,"carbs":0.0,"calories":295},"Фарш куриный":{"proteins":17.0,"fats":9.0,"carbs":0.0,"calories":152},"Фарш смешанный":{"proteins":16.0,"fats":22.0,"carbs":0.0,"calories":262},"Колбаса варёная":{"proteins":12.0,"fats":22.8,"carbs":1.5,"calories":260},"Колбаса докторская":{"proteins":12.8,"fats":22.2,"carbs":1.5,"calories":257},"Сосиски":{"proteins":10.1,"fats":19.8,"carbs":1.5,"calories":226},"Сардельки":{"proteins":11.0,"fats":20.5,"carbs":2.0,"calories":237},"Ветчина":{"proteins":15.0,"fats":10.5,"carbs":1.5,"calories":162},"Бекон":{"proteins":23.0,"fats":45.0,"carbs":0.0,"calories":500},"Горбуша сырая":{"proteins":20.5,"fats":6.5,"carbs":0.0,"calories":142},"Горбуша запечённая":{"proteins":22.9,"fats":7.3,"carbs":0.0,"calories":163},"Лосось сырой":{"proteins":20.0,"fats":15.1,"carbs":0.0,"calories":219},"Лосось запечённый":{"proteins":22.5,"fats":13.8,"carbs":0.0,"calories":206},"Сёмга сырая":{"proteins":20.0,"fats":15.0,"carbs":0.0,"calories":218},"Треска сырая":{"proteins":16.0,"fats":0.6,"carbs":0.0,"calories":69},"Треска варёная":{"proteins":17.8,"fats":0.7,"carbs":0.0,"calories":78},"Минтай сырой":{"proteins":15.9,"fats":0.9,"carbs":0.0,"calories":72},"Минтай запечённый":{"proteins":18.3,"fats":1.0,"carbs":0.0,"calories":82},"Тунец сырой":{"proteins":22.0,"fats":4.6,"carbs":0.0,"calories":132},"Тунец консервированный":{"proteins":22.0,"fats":0.9,"carbs":0.0,"calories":96},"Судак сырой":{"proteins":18.4,"fats":1.1,"carbs":0.0,"calories":83},"Карп сырой":{"proteins":16.0,"fats":5.3,"carbs":0.0,"calories":112},"Щука сырая":{"proteins":18.8,"fats":1.1,"carbs":0.0,"calories":84},"Сельдь":{"proteins":17.7,"fats":19.5,"carbs":0.0,"calories":248},"Скумбрия сырая":{"proteins":18.0,"fats":13.2,"carbs":0.0,"calories":191},"Скумбрия запечённая":{"proteins":21.0,"fats":16.1,"carbs":0.0,"calories":230},"Окунь морской":{"proteins":18.2,"fats":3.3,"carbs":0.0,"calories":103},"Тилапия":{"proteins":20.1,"fats":2.7,"carbs":0.0,"calories":111},"Дорадо":{"proteins":20.0,"fats":3.4,"carbs":0.0,"calories":113},"Форель сырая":{"proteins":19.2,"fats":7.2,"carbs":0.0,"calories":143},"Кета сырая":{"proteins":22.0,"fats":5.6,"carbs":0.0,"calories":138},"Кальмар":{"proteins":18.0,"fats":2.2,"carbs":2.0,"calories":110},"Креветки варёные":{"proteins":20.5,"fats":2.2,"carbs":0.0,"calories":97},"Мидии":{"proteins":11.5,"fats":2.0,"carbs":3.3,"calories":77},"Краб":{"proteins":18.1,"fats":1.1,"carbs":0.0,"calories":85},"Икра красная":{"proteins":31.6,"fats":13.8,"carbs":0.0,"calories":251},"Молоко 1%":{"proteins":3.0,"fats":1.0,"carbs":4.8,"calories":41},"Молоко 2.5%":{"proteins":2.8,"fats":2.5,"carbs":4.7,"calories":52},"Молоко 3.2%":{"proteins":2.9,"fats":3.2,"carbs":4.7,"calories":58},"Молоко 3.5%":{"proteins":2.9,"fats":3.5,"carbs":4.7,"calories":61},"Кефир 0%":{"proteins":3.0,"fats":0.1,"carbs":3.8,"calories":30},"Кефир 1%":{"proteins":2.8,"fats":1.0,"carbs":4.0,"calories":36},"Кефир 2.5%":{"proteins":2.8,"fats":2.5,"carbs":4.0,"calories":50},"Кефир 3.2%":{"proteins":2.7,"fats":3.2,"carbs":4.1,"calories":56},"Йогурт натуральный 0%":{"proteins":5.0,"fats":0.1,"carbs":3.5,"calories":35},"Йогурт натуральный 1.5%":{"proteins":5.0,"fats":1.5,"carbs":3.5,"calories":47},"Йогурт натуральный 3.2%":{"proteins":4.3,"fats":3.2,"carbs":4.3,"calories":62},"Мацони":{"proteins":2.9,"fats":3.2,"carbs":4.5,"calories":58},"Мацони 1.5%":{"proteins":3.0,"fats":1.5,"carbs":4.5,"calories":45},"Мацони 3.2%":{"proteins":2.9,"fats":3.2,"carbs":4.5,"calories":58},"Сметана 10%":{"proteins":3.0,"fats":10.0,"carbs":2.9,"calories":115},"Сметана 15%":{"proteins":2.6,"fats":15.0,"carbs":3.0,"calories":158},"Сметана 20%":{"proteins":2.8,"fats":20.0,"carbs":3.2,"calories":206},"Творог 0%":{"proteins":18.0,"fats":0.1,"carbs":1.8,"calories":80},"Творог 2%":{"proteins":18.0,"fats":2.0,"carbs":3.3,"calories":103},"Творог 5%":{"proteins":17.2,"fats":5.0,"carbs":1.8,"calories":121},"Творог 9%":{"proteins":16.7,"fats":9.0,"carbs":2.0,"calories":159},"Творог 18%":{"proteins":14.0,"fats":18.0,"carbs":2.8,"calories":236},"Творог зернёный":{"proteins":12.0,"fats":5.0,"carbs":2.0,"calories":105},"Сыр твёрдый":{"proteins":25.0,"fats":29.0,"carbs":0.4,"calories":364},"Сыр российский":{"proteins":23.2,"fats":29.0,"carbs":0.0,"calories":347},"Сыр голландский":{"proteins":26.8,"fats":27.3,"carbs":0.0,"calories":352},"Сыр пармезан":{"proteins":38.0,"fats":28.0,"carbs":3.2,"calories":431},"Сыр моцарелла":{"proteins":18.0,"fats":24.4,"carbs":0.0,"calories":280},"Сыр фета":{"proteins":14.2,"fats":21.3,"carbs":0.0,"calories":264},"Сыр адыгейский":{"proteins":18.5,"fats":20.1,"carbs":0.0,"calories":240},"Сыр плавленный":{"proteins":7.0,"fats":13.0,"carbs":10.0,"calories":182},"Сыр сулугуни":{"proteins":20.5,"fats":22.0,"carbs":0.0,"calories":285},"Масло сливочное":{"proteins":0.8,"fats":82.5,"carbs":0.9,"calories":748},"Масло сливочное 72.5%":{"proteins":0.8,"fats":72.5,"carbs":1.3,"calories":662},"Сливки 10%":{"proteins":3.0,"fats":10.0,"carbs":4.0,"calories":118},"Сливки 20%":{"proteins":2.8,"fats":20.0,"carbs":3.6,"calories":205},"Сливки 33%":{"proteins":2.2,"fats":33.0,"carbs":4.0,"calories":322},"Яйцо куриное":{"proteins":12.7,"fats":10.9,"carbs":0.7,"calories":157},"Яйцо варёное":{"proteins":12.9,"fats":11.5,"carbs":0.8,"calories":160},"Яйцо жареное":{"proteins":13.7,"fats":14.7,"carbs":0.8,"calories":192},"Яйцо перепелиное":{"proteins":11.9,"fats":13.1,"carbs":0.6,"calories":168},"Белок яичный":{"proteins":11.1,"fats":0.2,"carbs":0.7,"calories":44},"Желток яичный":{"proteins":16.2,"fats":31.2,"carbs":1.0,"calories":358},"Гречка сырая":{"proteins":12.6,"fats":3.3,"carbs":62.1,"calories":313},"Гречка варёная":{"proteins":4.2,"fats":1.1,"carbs":21.3,"calories":110},"Рис белый сырой":{"proteins":6.7,"fats":0.7,"carbs":78.9,"calories":344},"Рис белый варёный":{"proteins":2.2,"fats":0.5,"carbs":24.9,"calories":116},"Рис бурый сырой":{"proteins":7.4,"fats":2.7,"carbs":73.0,"calories":337},"Рис бурый варёный":{"proteins":2.6,"fats":0.9,"carbs":23.0,"calories":112},"Овсянка сырая":{"proteins":11.9,"fats":5.9,"carbs":65.4,"calories":366},"Овсянка варёная":{"proteins":3.0,"fats":1.7,"carbs":15.0,"calories":88},"Овсяные хлопья":{"proteins":11.0,"fats":6.2,"carbs":65.0,"calories":366},"Перловка сырая":{"proteins":9.3,"fats":1.1,"carbs":73.7,"calories":320},"Перловка варёная":{"proteins":3.1,"fats":0.4,"carbs":22.2,"calories":109},"Пшено сырое":{"proteins":11.5,"fats":3.3,"carbs":66.5,"calories":334},"Пшено варёное":{"proteins":3.0,"fats":0.7,"carbs":17.0,"calories":90},"Манка сырая":{"proteins":10.3,"fats":1.0,"carbs":73.3,"calories":328},"Манка варёная":{"proteins":3.0,"fats":0.6,"carbs":16.7,"calories":80},"Булгур варёный":{"proteins":3.1,"fats":0.2,"carbs":19.0,"calories":83},"Киноа варёная":{"proteins":4.4,"fats":1.9,"carbs":21.3,"calories":120},"Кускус варёный":{"proteins":3.8,"fats":0.2,"carbs":23.2,"calories":112},"Кукуруза варёная":{"proteins":3.0,"fats":1.2,"carbs":22.5,"calories":123},"Кукуруза консервированная":{"proteins":2.2,"fats":1.2,"carbs":22.7,"calories":119},"Чечевица варёная":{"proteins":9.0,"fats":0.4,"carbs":20.0,"calories":111},"Чечевица сырая":{"proteins":24.0,"fats":1.5,"carbs":53.7,"calories":284},"Горох варёный":{"proteins":6.0,"fats":0.5,"carbs":13.8,"calories":81},"Фасоль красная варёная":{"proteins":8.4,"fats":0.5,"carbs":21.5,"calories":123},"Фасоль белая варёная":{"proteins":7.0,"fats":0.5,"carbs":17.5,"calories":102},"Нут варёный":{"proteins":9.0,"fats":2.6,"carbs":27.4,"calories":164},"Тофу":{"proteins":8.1,"fats":4.2,"carbs":0.5,"calories":73},"Макароны варёные":{"proteins":3.9,"fats":0.6,"carbs":22.3,"calories":112},"Макароны сырые":{"proteins":10.4,"fats":1.1,"carbs":74.2,"calories":344},"Спагетти варёные":{"proteins":5.0,"fats":0.9,"carbs":26.0,"calories":131},"Хлеб белый":{"proteins":7.7,"fats":2.4,"carbs":53.4,"calories":266},"Хлеб чёрный":{"proteins":6.8,"fats":1.3,"carbs":40.7,"calories":207},"Хлеб ржаной":{"proteins":6.6,"fats":1.2,"carbs":34.2,"calories":174},"Хлеб цельнозерновой":{"proteins":9.0,"fats":2.5,"carbs":43.0,"calories":229},"Лаваш":{"proteins":9.1,"fats":1.1,"carbs":55.0,"calories":277},"Хлебцы рисовые":{"proteins":8.0,"fats":3.0,"carbs":81.0,"calories":382},"Картофель сырой":{"proteins":2.0,"fats":0.4,"carbs":18.1,"calories":77},"Картофель варёный":{"proteins":2.0,"fats":0.4,"carbs":16.7,"calories":82},"Картофель жареный":{"proteins":2.9,"fats":9.5,"carbs":23.0,"calories":192},"Морковь сырая":{"proteins":1.3,"fats":0.1,"carbs":6.9,"calories":32},"Морковь варёная":{"proteins":0.8,"fats":0.3,"carbs":5.0,"calories":25},"Свёкла сырая":{"proteins":1.5,"fats":0.1,"carbs":8.8,"calories":43},"Свёкла варёная":{"proteins":1.8,"fats":0.0,"carbs":10.8,"calories":49},"Капуста белокочанная":{"proteins":1.8,"fats":0.1,"carbs":4.7,"calories":27},"Капуста квашеная":{"proteins":1.8,"fats":0.1,"carbs":4.0,"calories":19},"Капуста цветная":{"proteins":2.5,"fats":0.3,"carbs":5.4,"calories":30},"Капуста брокколи":{"proteins":2.8,"fats":0.4,"carbs":6.6,"calories":34},"Капуста брюссельская":{"proteins":3.8,"fats":0.3,"carbs":9.0,"calories":43},"Капуста пекинская":{"proteins":1.2,"fats":0.2,"carbs":2.0,"calories":16},"Огурец":{"proteins":0.8,"fats":0.1,"carbs":2.8,"calories":15},"Помидор":{"proteins":0.6,"fats":0.2,"carbs":4.2,"calories":20},"Помидоры черри":{"proteins":0.6,"fats":0.2,"carbs":3.9,"calories":18},"Перец сладкий":{"proteins":1.3,"fats":0.1,"carbs":5.3,"calories":27},"Перец болгарский красный":{"proteins":1.0,"fats":0.3,"carbs":7.2,"calories":31},"Перец болгарский жёлтый":{"proteins":1.0,"fats":0.3,"carbs":6.3,"calories":27},"Кабачок":{"proteins":0.6,"fats":0.3,"carbs":4.6,"calories":24},"Кабачок запечённый":{"proteins":1.0,"fats":0.2,"carbs":5.0,"calories":26},"Баклажан":{"proteins":1.2,"fats":0.1,"carbs":4.5,"calories":24},"Лук репчатый":{"proteins":1.4,"fats":0.0,"carbs":10.4,"calories":41},"Лук зелёный":{"proteins":1.3,"fats":0.1,"carbs":4.6,"calories":19},"Чеснок":{"proteins":6.5,"fats":0.5,"carbs":29.9,"calories":149},"Шпинат":{"proteins":2.9,"fats":0.4,"carbs":2.0,"calories":22},"Листья салата":{"proteins":1.5,"fats":0.2,"carbs":2.1,"calories":17},"Руккола":{"proteins":2.6,"fats":0.7,"carbs":3.7,"calories":25},"Сельдерей":{"proteins":0.9,"fats":0.1,"carbs":2.1,"calories":12},"Тыква":{"proteins":1.0,"fats":0.1,"carbs":4.4,"calories":22},"Горошек зелёный свежий":{"proteins":5.0,"fats":0.2,"carbs":13.3,"calories":73},"Горошек зелёный консервированный":{"proteins":3.6,"fats":0.2,"carbs":9.9,"calories":55},"Фасоль стручковая":{"proteins":2.5,"fats":0.2,"carbs":3.6,"calories":31},"Редис":{"proteins":1.2,"fats":0.1,"carbs":3.4,"calories":19},"Грибы шампиньоны":{"proteins":4.3,"fats":1.0,"carbs":0.1,"calories":27},"Грибы лисички":{"proteins":1.6,"fats":1.1,"carbs":1.5,"calories":19},"Грибы вешенки":{"proteins":2.5,"fats":0.3,"carbs":6.1,"calories":33},"Грибы сушёные":{"proteins":20.1,"fats":1.2,"carbs":13.2,"calories":210},"Имбирь":{"proteins":1.8,"fats":0.8,"carbs":15.8,"calories":80},"Авокадо":{"proteins":2.0,"fats":14.7,"carbs":8.5,"calories":160},"Оливки":{"proteins":0.8,"fats":10.7,"carbs":6.3,"calories":115},"Яблоко":{"proteins":0.4,"fats":0.4,"carbs":9.8,"calories":47},"Груша":{"proteins":0.4,"fats":0.3,"carbs":10.9,"calories":42},"Банан":{"proteins":1.5,"fats":0.2,"carbs":21.8,"calories":89},"Апельсин":{"proteins":0.9,"fats":0.2,"carbs":8.1,"calories":36},"Мандарин":{"proteins":0.8,"fats":0.2,"carbs":7.5,"calories":33},"Лимон":{"proteins":0.9,"fats":0.1,"carbs":3.0,"calories":16},"Грейпфрут":{"proteins":0.7,"fats":0.2,"carbs":6.5,"calories":29},"Клубника":{"proteins":0.8,"fats":0.4,"carbs":7.5,"calories":41},"Малина":{"proteins":0.8,"fats":0.5,"carbs":8.3,"calories":42},"Черника":{"proteins":1.1,"fats":0.6,"carbs":7.6,"calories":44},"Смородина чёрная":{"proteins":1.0,"fats":0.2,"carbs":11.5,"calories":44},"Вишня":{"proteins":1.0,"fats":0.4,"carbs":10.6,"calories":52},"Черешня":{"proteins":1.1,"fats":0.4,"carbs":11.3,"calories":50},"Виноград":{"proteins":0.6,"fats":0.2,"carbs":16.8,"calories":65},"Персик":{"proteins":0.9,"fats":0.1,"carbs":9.5,"calories":46},"Абрикос":{"proteins":0.9,"fats":0.1,"carbs":10.8,"calories":44},"Слива":{"proteins":0.8,"fats":0.3,"carbs":9.6,"calories":43},"Арбуз":{"proteins":0.6,"fats":0.1,"carbs":5.8,"calories":25},"Дыня":{"proteins":0.6,"fats":0.3,"carbs":7.4,"calories":33},"Ананас":{"proteins":0.4,"fats":0.2,"carbs":11.8,"calories":49},"Манго":{"proteins":0.5,"fats":0.3,"carbs":14.0,"calories":67},"Киви":{"proteins":1.0,"fats":0.6,"carbs":10.3,"calories":47},"Хурма":{"proteins":0.5,"fats":0.3,"carbs":15.9,"calories":70},"Гранат":{"proteins":0.9,"fats":0.0,"carbs":14.5,"calories":52},"Клюква":{"proteins":0.5,"fats":0.2,"carbs":6.8,"calories":28},"Инжир":{"proteins":0.7,"fats":0.2,"carbs":13.7,"calories":56},"Финики":{"proteins":2.5,"fats":0.5,"carbs":69.2,"calories":274},"Изюм":{"proteins":2.3,"fats":0.5,"carbs":66.0,"calories":264},"Чернослив":{"proteins":2.3,"fats":0.7,"carbs":57.5,"calories":231},"Курага":{"proteins":5.2,"fats":0.3,"carbs":51.0,"calories":215},"Грецкий орех":{"proteins":15.2,"fats":65.2,"carbs":7.0,"calories":654},"Миндаль":{"proteins":21.2,"fats":52.1,"carbs":13.0,"calories":576},"Кешью":{"proteins":17.2,"fats":43.9,"carbs":22.5,"calories":553},"Фундук":{"proteins":13.0,"fats":61.0,"carbs":17.0,"calories":651},"Арахис":{"proteins":26.3,"fats":45.2,"carbs":9.9,"calories":551},"Арахисовая паста":{"proteins":25.1,"fats":46.1,"carbs":20.0,"calories":588},"Семена подсолнечника":{"proteins":20.7,"fats":52.9,"carbs":10.5,"calories":578},"Семена тыквы":{"proteins":24.5,"fats":45.8,"carbs":4.7,"calories":559},"Семена льна":{"proteins":18.3,"fats":42.2,"carbs":1.6,"calories":534},"Семена кунжута":{"proteins":17.7,"fats":53.8,"carbs":12.2,"calories":565},"Семена чиа":{"proteins":16.5,"fats":30.7,"carbs":42.1,"calories":486},"Фисташки":{"proteins":20.0,"fats":45.4,"carbs":27.2,"calories":562},"Масло подсолнечное":{"proteins":0.0,"fats":99.9,"carbs":0.0,"calories":899},"Масло оливковое":{"proteins":0.0,"fats":99.8,"carbs":0.0,"calories":898},"Масло кукурузное":{"proteins":0.0,"fats":99.9,"carbs":0.0,"calories":899},"Масло льняное":{"proteins":0.0,"fats":99.8,"carbs":0.0,"calories":898},"Масло кокосовое":{"proteins":0.0,"fats":99.9,"carbs":0.0,"calories":892},"Майонез":{"proteins":2.4,"fats":67.0,"carbs":2.6,"calories":627},"Кетчуп":{"proteins":1.8,"fats":0.1,"carbs":17.7,"calories":93},"Горчица":{"proteins":5.7,"fats":6.4,"carbs":22.5,"calories":162},"Соевый соус":{"proteins":6.0,"fats":0.1,"carbs":6.7,"calories":50},"Томатная паста":{"proteins":4.8,"fats":0.5,"carbs":19.0,"calories":82},"Мёд":{"proteins":0.8,"fats":0.0,"carbs":81.5,"calories":329},"Сахар":{"proteins":0.0,"fats":0.0,"carbs":99.8,"calories":399},"Уксус":{"proteins":0.0,"fats":0.0,"carbs":3.0,"calories":11}};
+
+// ── Normalize name for fuzzy match ──
+function normName(s){
+  return s.toLowerCase()
+    .replace(/ё/g,'е')
+    .replace(/[^а-яa-z0-9%\.]/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
+// ── Find candidates from FOODS_DB by partial word overlap ──
+function findFoodCandidates(name){
+  const q=normName(name);
+  const qWords=q.split(' ').filter(w=>w.length>2);
+  const exact=[], partial=[];
+  Object.entries(FOODS_DB).forEach(([dbName,v])=>{
+    const dn=normName(dbName);
+    if(dn===q){ exact.push({dbName,v,score:999}); return; }
+    const matches=qWords.filter(w=>dn.includes(w)).length;
+    if(matches>0) partial.push({dbName,v,score:matches});
+  });
+  // Sort partial by score desc
+  partial.sort((a,b)=>b.score-a.score);
+  return {exact, partial:partial.slice(0,8)};
+}
+
+// ── State for fill wizard ──
+let _fillQueue=[], _fillIdx=0, _fillDone=0, _fillSkipped=0;
+
+function startFillKbju(){
+  // Collect products with empty КБЖУ
+  _fillQueue=Object.entries(kbjuTable)
+    .filter(([n,d])=>!d.archived && (!d.proteins && !d.fats && !d.carbs && !d.calories))
+    .map(([n])=>n);
+  if(!_fillQueue.length){ alert('Нет продуктов с пустым КБЖУ'); return; }
+  _fillIdx=0; _fillDone=0; _fillSkipped=0;
+  showFillStep();
+}
+
+function showFillStep(){
+  if(_fillIdx>=_fillQueue.length){ finishFill(); return; }
+  const name=_fillQueue[_fillIdx];
+  const {exact,partial}=findFoodCandidates(name);
+
+  document.getElementById('fillProdName').textContent=name;
+  document.getElementById('fillProgress').textContent=
+    (_fillIdx+1)+' / '+_fillQueue.length;
+
+  const list=document.getElementById('fillCandList');
+  list.innerHTML='';
+
+  if(exact.length){
+    // Auto-apply exact match silently and move on
+    applyFillEntry(name, exact[0].v);
+    return;
+  }
+
+  if(!partial.length){
+    list.innerHTML='<div style="color:var(--text2);padding:12px 0;">Совпадений не найдено</div>';
+  } else {
+    partial.forEach(({dbName,v})=>{
+      const row=document.createElement('div');
+      row.className='fill-cand-row';
+      row.innerHTML=`
+        <span class="fill-cand-name">${dbName}</span>
+        <span class="fill-cand-kbju">Б${v.proteins} Ж${v.fats} У${v.carbs} К${v.calories}</span>
+        <button class="ctrl-btn" style="padding:2px 10px;font-size:12px;" 
+          onclick="applyFillEntry('${esc(name)}','${dbName}')">Выбрать</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  openModal('fillKbjuModal');
+}
+
+function applyFillEntry(productName, dbNameOrObj){
+  let v;
+  if(typeof dbNameOrObj==='string'){
+    v=FOODS_DB[dbNameOrObj];
+  } else {
+    v=dbNameOrObj;
+  }
+  if(v && kbjuTable[productName]){
+    Object.assign(kbjuTable[productName],{
+      proteins:v.proteins, fats:v.fats, carbs:v.carbs, calories:v.calories
+    });
+    _fillDone++;
+  }
+  closeModal('fillKbjuModal');
+  _fillIdx++;
+  setTimeout(showFillStep,100);
+}
+
+function skipFillEntry(){
+  _fillSkipped++;
+  closeModal('fillKbjuModal');
+  _fillIdx++;
+  setTimeout(showFillStep,100);
+}
+
+function finishFill(){
+  saveAll(); renderKbju(); reEvalStatuses();
+  alert('Готово! Заполнено: '+_fillDone+', пропущено: '+_fillSkipped);
+}
+
 </script>
 
 <div id="editRecipeModal" class="modal-ov">
@@ -1626,5 +1740,24 @@ function deleteSelectedKbju(){
     </div>
   </div>
 </div>
+
+<div id="fillKbjuModal" class="modal-ov">
+  <div class="modal-box" style="max-width:560px;width:95%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div class="modal-title" style="margin:0;">Заполнить КБЖУ</div>
+      <span id="fillProgress" style="color:var(--text2);font-size:13px;"></span>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
+      <div id="fillProdName" style="font-size:16px;font-weight:700;color:var(--accentL);"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
+    <div id="fillCandList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="m-btns" style="margin-top:16px;">
+      <button class="ctrl-btn sec" onclick="skipFillEntry()">Пропустить</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
