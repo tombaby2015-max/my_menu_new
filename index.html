@@ -1633,29 +1633,94 @@ const FOODS_DB={"Говядина сырая":{"proteins":18.9,"fats":12.4,"carb
 function normName(s){
   return s.toLowerCase()
     .replace(/ё/g,'е')
-    .replace(/[^а-яa-z0-9%\.]/g,' ')
+    .replace(/[^а-яa-z0-9%]/g,' ')
     .replace(/\s+/g,' ').trim();
 }
 
-// ── Find candidates from FOODS_DB by partial word overlap ──
+// ── Stem Russian word to root (strip common endings) ──
+function stemRu(w){
+  return w
+    .replace(/(овка|евка|овки|евки|ованный|еванный)$/,'')
+    .replace(/(ующий|ующая|ующее|ующих)$/,'')
+    .replace(/(ечный|очный|ечная)$/,'еч')
+    .replace(/(еные|ёные|еный|ёный)$/,'ен')
+    .replace(/(жаный|жаная|жаное)$/,'жан')
+    .replace(/(ёная|ёный|ёное)$/,'ён')
+    .replace(/(варёный|варёная|варёное|вареный|вареная|вареное)$/,'вар')
+    .replace(/(жареный|жареная|жареное)$/,'жар')
+    .replace(/(сырой|сырая|сырое)$/,'сыр')
+    .replace(/(консервированн)$/,'консерв')
+    .replace(/(запечённый|запечённая|запечённое|запеченный)$/,'запеч')
+    .replace(/(тушёный|тушёная|тушёное|тушеный)$/,'туш')
+    .replace(/(парниковый|парниковая|парниковое)$/,'')
+    .replace(/(овый|овая|овое|овых|овых)$/,'')
+    .replace(/(ский|ская|ское|ских)$/,'ск')
+    .replace(/(ный|ная|ное|ных|ные)$/,'н')
+    .replace(/(ный|ная|ное)$/,'н')
+    .replace(/(ений|ения|ение)$/,'ен')
+    .replace(/(ий|ие|ия|ых|ые|ой|ое|ую|ей)$/,'')
+    .replace(/(ки|ка|ку|ке)$/,'к')
+    .replace(/(цы|ца|цу|це)$/,'ц')
+    .replace(/(жи|жа|же)$/,'ж')
+    .replace(/(щи|щу|ще)$/,'щ')
+    .replace(/(ов|ев|ем|ам|ах|ом)$/,'')
+    .replace(/(ть|ться)$/,'')
+    .replace(/а$|я$/,'')
+    .replace(/ы$|и$/,'');
+}
+
+// ── Extract numbers like "1.5%" from name ──
+function extractPcts(s){
+  return (s.match(/\d+(?:\.\d+)?%/g)||[]);
+}
+
+// ── Find candidates from FOODS_DB ──
 function findFoodCandidates(name){
-  const q=normName(name);
-  // Extract only meaningful Cyrillic words (>2 chars), stop at numbers/latin brands
-  const allWords=q.split(' ');
-  const qWords=[];
-  for(const w of allWords){
-    if(/^[а-я]{3,}$/.test(w)) qWords.push(w);
-    // Stop if we hit something that looks like a brand marker (short latin/number token)
-  }
+  // Strip content in quotes (brand names), articles like #0-1, sizes like 450г
+  const cleanName=name
+    .replace(/["«»""][^"«»""]+["«»""]/g,' ')  // remove "Brand" quoted
+    .replace(/#[^\s]*/g,' ')                   // remove #0-1 type
+    .replace(/\b\d+\s*[гкгмлшт]+\b/gi,' ')  // remove 450г, 15шт
+    .replace(/\b\d+\s*%/g, w=>w);             // keep 1.5%
+  const q=normName(cleanName);
+  // Only Cyrillic words ≥3 chars — ignore brand names and Latin
+  const cyrWords=q.split(' ').filter(w=>/^[а-я]{3,}$/.test(w));
+  // Also extract % values like "1.5%"
+  const pcts=extractPcts(q);
+
   const exact=[], partial=[];
   Object.entries(FOODS_DB).forEach(([dbName,v])=>{
     const dn=normName(dbName);
+    // Exact after normalization
     if(dn===q){ exact.push({dbName,v,score:999}); return; }
-    // Also try exact match on first word(s) only
-    const matches=qWords.filter(w=>dn.includes(w)).length;
-    if(matches>0) partial.push({dbName,v,score:matches});
+
+    const dnWords=dn.split(' ').filter(w=>/^[а-я]{3,}$/.test(w));
+    const dnPcts=extractPcts(dn);
+
+    // Score: count stemmed word matches
+    let score=0;
+    cyrWords.forEach(qw=>{
+      const qStem=stemRu(qw);
+      if(dnWords.some(dw=>stemRu(dw)===qStem || dw.startsWith(qStem) || qStem.startsWith(stemRu(dw))))
+        score++;
+    });
+    // Bonus for matching % value (e.g. "1.5%")
+    pcts.forEach(p=>{ if(dnPcts.includes(p)) score+=0.5; });
+
+    if(score>0) partial.push({dbName,v,score});
   });
+
   partial.sort((a,b)=>b.score-a.score);
+
+  // Auto-exact: if top candidate matches ALL cyrillic words + pcts — treat as exact
+  if(!exact.length && partial.length){
+    const top=partial[0];
+    const totalExpected=cyrWords.length + pcts.length*0.5;
+    if(top.score>=totalExpected && totalExpected>0){
+      exact.push(top);
+    }
+  }
+
   return {exact, partial:partial.slice(0,8)};
 }
 
@@ -1766,16 +1831,16 @@ function finishFill(){
 </div>
 
 <div id="fillKbjuModal" class="modal-ov">
-  <div class="modal-box" style="max-width:560px;width:95%;">
+  <div class="modal-box" style="max-width:560px;width:95%;background:var(--bg);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <div class="modal-title" style="margin:0;">Заполнить КБЖУ</div>
-      <span id="fillProgress" style="color:var(--text2);font-size:13px;"></span>
+      <div class="modal-title" style="margin:0;color:#9499b0;">Заполнить КБЖУ</div>
+      <span id="fillProgress" style="color:#9499b0;font-size:13px;"></span>
     </div>
     <div style="margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
-      <div id="fillProdName" style="font-size:16px;font-weight:700;color:var(--accentL);"></div>
+      <div style="font-size:11px;color:#9499b0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
+      <div id="fillProdName" style="font-size:16px;font-weight:700;color:#9499b0;"></div>
     </div>
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
+    <div style="font-size:11px;color:#9499b0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
     <div id="fillCandList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
     <div class="m-btns" style="margin-top:16px;">
       <button class="ctrl-btn sec" onclick="skipFillEntry()">Пропустить</button>
