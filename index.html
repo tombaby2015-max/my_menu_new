@@ -77,9 +77,10 @@ input[type=number]{-moz-appearance:textfield;}
 #menuTable tbody td.col-ing,#menuTable tbody td.col-recipe{text-align:left;}
 #menuTable tbody td.col-dish{text-align:center;}
 #menuTable tbody tr:nth-child(even) td{background:var(--bg4);color:var(--text);}
+#menuTable tbody tr td[style*="rgba(160"]{background:rgba(160,35,35,.55)!important;color:#fff!important;}
 
-.meal-group-row td{background:var(--bg3)!important;border-top:none!important;}
-.meal-total-row td{background:var(--bg5)!important;border:1px solid var(--border2)!important;border-top:2px solid var(--border2)!important;font-weight:700;color:#ffffff!important;font-size:13px;}
+.meal-group-row td{border-top:none;}
+.meal-total-row td{background:var(--bg5)!important;border:1px solid var(--border2)!important;border-top:3px solid #9a9cb0!important;font-weight:700;color:#ffffff!important;font-size:13px;}
 .meal-tbody:first-child tr:first-child td,.meal-tbody tr:first-child td{border-top:1px solid var(--border2);}
 .day-total-row td{background:var(--bg2)!important;color:#ffffff!important;font-weight:700;}
 .meal-spacer-tbody td{height:6px;padding:0!important;background:var(--bg2)!important;border:none!important;}
@@ -604,7 +605,7 @@ input[type=number]{-moz-appearance:textfield;}
     <input id="psInput" type="text" placeholder="Поиск продукта..." oninput="filterPS()">
     <div id="psWrap">
       <table class="ps-tbl">
-        <thead><tr><th style="text-align:left">Продукт</th><th>Б</th><th>Ж</th><th>У</th><th>Ккал</th></tr></thead>
+        <thead><tr><th style="text-align:left">Продукт</th><th>Б</th><th>Ж</th><th>У</th><th>Ккал</th><th>Цена</th></tr></thead>
         <tbody id="psBody"></tbody>
       </table>
     </div>
@@ -845,7 +846,10 @@ function renderMenuDay(day){
     </td>`;
 
     // Recipe cell
-    const recCell=`<td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:6px;color:var(--text);">${recipe}</td>`;
+    const recCell=`<td class="col-recipe" rowspan="${rs}" style="vertical-align:top;padding-top:6px;color:var(--text);position:relative;">
+      <span>${recipe}</span>
+      <button class="btn-pencil" onclick="openEditRecipe('${esc(day)}','${esc(meal)}')" style="position:absolute;right:4px;bottom:4px;" title="Редактировать приготовление">✎</button>
+    </td>`;
 
     if(ings.length===0){
       // Empty meal — + and "Итого:" at bottom of cell
@@ -913,31 +917,29 @@ function renderIngCell(ing,i,day,meal){
   const status=ing.status||'exact';
   const isNotFound=status==='not_found';
   const isPartial=status==='partial';
+  const isRed=isNotFound||isPartial;
   const nameDisp=ing.originalName||ing.name;
+  const redStyle=isRed?'background:rgba(160,35,35,.55)!important;color:#fff!important;':'';
+  const redInput=isRed?'style="background:rgba(130,25,25,.6)!important;color:#fff!important;"':'';
 
-  // Red bg for not_found AND partial — white text
-  const cellClass=`col-ing${(isNotFound||isPartial)?' not-found-bg':''}`;
-
-  // Buttons: ? only for partial, ! only for exact (found), nothing extra for not_found
   let actionBtn='';
   if(isPartial){
     actionBtn=`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`;
   } else if(!isNotFound){
-    // exact — show ! circle for delete/replace
     actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
   }
 
-  return `<td class="${cellClass}">
+  return `<td class="col-ing" style="${redStyle}">
     <div class="ing-wrap">
-      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nameDisp}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isRed?'#fff':'inherit'};">${nameDisp}</span>
       ${actionBtn}
     </div>
   </td>
-  <td class="col-w"><input class="w-inp" type="number" value="${ing.weight}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
-  <td class="col-num">${n1(ing.proteins)}</td>
-  <td class="col-num">${n1(ing.fats)}</td>
-  <td class="col-num">${n1(ing.carbs)}</td>
-  <td class="col-kcal">${n1(ing.calories)}</td>`;
+  <td class="col-w" style="${redStyle}"><input class="w-inp" type="number" value="${ing.weight}" ${redInput} onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td>
+  <td class="col-num" style="${redStyle}">${n1(ing.proteins)}</td>
+  <td class="col-num" style="${redStyle}">${n1(ing.fats)}</td>
+  <td class="col-num" style="${redStyle}">${n1(ing.carbs)}</td>
+  <td class="col-kcal" style="${redStyle}">${n1(ing.calories)}</td>`;
 }
 
 
@@ -975,7 +977,9 @@ function showSug(e,day,meal,idx){
 
 function replIng(day,meal,idx,name){
   const ing=menuData[day][meal].ingredients[idx],k=kbjuTable[name],r=ing.weight/100;
-  Object.assign(ing,{name,originalName:name,status:'exact',suggestions:[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});
+  Object.assign(ing,{name,originalName:name,status:'exact',suggestions:[],
+    proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r,
+    price:k.price,priceType:k.priceType,packWeight:k.packWeight});
   saveAll();renderMenuDay(curDay);
 }
 
@@ -1002,16 +1006,54 @@ function openPS(day,meal){
 }
 function filterPS(){
   const q=document.getElementById('psInput').value.toLowerCase();
-  document.getElementById('psBody').innerHTML=Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).map(([name,d])=>`<tr onclick="pickProd('${esc(name)}')"><td style="text-align:left">${name}</td><td>${n1(d.proteins)}</td><td>${n1(d.fats)}</td><td>${n1(d.carbs)}</td><td>${n1(d.calories)}</td></tr>`).join('');
+  const tbody=document.getElementById('psBody');
+  tbody.innerHTML='';
+  Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).forEach(([name,d])=>{
+    const price=d.price!=null?d.price+'₽':'—';
+    const unit=d.priceType==='per_pack'&&d.packWeight?d.packWeight+'г':'кг';
+    const tr=document.createElement('tr');
+    tr.dataset.name=name;
+    tr.style.cursor='pointer';
+    const data=[
+      [name,'text-align:left'],
+      [n1(d.proteins),''],
+      [n1(d.fats),''],
+      [n1(d.carbs),''],
+      [n1(d.calories),''],
+      [price+'/'+unit,'color:var(--text2);font-size:11px;'],
+    ];
+    data.forEach(([txt,style])=>{
+      const td=document.createElement('td');
+      td.textContent=txt;
+      if(style) td.style.cssText=style;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
 }
+// Single delegated listener — set once on psBody
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('psBody').addEventListener('click',e=>{
+    const tr=e.target.closest('tr[data-name]');
+    if(tr) pickProd(tr.dataset.name);
+  });
+});
 function pickProd(name){
   if(!_psTarget)return;
-  const {day,meal}=_psTarget;
+  const {day,meal,replaceIdx}=_psTarget;
   if(!menuData[day])menuData[day]={};
   if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
   const k=kbjuTable[name];
-  menuData[day][meal].ingredients.push({name,originalName:name,weight:100,status:'exact',suggestions:[],proteins:k.proteins,fats:k.fats,carbs:k.carbs,calories:k.calories});
-  saveAll();renderMenuDay(curDay);closeModal('prodSelModal');
+  if(replaceIdx!=null){
+    // Replace mode
+    replIng(day,meal,replaceIdx,name);
+  } else {
+    menuData[day][meal].ingredients.push({name,originalName:name,weight:100,status:'exact',suggestions:[],
+      proteins:k.proteins,fats:k.fats,carbs:k.carbs,calories:k.calories,
+      price:k.price,priceType:k.priceType,packWeight:k.packWeight});
+    saveAll();renderMenuDay(curDay);
+  }
+  closeModal('prodSelModal');
 }
 
 // Save meal recipe
@@ -1423,15 +1465,18 @@ document.addEventListener('DOMContentLoaded',init);
 // ── ! action menu ──────────────────────────────────────
 function showActMenu(e,day,meal,idx){
   e.stopPropagation(); document.querySelectorAll('.dp').forEach(d=>d.remove());
-  const dp=document.createElement('div'); dp.className='dp'; dp.style.cssText='min-width:100px;padding:4px;';
-  // Delete option
+  const dp=document.createElement('div'); dp.className='dp'; dp.style.cssText='min-width:110px;padding:4px;';
   const del=document.createElement('div'); del.className='dp-i';
   del.innerHTML='✕ Удалить'; del.style.color='var(--red)';
   del.onclick=ev=>{ev.stopPropagation(); delIng(day,meal,idx); dp.remove();};
-  // Replace option
   const rep=document.createElement('div'); rep.className='dp-i';
   rep.innerHTML='✎ Заменить';
-  rep.onclick=ev=>{ev.stopPropagation(); dp.remove(); openReplaceIng(e,day,meal,idx);};
+  rep.onclick=ev=>{
+    ev.stopPropagation(); dp.remove();
+    // Open same modal as "+", but in replace mode
+    _psTarget={day,meal,replaceIdx:idx};
+    document.getElementById('psInput').value=''; filterPS(); openModal('prodSelModal');
+  };
   dp.appendChild(del); dp.appendChild(rep);
   const r=e.currentTarget.getBoundingClientRect();
   dp.style.left=r.left+'px'; dp.style.top=(r.bottom+3)+'px';
@@ -1488,6 +1533,34 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
   document.body.appendChild(dp);
 }
 
+
+function openEditRecipe(day,meal){
+  _renameTarget={day,meal,type:'recipe'};
+  const md=menuData[day]&&menuData[day][meal];
+  document.getElementById('editRecipeTA').value=md&&md.recipe?md.recipe:'';
+  openModal('editRecipeModal');
+  setTimeout(()=>document.getElementById('editRecipeTA').focus(),50);
+}
+function saveEditRecipe(){
+  if(!_renameTarget)return;
+  const {day,meal}=_renameTarget;
+  if(!menuData[day])menuData[day]={};
+  if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
+  menuData[day][meal].recipe=document.getElementById('editRecipeTA').value.trim();
+  saveAll();renderMenuDay(curDay);closeModal('editRecipeModal');
+}
+
 </script>
+
+<div id="editRecipeModal" class="modal-ov">
+  <div class="modal-box" style="max-width:520px;width:95%;">
+    <div class="modal-title">Приготовление</div>
+    <textarea id="editRecipeTA" style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px;color:var(--text);font-size:13px;resize:vertical;"></textarea>
+    <div class="m-btns">
+      <button class="ctrl-btn sec" onclick="closeModal('editRecipeModal')">Отмена</button>
+      <button class="ctrl-btn prim" onclick="saveEditRecipe()">Сохранить</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
