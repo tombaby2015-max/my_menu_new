@@ -298,10 +298,15 @@ input[type=number]{-moz-appearance:textfield;}
 .dp-pname{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
 .dp-pmeta{font-size:10px;color:var(--text2);white-space:nowrap;}
 
-.fill-cand-row{display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);}
-.fill-cand-row:hover{border-color:var(--accent);}
-.fill-cand-name{flex:1;font-size:13px;color:var(--text);}
-.fill-cand-kbju{font-size:11px;color:var(--text2);white-space:nowrap;}
+.fill-cand-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg4);border-radius:6px;border:1px solid var(--border2);}
+.fill-cand-row:hover{border-color:var(--accent);background:var(--bg5);}
+.fill-cand-name{flex:1;font-size:15px;font-weight:600;color:#ffffff;}
+.fill-cand-kbju{font-size:13px;color:#ffffff;white-space:nowrap;}
+#fillKbjuModal .modal-box{background:var(--bg2);}
+#fillKbjuModal .modal-title{color:var(--text2);}
+#fillProdName{font-size:17px;font-weight:700;color:var(--text2);}
+#fillProgress{color:var(--text2);}
+#fillKbjuModal [style*="Продукт"]{color:var(--text2)!important;}
 
 </style>
 </head>
@@ -1635,15 +1640,21 @@ function normName(s){
 // ── Find candidates from FOODS_DB by partial word overlap ──
 function findFoodCandidates(name){
   const q=normName(name);
-  const qWords=q.split(' ').filter(w=>w.length>2);
+  // Extract only meaningful Cyrillic words (>2 chars), stop at numbers/latin brands
+  const allWords=q.split(' ');
+  const qWords=[];
+  for(const w of allWords){
+    if(/^[а-я]{3,}$/.test(w)) qWords.push(w);
+    // Stop if we hit something that looks like a brand marker (short latin/number token)
+  }
   const exact=[], partial=[];
   Object.entries(FOODS_DB).forEach(([dbName,v])=>{
     const dn=normName(dbName);
     if(dn===q){ exact.push({dbName,v,score:999}); return; }
+    // Also try exact match on first word(s) only
     const matches=qWords.filter(w=>dn.includes(w)).length;
     if(matches>0) partial.push({dbName,v,score:matches});
   });
-  // Sort partial by score desc
   partial.sort((a,b)=>b.score-a.score);
   return {exact, partial:partial.slice(0,8)};
 }
@@ -1667,30 +1678,43 @@ function showFillStep(){
   const {exact,partial}=findFoodCandidates(name);
 
   document.getElementById('fillProdName').textContent=name;
-  document.getElementById('fillProgress').textContent=
-    (_fillIdx+1)+' / '+_fillQueue.length;
+  document.getElementById('fillProgress').textContent=(_fillIdx+1)+' / '+_fillQueue.length;
 
   const list=document.getElementById('fillCandList');
   list.innerHTML='';
 
   if(exact.length){
-    // Auto-apply exact match silently and move on
     applyFillEntry(name, exact[0].v);
     return;
   }
 
   if(!partial.length){
-    list.innerHTML='<div style="color:var(--text2);padding:12px 0;">Совпадений не найдено</div>';
+    const empty=document.createElement('div');
+    empty.style.cssText='color:var(--text2);padding:12px 0;';
+    empty.textContent='Совпадений не найдено';
+    list.appendChild(empty);
   } else {
     partial.forEach(({dbName,v})=>{
       const row=document.createElement('div');
       row.className='fill-cand-row';
-      row.innerHTML=`
-        <span class="fill-cand-name">${dbName}</span>
-        <span class="fill-cand-kbju">Б${v.proteins} Ж${v.fats} У${v.carbs} К${v.calories}</span>
-        <button class="ctrl-btn" style="padding:2px 10px;font-size:12px;" 
-          onclick="applyFillEntry('${esc(name)}','${dbName}')">Выбрать</button>
-      `;
+
+      const nameSpan=document.createElement('span');
+      nameSpan.className='fill-cand-name';
+      nameSpan.textContent=dbName;
+
+      const kbjuSpan=document.createElement('span');
+      kbjuSpan.className='fill-cand-kbju';
+      kbjuSpan.textContent='Б — '+v.proteins+', Ж — '+v.fats+', У — '+v.carbs+', Ккал — '+v.calories;
+
+      const btn=document.createElement('button');
+      btn.className='ctrl-btn';
+      btn.style.cssText='padding:2px 10px;font-size:13px;';
+      btn.textContent='Выбрать';
+      btn.addEventListener('click',()=>applyFillEntry(name, v));
+
+      row.appendChild(nameSpan);
+      row.appendChild(kbjuSpan);
+      row.appendChild(btn);
       list.appendChild(row);
     });
   }
@@ -1748,10 +1772,10 @@ function finishFill(){
       <span id="fillProgress" style="color:var(--text2);font-size:13px;"></span>
     </div>
     <div style="margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
       <div id="fillProdName" style="font-size:16px;font-weight:700;color:var(--accentL);"></div>
     </div>
-    <div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
     <div id="fillCandList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
     <div class="m-btns" style="margin-top:16px;">
       <button class="ctrl-btn sec" onclick="skipFillEntry()">Пропустить</button>
