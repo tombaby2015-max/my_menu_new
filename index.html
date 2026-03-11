@@ -1678,6 +1678,17 @@ confidence:
       })
     });
     const data=await resp.json();
+    // Check for API error
+    if(data.error){
+      document.getElementById('fillStatus').textContent='Ошибка API: '+JSON.stringify(data.error);
+      console.error('API error:', data);
+      return;
+    }
+    if(!data.content || !Array.isArray(data.content)){
+      document.getElementById('fillStatus').textContent='Неожиданный ответ: '+JSON.stringify(data).slice(0,200);
+      console.error('Unexpected response:', data);
+      return;
+    }
     const text=data.content.map(c=>c.text||'').join('');
     // Strip markdown fences if present
     const clean=text.replace(/```json|```/g,'').trim();
