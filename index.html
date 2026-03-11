@@ -775,8 +775,13 @@ function showBadge(t,c){
 // ══════════════════════════════════════════════════════════════════
 function init(){
   loadAll();
+  // Restore last section
+  const lastSec=localStorage.getItem('lastSection')||'menu';
+  // Set curDay to today's day of week
+  const todayIdx=(new Date().getDay()+6)%7; // 0=Mon..6=Sun
+  curDay=DAYS[todayIdx];
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('dayTabsWrap').style.display='block';
+  document.getElementById('dayTabsWrap').style.display=lastSec==='menu'?'block':'none';
   buildDayTabs();
   renderMenuDay(curDay);
   renderKbju();
@@ -785,6 +790,8 @@ function init(){
   document.getElementById('notesArea').value=notes;
   loadFromKV().then(ok=>{
     if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;}
+    // Apply saved section after data loaded
+    goSec(lastSec);
   });
   document.addEventListener('click',e=>{
     if(!e.target.closest('#navDropdown')&&!e.target.closest('#sectionsBtn')) document.getElementById('navDropdown').classList.remove('open');
@@ -806,6 +813,7 @@ function goSec(sec){
   document.getElementById('sec-'+sec).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.sec===sec));
   document.getElementById('dayTabsWrap').style.display=sec==='menu'?'block':'none';
+  localStorage.setItem('lastSection', sec);
   if(sec==='cost') calcCosts();
   if(sec==='kbju') renderKbju();
   if(sec==='saved') renderSaved();
