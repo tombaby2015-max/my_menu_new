@@ -1668,28 +1668,23 @@ confidence:
 Важно: верни ровно ${_fillQueue.length} объектов в массиве, по одному на каждый продукт.`;
 
   try{
-    const resp=await fetch(WORKER_URL+'/api/claude',{
+    const resp=await fetch(WORKER_URL+'/api/gemini',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4000,
-        messages:[{role:'user',content:prompt}]
-      })
+      body:JSON.stringify({prompt})
     });
     const data=await resp.json();
-    // Check for API error
     if(data.error){
       document.getElementById('fillStatus').textContent='Ошибка API: '+JSON.stringify(data.error);
       console.error('API error:', data);
       return;
     }
-    if(!data.content || !Array.isArray(data.content)){
+    if(!data.text){
       document.getElementById('fillStatus').textContent='Неожиданный ответ: '+JSON.stringify(data).slice(0,200);
       console.error('Unexpected response:', data);
       return;
     }
-    const text=data.content.map(c=>c.text||'').join('');
+    const text=data.text;
     // Strip markdown fences if present
     const clean=text.replace(/```json|```/g,'').trim();
     _fillResults=JSON.parse(clean);
