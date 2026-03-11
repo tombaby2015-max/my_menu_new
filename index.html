@@ -775,6 +775,7 @@ function showBadge(t,c){
 // ══════════════════════════════════════════════════════════════════
 function init(){
   loadAll();
+  reEvalStatuses();
   // Restore last section IMMEDIATELY — before any async to avoid flicker
   const lastSec=localStorage.getItem('lastSection')||'menu';
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -793,7 +794,7 @@ function init(){
   document.getElementById('notesArea').value=notes;
   loadFromKV().then(ok=>{
     if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;}
-    // Apply saved section after data loaded
+    reEvalStatuses();
     goSec(lastSec);
   });
   document.addEventListener('click',e=>{
