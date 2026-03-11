@@ -775,13 +775,16 @@ function showBadge(t,c){
 // ══════════════════════════════════════════════════════════════════
 function init(){
   loadAll();
-  // Restore last section
+  // Restore last section IMMEDIATELY — before any async to avoid flicker
   const lastSec=localStorage.getItem('lastSection')||'menu';
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+lastSec).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.sec===lastSec));
+  document.getElementById('dayTabsWrap').style.display=lastSec==='menu'?'block':'none';
   // Set curDay to today's day of week
   const todayIdx=(new Date().getDay()+6)%7; // 0=Mon..6=Sun
   curDay=DAYS[todayIdx];
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('dayTabsWrap').style.display=lastSec==='menu'?'block':'none';
   buildDayTabs();
   renderMenuDay(curDay);
   renderKbju();
