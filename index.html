@@ -1620,7 +1620,11 @@ function toggleKbjuSelect(){
 }
 
 function selectAllKbju(){
-  document.querySelectorAll('.kbju-sel-cb').forEach(cb=>cb.checked=true);
+  const cbs=document.querySelectorAll('.kbju-sel-cb');
+  const allChecked=[...cbs].every(cb=>cb.checked);
+  cbs.forEach(cb=>cb.checked=!allChecked);
+  const btn=document.getElementById('btnSelectAll');
+  btn.textContent=allChecked?'Выбрать все':'Снять все';
 }
 
 function deleteSelectedKbju(){
