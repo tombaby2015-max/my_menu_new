@@ -1061,9 +1061,24 @@ function filterPS(){
 }
 // Single delegated listener — set once on psBody
 document.addEventListener('DOMContentLoaded',()=>{
+  // Products picker delegation
   document.getElementById('psBody').addEventListener('click',e=>{
     const tr=e.target.closest('tr[data-name]');
     if(tr) pickProd(tr.dataset.name);
+  });
+  // KBJU table delegation
+  document.getElementById('kbjuBody').addEventListener('click',e=>{
+    const name=e.target.dataset.name?decodeURIComponent(e.target.dataset.name):null;
+    if(e.target.classList.contains('kbju-edit-btn') && name){ openAddProd(name); return; }
+    if(e.target.classList.contains('kbju-arc-btn') && name){ togArc(name); return; }
+    if(e.target.classList.contains('p-badge') && e.target.dataset.ph){ e.stopPropagation(); showPH(decodeURIComponent(e.target.dataset.ph)); return; }
+    if(_kbjuSelectMode){
+      const tr=e.target.closest('tr.kbju-row');
+      if(tr && !e.target.classList.contains('kbju-sel-cb')){
+        const cb=tr.querySelector('.kbju-sel-cb');
+        if(cb) cb.checked=!cb.checked;
+      }
+    }
   });
 });
 function pickProd(name){
@@ -1195,13 +1210,20 @@ function renderKbju(){
   const row=([name,d],i,isA)=>{
     const h=d.priceHistory||[],cur=h.length?h[h.length-1]:null,prev=h.length>1?h[h.length-2].price:null;
     let bc='eq',sym='=';if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
+    const dn=encodeURIComponent(name);
     const actionCell=_kbjuSelectMode
-      ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+esc(name)+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
-      :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="openAddProd(\''+esc(name)+'\')">Ред.</button><button class="ctrl-btn sec" style="padding:2px 7px;font-size:12px;" onclick="togArc(\''+esc(name)+'\')">'+(isA?'↩':'Арх.')+'</button></td>';
-    return '<tr style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'" '
-      +(_kbjuSelectMode?'onclick="this.querySelector(\'.kbju-sel-cb\').checked=!this.querySelector(\'.kbju-sel-cb\').checked"':'')+
-      '><td style="text-align:center;color:var(--text2)">'+(i+1)+'</td><td style="text-align:left">'+name+'</td><td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td><td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td><td><div class="price-cell"><span>'+(cur?Math.round(cur.price).toLocaleString('ru-RU')+' ֏':'—')+'</span>'+(h.length?'<span class="p-badge '+bc+'" onclick="event.stopPropagation();showPH(\''+esc(name)+'\');" title="История">'+sym+'</span>':'')+(cur?'<span class="p-date">'+cur.date+'</span>':'')+'</div></td>'+actionCell+'</tr>';
+      ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+dn+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
+      :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec kbju-edit-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">Ред.</button><button class="ctrl-btn sec kbju-arc-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">'+(isA?'↩':'Арх.')+'</button></td>';
+    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'
+      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td><td style="text-align:left">'+name+'</td>'
+      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'
+      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'
+      +'<td><div class="price-cell"><span>'+(cur?Math.round(cur.price).toLocaleString('ru-RU')+' ֍':'—')+'</span>'
+      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="История">'+sym+'</span>':'')
+      +(cur?'<span class="p-date">'+cur.date+'</span>':'')
+      +'</div></td>'+actionCell+'</tr>';
   };
+
   let html=act.map((e,i)=>row(e,i,false)).join('');
   if(arc.length)html+='<tr class="arc-hdr"><td colspan="8">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
   document.getElementById('kbjuBody').innerHTML=html;
@@ -1642,7 +1664,7 @@ function deleteSelectedKbju(){
   const checked=document.querySelectorAll('.kbju-sel-cb:checked');
   if(!checked.length){alert('Ничего не выбрано');return;}
   if(!confirm('Удалить '+checked.length+' продукт(ов)?'))return;
-  checked.forEach(cb=>{ delete kbjuTable[cb.dataset.name]; });
+  checked.forEach(cb=>{ delete kbjuTable[decodeURIComponent(cb.dataset.name)]; });
   saveAll();renderKbju();
 }
 
