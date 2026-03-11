@@ -1668,7 +1668,7 @@ confidence:
 Важно: верни ровно ${_fillQueue.length} объектов в массиве, по одному на каждый продукт.`;
 
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch(WORKER_URL+'/api/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
