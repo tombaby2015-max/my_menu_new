@@ -549,7 +549,7 @@ input[type=number]{-moz-appearance:textfield;}
             <th onclick="sortK('carbs')">У ⇅</th>
             <th onclick="sortK('calories')">Ккал ⇅</th>
             <th>Цена</th>
-            <th id="thAction" style="white-space:nowrap;">Действие <button id="btnDeleteSelected" class="ctrl-btn" style="display:none;padding:2px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);margin-left:4px;" onclick="deleteSelectedKbju()">Удалить</button></th>
+            <th id="thAction" style="white-space:nowrap;">Действие <button id="btnDeleteSelected" class="ctrl-btn" style="display:none;padding:2px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);margin-left:4px;" onclick="deleteSelectedKbju()">Удалить</button><button id="btnSelectAll" class="ctrl-btn sec" style="display:none;padding:2px 8px;font-size:11px;margin-left:4px;" onclick="selectAllKbju()">Выбрать все</button></th>
           </tr></thead>
           <tbody id="kbjuBody"></tbody>
         </table>
@@ -1611,10 +1611,16 @@ function toggleKbjuSelect(){
   _kbjuSelectMode=!_kbjuSelectMode;
   const btn=document.getElementById('btnSelectKbju');
   const delBtn=document.getElementById('btnDeleteSelected');
+  const selAll=document.getElementById('btnSelectAll');
   btn.style.background=_kbjuSelectMode?'var(--accent)':'';
   btn.style.color=_kbjuSelectMode?'#fff':'';
   delBtn.style.display=_kbjuSelectMode?'inline-block':'none';
+  selAll.style.display=_kbjuSelectMode?'inline-block':'none';
   renderKbju();
+}
+
+function selectAllKbju(){
+  document.querySelectorAll('.kbju-sel-cb').forEach(cb=>cb.checked=true);
 }
 
 function deleteSelectedKbju(){
