@@ -1229,7 +1229,7 @@ function renderKbju(){
   document.getElementById('kbjuBody').innerHTML=html;
 }
 function sortK(k){kSortDir=kSortKey===k?kSortDir*-1:1;kSortKey=k;renderKbju();}
-function togArc(n){kbjuTable[n].archived=!kbjuTable[n].archived;saveAll();renderKbju();}
+function togArc(n){kbjuTable[n].archived=!kbjuTable[n].archived;saveAll();renderKbju();reEvalStatuses();}
 function togglePackRow(){document.getElementById('npPR').style.display=document.getElementById('npPT').value==='pack'?'block':'none';}
 function openAddProd(name){
   _editProd=name||null;
@@ -1241,16 +1241,17 @@ function openAddProd(name){
 }
 
 function reEvalStatuses(){
-  // Re-check status of every ingredient in menuData against current kbjuTable
+  // Re-check ALL statuses from scratch against current kbjuTable
   DAYS.forEach(day=>{
     if(!menuData[day])return;
     MEALS.forEach(meal=>{
       const md=menuData[day][meal];
       if(!md||!md.ingredients)return;
       md.ingredients.forEach(ing=>{
-        const f=findKbju(ing.originalName||ing.name);
+        const lookupName=ing.originalName||ing.name;
+        const f=findKbju(lookupName);
         if(f.type==='exact'){
-          const k=kbjuTable[f.name], r=ing.weight/100;
+          const k=kbjuTable[f.name], r=(ing.weight||0)/100;
           ing.name=f.name;
           ing.status='exact';
           ing.suggestions=[];
@@ -1261,8 +1262,14 @@ function reEvalStatuses(){
         } else if(f.type==='partial'){
           ing.status='partial';
           ing.suggestions=f.all||[];
+          // Zero out KBJU since product is ambiguous
+          ing.proteins=0; ing.fats=0; ing.carbs=0; ing.calories=0;
+        } else {
+          // not_found — always set, even if was exact before
+          ing.status='not_found';
+          ing.suggestions=[];
+          ing.proteins=0; ing.fats=0; ing.carbs=0; ing.calories=0;
         }
-        // not_found stays as-is
       });
     });
   });
@@ -1665,7 +1672,7 @@ function deleteSelectedKbju(){
   if(!checked.length){alert('Ничего не выбрано');return;}
   if(!confirm('Удалить '+checked.length+' продукт(ов)?'))return;
   checked.forEach(cb=>{ delete kbjuTable[decodeURIComponent(cb.dataset.name)]; });
-  saveAll();renderKbju();
+  saveAll();renderKbju();reEvalStatuses();
 }
 
 
