@@ -1767,8 +1767,9 @@ function skipFillEntry(){
 }
 
 function finishFill(){
+  document.getElementById('fillKbjuModal').style.display='none';
   saveAll();renderKbju();reEvalStatuses();
-  alert('Готово!\nЗаполнено автоматически: '+_fillDone+'\nПодтверждено вручную: '+(_fillDone-_fillDone)+'\nПропущено: '+_fillSkipped);
+  alert('Готово!\nЗаполнено автоматически: '+_fillDone+'\nПропущено: '+_fillSkipped);
 }
 
 </script>
