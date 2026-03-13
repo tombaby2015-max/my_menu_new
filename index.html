@@ -953,7 +953,9 @@ function renderIngCell(ing,i,day,meal){
   let actionBtn='';
   if(isPartial){
     actionBtn=`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`;
-  } else if(!isNotFound){
+  } else if(isNotFound){
+    actionBtn=`<button class="btn-act" style="background:rgba(160,35,35,.7);border-color:rgba(200,80,80,.5);" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
+  } else {
     actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;
   }
 
@@ -1000,7 +1002,8 @@ function showSug(e,day,meal,idx){
   const ing=menuData[day][meal].ingredients[idx], term=(ing.originalName||ing.name).toLowerCase();
   let matches=Object.keys(kbjuTable).filter(p=>p.toLowerCase().includes(term)||term.includes(p.toLowerCase())||p.split(/\s+/).some(w=>w.length>2&&term.includes(w.toLowerCase())));
   if(!matches.length) matches=Object.keys(kbjuTable).slice(0,20);
-  _showPickerDp(e, matches, (p)=>{ replIng(day,meal,idx,p); });
+  const dp2=_showPickerDp(e, matches, (p)=>{ replIng(day,meal,idx,p); });
+  if(dp2) dp2._onDelete=()=>delIng(day,meal,idx);
 }
 
 function replIng(day,meal,idx,name){
@@ -1608,12 +1611,11 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
     list.innerHTML='';
     (filtered.slice(0,60)).forEach(p=>{
       const kb=kbjuTable[p]||{};
-      const _ph2=kb.priceHistory,_lp2=_ph2&&_ph2.length?_ph2[_ph2.length-1].price:null;
-      const price=_lp2!=null?_lp2+'₽':'—';
-      const unit=kb.priceType==='pack'&&kb.packWeight?`${kb.packWeight}г`:'кг';
+      const _ph2=kb.priceHistory,_lp2=_ph2&&_ph2.length?Math.round(_ph2[_ph2.length-1].price):null;
+      const price=_lp2!=null?_lp2+'֍':'—';
       const row=document.createElement('div'); row.className='dp-i dp-product-row';
       row.innerHTML=`<span class="dp-pname">${p}</span>
-        <span class="dp-pmeta">Б${n1(kb.proteins)} Ж${n1(kb.fats)} У${n1(kb.carbs)} К${n1(kb.calories)} · ${price}/${unit}</span>`;
+        <span class="dp-pmeta">Б — ${n1(kb.proteins)}, Ж — ${n1(kb.fats)}, У — ${n1(kb.carbs)}, Ккал — ${n1(kb.calories)}, Цена — ${price}</span>`;
       row.onclick=ev=>{ev.stopPropagation(); onSelect(p); dp.remove();};
       list.appendChild(row);
     });
@@ -1623,9 +1625,22 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
   }
   renderItems();
 
+  // Кнопка Удалить внизу — передаётся через onDelete если задан
+  if(dp._onDelete){
+    const sep=document.createElement('div');
+    sep.style.cssText='border-top:1px solid var(--border);margin:4px 0;';
+    dp.appendChild(sep);
+    const delBtn=document.createElement('div'); delBtn.className='dp-i';
+    delBtn.style.color='var(--red)';
+    delBtn.textContent='✕ Удалить';
+    delBtn.onclick=ev=>{ev.stopPropagation(); dp._onDelete(); dp.remove();};
+    dp.appendChild(delBtn);
+  }
+
   const r=e.currentTarget?e.currentTarget.getBoundingClientRect():e;
   dp.style.left=r.left+'px'; dp.style.top=(r.bottom+3)+'px';
   document.body.appendChild(dp);
+  return dp;
 }
 
 
