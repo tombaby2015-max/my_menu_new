@@ -1403,7 +1403,7 @@ function renderSelPanel(){
   parseSelected.forEach((cat,id)=>{const t=document.createElement('div');t.className='sel-tag';t.innerHTML='<span class="tn">'+cat.name+'</span><span class="tr" onclick="removeCatSel('+id+')">×</span>';p.appendChild(t);});
 }
 
-async // Рекурсивно находим все конечные категории (у которых нет детей)
+// Рекурсивно находим все конечные категории (у которых нет детей)
 async function resolveLeafCats(cat, depth=0){
   try{
     const d=await apiCall('/api/children',{parentId:cat.id,page:1,pageSize:100});
@@ -1528,15 +1528,6 @@ function renderProdTable(){
 }
 
 
-async function fetchAllProds(catId){
-  const body={categoryId:catId,parentId:catId,count:100,page:1,priceFrom:null,priceTo:null,countries:[],categories:[],brands:[],search:null,isDiscounted:false,sortBy:3};
-  const first=await apiCall('/api/products',body);
-  const inner=first?.data||{},pages=inner.pageCount||1;
-  let items=inner.list||[];
-  const ps=[];for(let p=2;p<=pages;p++)ps.push(apiCall('/api/products',{...body,page:p}));
-  (await Promise.all(ps)).forEach(d=>{items=items.concat(d?.data?.list||[]);});
-  return items;
-}
 
 function fmtUnit(row){
   const ppu=row.pricePerUnit;if(!ppu||ppu<=0)return '';
@@ -1548,41 +1539,10 @@ function fmtUnit(row){
 }
 function fmtPrice(v){if(!v)return '—';return Math.round(v).toLocaleString('ru-RU')+' ֏';}
 
-function renderProdTable(){
-  const tbody=document.getElementById('prodBody');
-  tbody.innerHTML='';
-  // Group by catId
-  const groups={};
-  _parsedRows.forEach((row,i)=>{if(!groups[row.catId])groups[row.catId]={name:row.catName,rows:[]};groups[row.catId].rows.push({...row,idx:i});});
-  Object.entries(groups).forEach(([catId,g])=>{
-    // Category header row
-    const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="10">'+g.name+' ('+g.rows.length+')</td>';
-    hdr.onclick=()=>{
-      hdr.classList.toggle('open');
-      const isOpen=hdr.classList.contains('open');
-      tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]').forEach(r=>r.classList.toggle('hidden',!isOpen));
-    };
-    tbody.appendChild(hdr);
-    // Product rows — start hidden (collapsed)
-    g.rows.forEach(row=>{
-      const tr=document.createElement('tr');tr.className='prod-row hidden';tr.dataset.catid=catId;
-      const photo=row.photo?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${row.photo}" alt="" loading="lazy" decoding="async"/></div></div>`:`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
-      tr.innerHTML=`
-        <td></td>
-        <td style="padding:4px 6px;">${photo}</td>
-        <td style="text-align:left">${row.name}</td>
-        <td class="td-price">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td>
-        <td class="td-orig">${row.origPrice?fmtPrice(row.origPrice):''}</td>
-        <td class="td-kg">${fmtUnit(row)}</td>
-        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="snack"     onchange="updLists()"></td>
-        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="breakfast" onchange="updLists()"></td>
-        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="lunch"     onchange="updLists()"></td>
-        <td style="text-align:center"><input type="checkbox" class="cb-m" data-idx="${row.idx}" data-meal="dinner"    onchange="updLists()"></td>`;
-      tbody.appendChild(tr);
-    });
-  });
-}
+
+// ══════════════════════════════════════════════════════════════════
+// ОБЛАСТЬ 3 — МОЙ СПИСОК
+// ══════════════════════════════════════════════════════════════════
 
 function updLists(){
   const lists={snack:[],breakfast:[],lunch:[],dinner:[]};
@@ -1597,73 +1557,17 @@ function updLists(){
   document.getElementById('lst-lunch').innerHTML    =lists.lunch.map(n=>'<li>'+n+'</li>').join('');
   document.getElementById('lst-dinner').innerHTML   =lists.dinner.map(n=>'<li>'+n+'</li>').join('');
 }
-
-
 function getListItems(id){
   return [...document.getElementById('lst-'+id).querySelectorAll('li')].map(li=>li.textContent);
 }
-function todayStr(){return new Date().toLocaleDateString('ru-RU').replace(/\./g,'.');}
 function dlList(id,label){
-  const items=id==='all'?[...document.getElementById('lst-all').querySelectorAll('li')].map(l=>l.textContent):getListItems(id);
+  const items=getListItems(id);
   if(!items.length){alert('Список пуст');return;}
   const blob=new Blob([items.join('\n')],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download=label.replace(/\s/g,'_')+'_'+new Date().toLocaleDateString('ru-RU').replace(/\./g,'.')+'.txt';
   a.click();
 }
-function saveListToNotes(id,label){
-  const snack=getListItems('snack'),breakfast=getListItems('breakfast'),lunch=getListItems('lunch'),dinner=getListItems('dinner'),all=[...new Set([...snack,...breakfast,...lunch,...dinner])];
-  const date=new Date().toLocaleDateString('ru-RU');
-  const entry={id:Date.now(),date,label:'Список продуктов из Yerevan City за '+date,snack,breakfast,lunch,dinner,all};
-  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
-  stored.push(entry);localStorage.setItem('notesLists',JSON.stringify(stored));
-  renderNotesLists();
-  goSec('notes');
-  alert('Список сохранён в заметках!');
-}
-function renderNotesLists(){
-  const wrap=document.getElementById('notesListWrap');if(!wrap)return;
-  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
-  if(!stored.length){wrap.innerHTML='';return;}
-  wrap.innerHTML=stored.map((e,i)=>'<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;margin:0 6px 6px 0;cursor:pointer;font-size:12px;" onclick="viewNotesList('+i+')">📋 '+e.label+'<span onclick="event.stopPropagation();delNotesList('+i+')" style="color:var(--text2);margin-left:4px;cursor:pointer;">×</span></div>').join('');
-}
-function viewNotesList(i){
-  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
-  const e=stored[i];if(!e)return;
-  document.getElementById('nlmTitle').textContent=e.label;
-  document.getElementById('nlmBody').innerHTML=
-    '<div><strong style="color:var(--accent)">Перекус</strong><br>'+e.snack.map(n=>'• '+n).join('<br>')+'</div>'+
-    '<div><strong style="color:var(--accent)">Завтрак</strong><br>'+e.breakfast.map(n=>'• '+n).join('<br>')+'</div>'+
-    '<div><strong style="color:var(--accent)">Обед</strong><br>'+e.lunch.map(n=>'• '+n).join('<br>')+'</div>'+
-    '<div><strong style="color:var(--accent)">Ужин</strong><br>'+e.dinner.map(n=>'• '+n).join('<br>')+'</div>'+
-    '<div style="grid-column:span 2"><strong style="color:var(--accent)">Общий список</strong><br>'+e.all.map(n=>'• '+n).join('<br>')+'</div>';
-  openModal('notesListModal');
-}
-function delNotesList(i){
-  let stored=[];try{stored=JSON.parse(localStorage.getItem('notesLists')||'[]');}catch(e){}
-  stored.splice(i,1);localStorage.setItem('notesLists',JSON.stringify(stored));renderNotesLists();
-}
-
-function transferToKbju(){
-  const names=new Set();document.querySelectorAll('.cb-m:checked').forEach(cb=>{const r=_parsedRows[parseInt(cb.dataset.idx)];if(r)names.add(r.name);});
-  if(!names.size){alert('Отметьте продукты');return;}
-  const today=new Date().toLocaleDateString('ru-RU'),conflicts=[],toAdd=[];
-  names.forEach(name=>{
-    const pr=_parsedRows.find(r=>r.name===name),newP=pr?pr.price:null,ex=kbjuTable[name];
-    if(ex){const last=ex.priceHistory?.length?ex.priceHistory[ex.priceHistory.length-1].price:null;if(newP&&last!==newP){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:newP});}}
-    else{const sim=Object.keys(kbjuTable).find(k=>k.toLowerCase().includes(name.toLowerCase().slice(0,5))||name.toLowerCase().includes(k.toLowerCase().slice(0,5)));if(sim)conflicts.push({newName:name,existingName:sim,price:newP});else toAdd.push({name,price:newP});}
-  });
-  toAdd.forEach(({name,price})=>{kbjuTable[name]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};});
-  if(conflicts.length){
-    _syncDec=conflicts.map(c=>({...c,decision:'new'}));
-    document.getElementById('scConflicts').innerHTML=conflicts.map((c,i)=>'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:11px;margin-bottom:9px;"><p style="font-size:12px;margin-bottom:9px;">Новый: <strong style="color:var(--accent)">'+c.newName+'</strong><br>Похожий: <strong>'+c.existingName+'</strong></p><div style="display:flex;gap:7px;"><button class="ctrl-btn sec" style="font-size:12px;padding:5px 9px;" onclick="setSyncDec('+i+',\'replace\')">Заменить</button><button class="ctrl-btn" style="font-size:12px;padding:5px 9px;" onclick="setSyncDec('+i+',\'new\')">Добавить новым</button></div><div id="sd-'+i+'" style="margin-top:5px;font-size:11px;color:var(--green)"></div></div>').join('');
-    document.getElementById('scSummary').textContent='Авто: '+toAdd.length+', конфликты: '+conflicts.length;
-    saveAll();openModal('syncConflModal');
-  }else{saveAll();renderKbju();alert('Перенесено: '+toAdd.length);}
-}
-// ══════════════════════════════════════════════════════════════════
-// ОБЛАСТЬ 3 — МОЙ СПИСОК
-// ══════════════════════════════════════════════════════════════════
 
 // Чекбокс в Области 2 — немедленно добавляет/убирает из myList
 function toggleMyListItem(cb){
@@ -1679,7 +1583,6 @@ function toggleMyListItem(cb){
   }
   saveAll();
   renderMyList();
-  // Обновить зелёную подсветку без полного ре-рендера
   const tbody=document.getElementById('prodBody');
   tbody.querySelectorAll('.prod-row').forEach(tr=>{
     const c=tr.querySelector('.cb-add');
@@ -1690,11 +1593,6 @@ function toggleMyListItem(cb){
   });
 }
 
-// Убираем старую функцию, оставляем только toggleMyListItem
-function addCheckedToMyList(){ /* deprecated — используй toggleMyListItem */ }
-
-
-// Рендер Области 3
 function renderMyList(){
   const wrap=document.getElementById('myListWrap');
   if(!wrap)return;
@@ -1702,28 +1600,24 @@ function renderMyList(){
     wrap.innerHTML='<div style="color:var(--text2);padding:20px;text-align:center;">Список пуст — добавьте продукты из Области 2</div>';
     return;
   }
-  // Группировка по catName
   const groups={};
   myList.forEach((p,i)=>{
-    if(!groups[p.catName])groups[p.catName]={open:true,items:[]};
+    if(!groups[p.catName])groups[p.catName]={items:[]};
     groups[p.catName].items.push({...p,idx:i});
   });
   wrap.innerHTML='';
   Object.entries(groups).forEach(([catName,g])=>{
-    // Заголовок группы
     const hdr=document.createElement('div');
     hdr.className='mylist-cat-hdr';
-    hdr.dataset.cat=catName;
     hdr.innerHTML=`<span class="mylist-cat-tog">▼</span> ${catName} <span style="color:var(--text2);font-size:11px;">(${g.items.length})</span>`;
     hdr.onclick=()=>{
-      const body=wrap.querySelector('.mylist-cat-body[data-cat="'+catName+'"]');
+      const body=wrap.querySelector('.mylist-cat-body[data-cat="'+CSS.escape(catName)+'"]');
       const tog=hdr.querySelector('.mylist-cat-tog');
       const isOpen=body.style.display!=='none';
       body.style.display=isOpen?'none':'block';
       tog.textContent=isOpen?'▶':'▼';
     };
     wrap.appendChild(hdr);
-    // Тело группы
     const body=document.createElement('div');
     body.className='mylist-cat-body';
     body.dataset.cat=catName;
@@ -1734,17 +1628,16 @@ function renderMyList(){
         <div class="mylist-name">${p.name}</div>
         <div class="mylist-price">${fmtPrice(p.price)}</div>
         <div class="mylist-meals">
-          <label title="Перекус"><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Пер.</label>
-          <label title="Завтрак"><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завт.</label>
-          <label title="Обед"><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label>
-          <label title="Ужин"><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label>
+          <label><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Пер.</label>
+          <label><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завт.</label>
+          <label><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label>
+          <label><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label>
         </div>
-        <button class="mylist-del" onclick="removeFromMyList(${p.idx})" title="Удалить из списка">✕</button>`;
+        <button class="mylist-del" onclick="removeFromMyList(${p.idx})">✕</button>`;
       body.appendChild(row);
     });
     wrap.appendChild(body);
   });
-  // Event delegation для чекбоксов приёмов пищи
   wrap.querySelectorAll('.ml-cb').forEach(cb=>{
     cb.addEventListener('change',()=>{
       const idx=parseInt(cb.dataset.idx);
@@ -1763,18 +1656,16 @@ function removeFromMyList(idx){
   renderProdTable();
 }
 
-// Отправить весь myList в Таблицу КБЖУ
 function sendMyListToKbju(){
   if(!myList.length){alert('Список пуст');return;}
   const today=new Date().toLocaleDateString('ru-RU');
   let added=0, skipped=0;
   myList.forEach(p=>{
     if(kbjuTable[p.name]){
-      // Уже есть — только обновляем цену если изменилась
       const ex=kbjuTable[p.name];
       if(p.price){
         const last=ex.priceHistory?.length?ex.priceHistory[ex.priceHistory.length-1].price:null;
-        if(last!==p.price){
+        if(Math.round(last||0)!==Math.round(p.price)){
           if(!ex.priceHistory)ex.priceHistory=[];
           ex.priceHistory.push({date:today,price:p.price});
         }
@@ -1796,14 +1687,12 @@ function sendMyListToKbju(){
   alert('Добавлено: '+added+', уже было (цена обновлена): '+skipped);
 }
 
-// Обновить цены из ЕреванСити для продуктов с меткой fromYC
 async function updatePricesFromYC(){
   const ycProds=Object.entries(kbjuTable).filter(([n,d])=>d.fromYC&&d.ycCatId);
   if(!ycProds.length){alert('Нет продуктов из ЕреванСити');return;}
   const btn=document.getElementById('btnUpdateYCPrices');
-  if(btn)btn.disabled=true;
+  if(btn){btn.disabled=true;btn.textContent='Обновляю...';}
   const today=new Date().toLocaleDateString('ru-RU');
-  // Group by catId to minimize requests
   const byCat={};
   ycProds.forEach(([name,d])=>{
     if(!byCat[d.ycCatId])byCat[d.ycCatId]=[];
@@ -1829,345 +1718,10 @@ async function updatePricesFromYC(){
     }catch(e){console.warn('catId '+catId,e);}
   }
   saveAll();renderKbju();
-  if(btn)btn.disabled=false;
+  if(btn){btn.disabled=false;btn.textContent='🔄 Цены ЕреванСити';}
   alert('Цены обновлены: '+updated+', не найдено: '+notFound);
 }
 
-
-function setSyncDec(i,d){_syncDec[i].decision=d;document.getElementById('sd-'+i).textContent=d==='new'?'→ Добавить новым':'→ Заменить';}
-function applySyncDec(){
-  const today=new Date().toLocaleDateString('ru-RU');
-  _syncDec.forEach(d=>{
-    if(d.decision==='replace'){const ex=kbjuTable[d.existingName];if(ex&&d.price){if(!ex.priceHistory)ex.priceHistory=[];ex.priceHistory.push({date:today,price:d.price});}}
-    else{kbjuTable[d.newName]={proteins:0,fats:0,carbs:0,calories:0,priceType:'kg',priceHistory:d.price?[{date:today,price:d.price}]:[]};}
-  });
-  saveAll();renderKbju();closeModal('syncConflModal');
-}
-
-// ══════════════════════════════════════════════════════════════════
-// NOTES
-// ══════════════════════════════════════════════════════════════════
-function saveNotes(){notes=document.getElementById('notesArea').value;saveAll();}
-
-// ══════════════════════════════════════════════════════════════════
-// MODAL HELPERS
-// ══════════════════════════════════════════════════════════════════
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-
-document.addEventListener('DOMContentLoaded',init);
-
-// ── ! action menu ──────────────────────────────────────
-function showActMenu(e,day,meal,idx){
-  e.stopPropagation(); document.querySelectorAll('.dp').forEach(d=>d.remove());
-  const dp=document.createElement('div'); dp.className='dp'; dp.style.cssText='min-width:110px;padding:4px;';
-  const del=document.createElement('div'); del.className='dp-i';
-  del.innerHTML='✕ Удалить'; del.style.color='var(--red)';
-  del.onclick=ev=>{ev.stopPropagation(); delIng(day,meal,idx); dp.remove();};
-  const rep=document.createElement('div'); rep.className='dp-i';
-  rep.innerHTML='✎ Заменить';
-  rep.onclick=ev=>{
-    ev.stopPropagation(); dp.remove();
-    // Open same modal as "+", but in replace mode
-    _psTarget={day,meal,replaceIdx:idx};
-    document.getElementById('psInput').value=''; filterPS(); openModal('prodSelModal');
-  };
-  dp.appendChild(del); dp.appendChild(rep);
-  const r=e.currentTarget.getBoundingClientRect();
-  dp.style.left=r.left+'px'; dp.style.top=(r.bottom+3)+'px';
-  document.body.appendChild(dp);
-}
-
-// ── Replace ing — full searchable picker ───────────────
-function openReplaceIng(e,day,meal,idx){
-  document.querySelectorAll('.dp').forEach(d=>d.remove());
-  const all=Object.keys(kbjuTable);
-  _showPickerDp(e, all, (p)=>{ replIng(day,meal,idx,p); }, true);
-}
-
-// ── Shared picker dropdown with КБЖУ + price + search ──
-function _showPickerDp(e, items, onSelect, withSearch=false, onDelete=null){
-  document.querySelectorAll('.dp').forEach(d=>d.remove());
-  const dp=document.createElement('div'); dp.className='dp';
-  dp.style.cssText='width:340px;max-height:320px;display:flex;flex-direction:column;padding:0;overflow:hidden;';
-
-  if(withSearch){
-    const si=document.createElement('input'); si.type='text'; si.placeholder='Поиск продукта...';
-    si.style.cssText='margin:6px 8px 4px;padding:5px 8px;background:var(--bg4);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:12px;outline:none;flex-shrink:0;';
-    dp.appendChild(si);
-    si.addEventListener('input',()=>{ renderItems(si.value.toLowerCase()); });
-    // Focus after mount
-    setTimeout(()=>si.focus(),30);
-  }
-
-  const list=document.createElement('div');
-  list.style.cssText='overflow-y:auto;flex:1;';
-  dp.appendChild(list);
-
-  function renderItems(q=''){
-    const filtered=q?items.filter(p=>p.toLowerCase().includes(q)):items;
-    list.innerHTML='';
-    (filtered.slice(0,60)).forEach(p=>{
-      const kb=kbjuTable[p]||{};
-      const _ph2=kb.priceHistory,_lp2=_ph2&&_ph2.length?Math.round(_ph2[_ph2.length-1].price):null;
-      const price=_lp2!=null?_lp2+'֏':'—';
-      const row=document.createElement('div'); row.className='dp-i dp-product-row';
-      row.innerHTML=`<span class="dp-pname">${p}</span>
-        <span class="dp-pmeta">Б-${n1(kb.proteins)}, Ж-${n1(kb.fats)}, У-${n1(kb.carbs)}, Ккал-${n1(kb.calories)}, Цена-${price}</span>`;
-      row.onclick=ev=>{ev.stopPropagation(); onSelect(p); dp.remove();};
-      list.appendChild(row);
-    });
-    if(!list.children.length){
-      list.innerHTML='<div style="padding:8px 12px;color:var(--text2);font-size:12px;">Не найдено</div>';
-    }
-  }
-  renderItems();
-
-  // Кнопка Удалить внизу — передаётся через onDelete если задан
-  if(onDelete){
-    const sep=document.createElement('div');
-    sep.style.cssText='border-top:1px solid var(--border);margin:4px 0;';
-    dp.appendChild(sep);
-    const delBtn=document.createElement('div'); delBtn.className='dp-i';
-    delBtn.style.color='var(--red)';
-    delBtn.textContent='✕ Удалить';
-    delBtn.onclick=ev=>{ev.stopPropagation(); onDelete(); dp.remove();};
-    dp.appendChild(delBtn);
-  }
-
-  const r=e.currentTarget?e.currentTarget.getBoundingClientRect():e;
-  dp.style.left=r.left+'px'; dp.style.top=(r.bottom+3)+'px';
-  document.body.appendChild(dp);
-  return dp;
-}
-
-
-function openEditRecipe(day,meal){
-  _renameTarget={day,meal,type:'recipe'};
-  const md=menuData[day]&&menuData[day][meal];
-  document.getElementById('editRecipeTA').value=md&&md.recipe?md.recipe:'';
-  openModal('editRecipeModal');
-  setTimeout(()=>document.getElementById('editRecipeTA').focus(),50);
-}
-function saveEditRecipe(){
-  if(!_renameTarget)return;
-  const {day,meal}=_renameTarget;
-  if(!menuData[day])menuData[day]={};
-  if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
-  menuData[day][meal].recipe=document.getElementById('editRecipeTA').value.trim();
-  saveAll();renderMenuDay(curDay);closeModal('editRecipeModal');
-}
-
-
-let _kbjuSelectMode=false;
-
-function toggleKbjuSelect(){
-  _kbjuSelectMode=!_kbjuSelectMode;
-  const btn=document.getElementById('btnSelectKbju');
-  const delBtn=document.getElementById('btnDeleteSelected');
-  const selAll=document.getElementById('btnSelectAll');
-  btn.style.background=_kbjuSelectMode?'var(--accent)':'';
-  btn.style.color=_kbjuSelectMode?'#fff':'';
-  delBtn.style.display=_kbjuSelectMode?'inline-block':'none';
-  selAll.style.display=_kbjuSelectMode?'inline-block':'none';
-  renderKbju();
-}
-
-function selectAllKbju(){
-  const cbs=document.querySelectorAll('.kbju-sel-cb');
-  const allChecked=[...cbs].every(cb=>cb.checked);
-  cbs.forEach(cb=>cb.checked=!allChecked);
-  const btn=document.getElementById('btnSelectAll');
-  btn.textContent=allChecked?'Выбрать все':'Снять все';
-}
-
-function deleteSelectedKbju(){
-  const checked=document.querySelectorAll('.kbju-sel-cb:checked');
-  if(!checked.length){alert('Ничего не выбрано');return;}
-  if(!confirm('Удалить '+checked.length+' продукт(ов)?'))return;
-  checked.forEach(cb=>{ delete kbjuTable[decodeURIComponent(cb.dataset.name)]; });
-  saveAll();renderKbju();reEvalStatuses();
-}
-
-
-
-
-// ══════════════════════════════════════════════════════════════════
-// ЗАПОЛНИТЬ КБЖУ через Claude API
-// ══════════════════════════════════════════════════════════════════
-let _fillQueue=[], _fillIdx=0, _fillDone=0, _fillSkipped=0, _fillResults=[];
-
-async function startFillKbju(){
-  // Products with empty КБЖУ
-  _fillQueue=Object.entries(kbjuTable)
-    .filter(([n,d])=>!d.archived&&!(d.proteins||d.fats||d.carbs||d.calories))
-    .map(([n])=>n);
-  if(!_fillQueue.length){alert('Нет продуктов с пустым КБЖУ');return;}
-
-  // Show loading state
-  document.getElementById('fillStatus').textContent='Запрос к Claude...';
-  document.getElementById('fillKbjuModal').style.display='flex';
-  document.getElementById('fillCandList').innerHTML='';
-  document.getElementById('fillProdName').textContent='';
-  document.getElementById('fillProgress').textContent='';
-
-  // Build prompt — send all products at once
-  const prompt=`Ты эксперт по питанию. Для каждого продукта из списка найди стандартные значения КБЖУ на 100г.
-Названия могут содержать бренды, артикулы, веса — игнорируй их, ориентируйся только на тип продукта.
-
-Список продуктов:
-${_fillQueue.map((n,i)=>`${i+1}. ${n}`).join('\n')}
-
-Ответь ТОЛЬКО валидным JSON массивом, без пояснений, без markdown:
-[
-  {"idx":1,"name":"оригинальное название","matched":"название из базы или как ты его понял","proteins":0,"fats":0,"carbs":0,"calories":0,"confidence":"high|medium|low"},
-  ...
-]
-
-confidence:
-- "high" — очевидное совпадение (яйца = яйцо куриное, кабачки = кабачок)
-- "medium" — несколько вариантов (курица варёная vs жареная), требует подтверждения
-- "low" — не удалось определить, все поля 0
-
-Важно: верни ровно ${_fillQueue.length} объектов в массиве, по одному на каждый продукт.`;
-
-  try{
-    const resp=await fetch(WORKER_URL+'/api/gemini',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt})
-    });
-    const data=await resp.json();
-    if(data.error){
-      document.getElementById('fillStatus').textContent='Ошибка API: '+JSON.stringify(data.error);
-      console.error('API error:', data);
-      return;
-    }
-    if(!data.text){
-      document.getElementById('fillStatus').textContent='Неожиданный ответ: '+JSON.stringify(data).slice(0,200);
-      console.error('Unexpected response:', data);
-      return;
-    }
-    const text=data.text;
-    // Strip markdown fences if present
-    const clean=text.replace(/```json|```/g,'').trim();
-    _fillResults=JSON.parse(clean);
-    _fillIdx=0; _fillDone=0; _fillSkipped=0;
-    document.getElementById('fillStatus').textContent='';
-    showFillStep();
-  }catch(err){
-    document.getElementById('fillStatus').textContent='Ошибка: '+err.message;
-    console.error(err);
-  }
-}
-
-function showFillStep(){
-  if(_fillIdx>=_fillResults.length){finishFill();return;}
-  const res=_fillResults[_fillIdx];
-  const origName=_fillQueue[res.idx-1]||_fillQueue[_fillIdx];
-
-  document.getElementById('fillProdName').textContent=origName;
-  document.getElementById('fillProgress').textContent=(_fillIdx+1)+' / '+_fillResults.length;
-
-  const list=document.getElementById('fillCandList');
-  list.innerHTML='';
-
-  if(res.confidence==='high' && res.calories>0){
-    // Auto-apply, no confirmation needed
-    applyFillEntry(origName, res);
-    return;
-  }
-
-  if(res.confidence==='low' || res.calories===0){
-    const msg=document.createElement('div');
-    msg.style.cssText='color:#9499b0;padding:12px 0;';
-    msg.textContent='Не удалось определить продукт — заполните вручную';
-    list.appendChild(msg);
-  } else {
-    // medium — show what Claude found, ask confirmation
-    const row=document.createElement('div');
-    row.className='fill-cand-row';
-
-    const nameSpan=document.createElement('span');
-    nameSpan.className='fill-cand-name';
-    nameSpan.textContent=res.matched;
-
-    const kbjuSpan=document.createElement('span');
-    kbjuSpan.className='fill-cand-kbju';
-    kbjuSpan.textContent='Б — '+res.proteins+', Ж — '+res.fats+', У — '+res.carbs+', Ккал — '+res.calories;
-
-    const btn=document.createElement('button');
-    btn.className='ctrl-btn';
-    btn.style.cssText='padding:2px 10px;font-size:13px;flex-shrink:0;';
-    btn.textContent='Подтвердить';
-    btn.addEventListener('click',()=>applyFillEntry(origName, res));
-
-    row.appendChild(nameSpan);
-    row.appendChild(kbjuSpan);
-    row.appendChild(btn);
-    list.appendChild(row);
-  }
-
-  openModal('fillKbjuModal');
-}
-
-function applyFillEntry(productName, res){
-  if(res.calories>0 && kbjuTable[productName]){
-    Object.assign(kbjuTable[productName],{
-      proteins:res.proteins, fats:res.fats, carbs:res.carbs, calories:res.calories
-    });
-    _fillDone++;
-  }
-  closeModal('fillKbjuModal');
-  _fillIdx++;
-  setTimeout(showFillStep,80);
-}
-
-function skipFillEntry(){
-  _fillSkipped++;
-  closeModal('fillKbjuModal');
-  _fillIdx++;
-  setTimeout(showFillStep,80);
-}
-
-function finishFill(){
-  document.getElementById('fillKbjuModal').style.display='none';
-  saveAll();renderKbju();reEvalStatuses();
-  alert('Готово!\nЗаполнено автоматически: '+_fillDone+'\nПропущено: '+_fillSkipped);
-}
-
 </script>
-
-<div id="editRecipeModal" class="modal-ov">
-  <div class="modal-box" style="max-width:520px;width:95%;">
-    <div class="modal-title">Приготовление</div>
-    <textarea id="editRecipeTA" style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px;color:var(--text);font-size:13px;resize:vertical;"></textarea>
-    <div class="m-btns">
-      <button class="ctrl-btn sec" onclick="closeModal('editRecipeModal')">Отмена</button>
-      <button class="ctrl-btn prim" onclick="saveEditRecipe()">Сохранить</button>
-    </div>
-  </div>
-</div>
-
-
-<div id="fillKbjuModal" class="modal-ov" style="display:none;">
-  <div class="modal-box" style="max-width:560px;width:95%;background:var(--bg);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <div class="modal-title" style="margin:0;color:#9499b0;">Заполнить КБЖУ</div>
-      <span id="fillProgress" style="color:#9499b0;font-size:13px;"></span>
-    </div>
-    <div id="fillStatus" style="color:#9499b0;font-size:13px;margin-bottom:8px;"></div>
-    <div style="margin-bottom:14px;">
-      <div style="font-size:11px;color:#9499b0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Продукт в вашем списке:</div>
-      <div id="fillProdName" style="font-size:16px;font-weight:700;color:#9499b0;"></div>
-    </div>
-    <div style="font-size:11px;color:#9499b0;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Выберите из базы:</div>
-    <div id="fillCandList" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
-    <div class="m-btns" style="margin-top:16px;">
-      <button class="ctrl-btn sec" onclick="skipFillEntry()">Пропустить</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
