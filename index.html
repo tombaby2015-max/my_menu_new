@@ -1513,6 +1513,7 @@ function renderProdTable(){
       const photo=row.photo
         ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${row.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
+      const rowData=encodeURIComponent(JSON.stringify({name:row.name,price:row.price,origPrice:row.origPrice||null,discPct:row.discPct||0,catId:row.catId,catName:row.catName,photo:row.photo||'',pricePerUnit:row.pricePerUnit||0,weightMeasure:row.weightMeasure||''}));
       tr.innerHTML=`
         <td></td>
         <td style="padding:4px 6px;">${photo}</td>
@@ -1520,7 +1521,7 @@ function renderProdTable(){
         <td class="td-price">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td>
         <td class="td-orig">${row.origPrice?fmtPrice(row.origPrice):''}</td>
         <td class="td-kg">${fmtUnit(row)}</td>
-        <td style="text-align:center"><input type="checkbox" class="cb-add" data-idx="${row.idx}" ${inMyList?'checked':''} onchange="toggleMyListItem(${row.idx},this.checked)"></td>`;
+        <td style="text-align:center"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>`;
       tbody.appendChild(tr);
     });
   });
@@ -1665,37 +1666,25 @@ function transferToKbju(){
 // ══════════════════════════════════════════════════════════════════
 
 // Чекбокс в Области 2 — немедленно добавляет/убирает из myList
-function toggleMyListItem(rowIdx, checked){
-  const row=_parsedRows[rowIdx];
+function toggleMyListItem(cb){
+  const row=JSON.parse(decodeURIComponent(cb.dataset.row));
   if(!row)return;
-  if(checked){
-    // Добавить если ещё нет
+  if(cb.checked){
     if(!myList.find(p=>p.name===row.name)){
-      myList.push({
-        name:row.name, price:row.price,
-        origPrice:row.origPrice||null, discPct:row.discPct||0,
-        catId:row.catId, catName:row.catName,
-        photo:row.photo||'',
-        pricePerUnit:row.pricePerUnit||0,
-        weightMeasure:row.weightMeasure||'',
-        fromYC:true,
-        snack:false, breakfast:false, lunch:false, dinner:false
-      });
+      myList.push({...row, fromYC:true, snack:false, breakfast:false, lunch:false, dinner:false});
     }
   } else {
-    // Убрать
     const i=myList.findIndex(p=>p.name===row.name);
     if(i>=0) myList.splice(i,1);
   }
   saveAll();
   renderMyList();
-  // Обновить зелёную подсветку в текущей таблице без полного ре-рендера
+  // Обновить зелёную подсветку без полного ре-рендера
   const tbody=document.getElementById('prodBody');
   tbody.querySelectorAll('.prod-row').forEach(tr=>{
-    const cb=tr.querySelector('.cb-add');
-    if(!cb)return;
-    const r=_parsedRows[parseInt(cb.dataset.idx)];
-    if(!r)return;
+    const c=tr.querySelector('.cb-add');
+    if(!c||!c.dataset.row)return;
+    const r=JSON.parse(decodeURIComponent(c.dataset.row));
     const inList=!!myList.find(p=>p.name===r.name);
     tr.classList.toggle('prod-in-mylist', inList);
   });
