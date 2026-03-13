@@ -410,7 +410,6 @@ input[type=number]{-moz-appearance:textfield;}
           <h3>📋 Область 2 — Товары</h3>
           <div style="display:flex;align-items:center;gap:10px;">
             <span id="parsedCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
-            <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;" onclick="addCheckedToMyList()">+ В мой список</button>
             <span class="screen-nav-hint">↑ каталог · ↓ мой список</span>
           </div>
         </div>
@@ -1404,27 +1403,66 @@ function renderSelPanel(){
   parseSelected.forEach((cat,id)=>{const t=document.createElement('div');t.className='sel-tag';t.innerHTML='<span class="tn">'+cat.name+'</span><span class="tr" onclick="removeCatSel('+id+')">×</span>';p.appendChild(t);});
 }
 
+async // Рекурсивно находим все конечные категории (у которых нет детей)
+async function resolveLeafCats(cat, depth=0){
+  try{
+    const d=await apiCall('/api/children',{parentId:cat.id,page:1,pageSize:100});
+    const inner=d?.data||{};
+    const children=[...(inner.categoryWithChildren||[]),...(inner.categories||[])];
+    if(!children.length) return [{...cat}]; // конечная категория
+    // Есть дети — рекурсивно обходим
+    const results=[];
+    for(const child of children){
+      const leaves=await resolveLeafCats(child, depth+1);
+      results.push(...leaves);
+    }
+    return results;
+  }catch(e){ return [{...cat}]; }
+}
+
 async function exportData(){
   if(!parseSelected.size)return;
   const btn=document.getElementById('exportBtn'),fill=document.getElementById('parseProg'),msg=document.getElementById('parseStatus');
   btn.disabled=true;btn.textContent='Загрузка...';
   _parsedRows=[];_parsedCats=[];fill.style.width='0%';
-  const cats=[...parseSelected.values()];
-  for(let i=0;i<cats.length;i++){
-    msg.textContent='Загружаю: '+cats[i].name+'...';fill.style.width=((i/cats.length)*100)+'%';
+
+  // Шаг 1: раскрываем все выбранные категории до конечных
+  msg.textContent='Определяю подкатегории...';
+  const selected=[...parseSelected.values()];
+  const leafCats=[];
+  for(const cat of selected){
+    const leaves=await resolveLeafCats(cat);
+    leafCats.push(...leaves);
+  }
+  msg.textContent='Найдено подкатегорий: '+leafCats.length;
+
+  // Шаг 2: загружаем продукты из каждой конечной категории
+  for(let i=0;i<leafCats.length;i++){
+    const cat=leafCats[i];
+    msg.textContent='Загружаю: '+cat.name+'...';
+    fill.style.width=((i/leafCats.length)*100)+'%';
     try{
-      const prods=await fetchAllProds(cats[i].id);
+      const prods=await fetchAllProds(cat.id);
       prods.sort((a,b)=>{const pa=a.discountedPrice>0?a.discountedPrice:a.price||0,pb=b.discountedPrice>0?b.discountedPrice:b.price||0;return pa-pb;});
-      _parsedCats.push({cat:cats[i],prods});
+      _parsedCats.push({cat,prods});
       prods.forEach(item=>{
         const disc=item.discountedPrice>0&&item.discountedPrice<item.price;
-        _parsedRows.push({catId:cats[i].id,catName:cats[i].name,name:item.name||'',price:disc?item.discountedPrice:item.price,origPrice:disc?item.price:null,discPct:disc?Math.round(item.discountPercent):0,pricePerUnit:item.productPricePerUnit,weightMeasure:item.weightMeasure,photo:item.photo||''});
+        _parsedRows.push({
+          catId:cat.id, catName:cat.name,
+          name:item.name||'',
+          price:disc?item.discountedPrice:item.price,
+          origPrice:disc?item.price:null,
+          discPct:disc?Math.round(item.discountPercent):0,
+          pricePerUnit:item.productPricePerUnit,
+          weightMeasure:item.weightMeasure,
+          photo:item.photo||''
+        });
       });
     }catch(e){console.warn(e);}
   }
   fill.style.width='100%';
   document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
-  msg.textContent='✅ Готово — '+_parsedRows.length+' товаров';
+  msg.textContent='✅ Готово — '+_parsedRows.length+' товаров из '+leafCats.length+' категорий';
   btn.disabled=false;btn.textContent='⬇ Выгрузить';
   renderProdTable();
 }
@@ -1482,7 +1520,7 @@ function renderProdTable(){
         <td class="td-price">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td>
         <td class="td-orig">${row.origPrice?fmtPrice(row.origPrice):''}</td>
         <td class="td-kg">${fmtUnit(row)}</td>
-        <td style="text-align:center"><input type="checkbox" class="cb-add" data-idx="${row.idx}" ${inMyList?'checked':''}></td>`;
+        <td style="text-align:center"><input type="checkbox" class="cb-add" data-idx="${row.idx}" ${inMyList?'checked':''} onchange="toggleMyListItem(${row.idx},this.checked)"></td>`;
       tbody.appendChild(tr);
     });
   });
@@ -1626,36 +1664,46 @@ function transferToKbju(){
 // ОБЛАСТЬ 3 — МОЙ СПИСОК
 // ══════════════════════════════════════════════════════════════════
 
-// Добавить отмеченные в Области 2 в myList
-function addCheckedToMyList(){
-  const cbs=document.querySelectorAll('.cb-add:checked');
-  if(!cbs.length){alert('Отметьте продукты');return;}
-  const myNames=new Set(myList.map(p=>p.name));
-  let added=0;
-  cbs.forEach(cb=>{
-    const row=_parsedRows[parseInt(cb.dataset.idx)];
-    if(!row||myNames.has(row.name))return;
-    myList.push({
-      name:row.name,
-      price:row.price,
-      origPrice:row.origPrice||null,
-      discPct:row.discPct||0,
-      catId:row.catId,
-      catName:row.catName,
-      photo:row.photo||'',
-      pricePerUnit:row.pricePerUnit||0,
-      weightMeasure:row.weightMeasure||'',
-      fromYC:true,
-      snack:false, breakfast:false, lunch:false, dinner:false
-    });
-    added++;
-  });
-  if(!added){alert('Все отмеченные продукты уже в списке');return;}
+// Чекбокс в Области 2 — немедленно добавляет/убирает из myList
+function toggleMyListItem(rowIdx, checked){
+  const row=_parsedRows[rowIdx];
+  if(!row)return;
+  if(checked){
+    // Добавить если ещё нет
+    if(!myList.find(p=>p.name===row.name)){
+      myList.push({
+        name:row.name, price:row.price,
+        origPrice:row.origPrice||null, discPct:row.discPct||0,
+        catId:row.catId, catName:row.catName,
+        photo:row.photo||'',
+        pricePerUnit:row.pricePerUnit||0,
+        weightMeasure:row.weightMeasure||'',
+        fromYC:true,
+        snack:false, breakfast:false, lunch:false, dinner:false
+      });
+    }
+  } else {
+    // Убрать
+    const i=myList.findIndex(p=>p.name===row.name);
+    if(i>=0) myList.splice(i,1);
+  }
   saveAll();
   renderMyList();
-  renderProdTable(); // обновить зелёную подсветку
-  alert('Добавлено: '+added);
+  // Обновить зелёную подсветку в текущей таблице без полного ре-рендера
+  const tbody=document.getElementById('prodBody');
+  tbody.querySelectorAll('.prod-row').forEach(tr=>{
+    const cb=tr.querySelector('.cb-add');
+    if(!cb)return;
+    const r=_parsedRows[parseInt(cb.dataset.idx)];
+    if(!r)return;
+    const inList=!!myList.find(p=>p.name===r.name);
+    tr.classList.toggle('prod-in-mylist', inList);
+  });
 }
+
+// Убираем старую функцию, оставляем только toggleMyListItem
+function addCheckedToMyList(){ /* deprecated — используй toggleMyListItem */ }
+
 
 // Рендер Области 3
 function renderMyList(){
