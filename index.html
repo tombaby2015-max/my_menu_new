@@ -1002,8 +1002,7 @@ function showSug(e,day,meal,idx){
   const ing=menuData[day][meal].ingredients[idx], term=(ing.originalName||ing.name).toLowerCase();
   let matches=Object.keys(kbjuTable).filter(p=>p.toLowerCase().includes(term)||term.includes(p.toLowerCase())||p.split(/\s+/).some(w=>w.length>2&&term.includes(w.toLowerCase())));
   if(!matches.length) matches=Object.keys(kbjuTable).slice(0,20);
-  const dp2=_showPickerDp(e, matches, (p)=>{ replIng(day,meal,idx,p); });
-  if(dp2) dp2._onDelete=()=>delIng(day,meal,idx);
+  _showPickerDp(e, matches, (p)=>{ replIng(day,meal,idx,p); }, false, ()=>delIng(day,meal,idx));
 }
 
 function replIng(day,meal,idx,name){
@@ -1588,7 +1587,7 @@ function openReplaceIng(e,day,meal,idx){
 }
 
 // ── Shared picker dropdown with КБЖУ + price + search ──
-function _showPickerDp(e, items, onSelect, withSearch=false){
+function _showPickerDp(e, items, onSelect, withSearch=false, onDelete=null){
   document.querySelectorAll('.dp').forEach(d=>d.remove());
   const dp=document.createElement('div'); dp.className='dp';
   dp.style.cssText='width:340px;max-height:320px;display:flex;flex-direction:column;padding:0;overflow:hidden;';
@@ -1612,10 +1611,10 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
     (filtered.slice(0,60)).forEach(p=>{
       const kb=kbjuTable[p]||{};
       const _ph2=kb.priceHistory,_lp2=_ph2&&_ph2.length?Math.round(_ph2[_ph2.length-1].price):null;
-      const price=_lp2!=null?_lp2+'֍':'—';
+      const price=_lp2!=null?_lp2+'֏':'—';
       const row=document.createElement('div'); row.className='dp-i dp-product-row';
       row.innerHTML=`<span class="dp-pname">${p}</span>
-        <span class="dp-pmeta">Б — ${n1(kb.proteins)}, Ж — ${n1(kb.fats)}, У — ${n1(kb.carbs)}, Ккал — ${n1(kb.calories)}, Цена — ${price}</span>`;
+        <span class="dp-pmeta">Б-${n1(kb.proteins)}, Ж-${n1(kb.fats)}, У-${n1(kb.carbs)}, Ккал-${n1(kb.calories)}, Цена-${price}</span>`;
       row.onclick=ev=>{ev.stopPropagation(); onSelect(p); dp.remove();};
       list.appendChild(row);
     });
@@ -1626,14 +1625,14 @@ function _showPickerDp(e, items, onSelect, withSearch=false){
   renderItems();
 
   // Кнопка Удалить внизу — передаётся через onDelete если задан
-  if(dp._onDelete){
+  if(onDelete){
     const sep=document.createElement('div');
     sep.style.cssText='border-top:1px solid var(--border);margin:4px 0;';
     dp.appendChild(sep);
     const delBtn=document.createElement('div'); delBtn.className='dp-i';
     delBtn.style.color='var(--red)';
     delBtn.textContent='✕ Удалить';
-    delBtn.onclick=ev=>{ev.stopPropagation(); dp._onDelete(); dp.remove();};
+    delBtn.onclick=ev=>{ev.stopPropagation(); onDelete(); dp.remove();};
     dp.appendChild(delBtn);
   }
 
