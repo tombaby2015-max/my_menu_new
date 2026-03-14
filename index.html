@@ -362,27 +362,30 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
           <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
           <div class="parse-status" id="parseStatus"></div>
-          <!-- Каталог — не сжимается, flex:none переопределяет flex:1 из CSS -->
-          <div class="cat-screen-inner" style="flex:none;height:280px;">
-            <div class="cat-panel">
-              <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
-              <div class="cat-panel-body" id="catalogPanel">
-                <div class="load-row"><div class="spin"></div> Загрузка...</div>
+          <!-- Скроллируемый контейнер: каталог + результаты под ним -->
+          <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+            <!-- Каталог — исходный размер, не ограничен -->
+            <div class="cat-screen-inner" style="flex-shrink:0;">
+              <div class="cat-panel">
+                <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
+                <div class="cat-panel-body" id="catalogPanel">
+                  <div class="load-row"><div class="spin"></div> Загрузка...</div>
+                </div>
+              </div>
+              <div class="sel-panel">
+                <div class="cat-panel-hdr">✅ Выбранные категории</div>
+                <div class="cat-panel-body" id="selectedPanel">
+                  <div class="sel-empty">Отметьте категории слева</div>
+                </div>
+                <button class="btn-exp" id="exportViewBtn" onclick="exportDataView()" disabled>👁 Выгрузить</button>
+                <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
               </div>
             </div>
-            <div class="sel-panel">
-              <div class="cat-panel-hdr">✅ Выбранные категории</div>
-              <div class="cat-panel-body" id="selectedPanel">
-                <div class="sel-empty">Отметьте категории слева</div>
-              </div>
-              <button class="btn-exp" id="exportViewBtn" onclick="exportDataView()" disabled>👁 Выгрузить</button>
-              <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
+            <!-- Результаты выгрузки — появляются под каталогом -->
+            <div id="viewPanel" style="padding:10px;border-top:1px solid var(--border2);">
+              <div id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);margin-bottom:8px;"></div>
+              <div id="viewPanelBody"></div>
             </div>
-          </div>
-          <!-- Панель просмотра — независимый скролл под каталогом, всегда в DOM -->
-          <div id="viewPanel" style="flex:1;overflow-y:auto;padding:10px;border-top:1px solid var(--border2);">
-            <div id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);margin-bottom:8px;"></div>
-            <div id="viewPanelBody"></div>
           </div>
         </div>
 
