@@ -403,13 +403,11 @@ input[type=number]{-moz-appearance:textfield;}
             <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border2);">
             <table class="prod-table" id="prodTable">
               <thead><tr>
-                <th style="min-width:100px">Категория</th>
                 <th style="width:34px;text-align:center;">Фото</th>
                 <th style="min-width:160px">Название</th>
                 <th style="width:80px;text-align:center;">Цена</th>
-                <th style="width:80px;text-align:center;">История</th>
+                <th style="width:80px;text-align:center;">До скидки</th>
                 <th style="width:80px;text-align:center;">1 ед.</th>
-                <th style="width:80px;text-align:center;">Статус</th>
                 <th style="width:50px;text-align:center;">✕</th>
               </tr></thead>
               <tbody id="prodBody"></tbody>
@@ -1513,42 +1511,90 @@ function renderMyProdTable(){
   let total=0;
   catIds.forEach(catId=>{
     const cat=myProdList[catId];
+    // Сортировка по цене от дешёвой к дорогой
+    const sorted=[...cat.products].map((p,i)=>({...p,_origIdx:i}))
+      .sort((a,b)=>(a.status==='unavailable'?999999:a.price)-(b.status==='unavailable'?999999:b.price));
     total+=cat.products.length;
+    // Шапка категории
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="8">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
+    hdr.innerHTML='<td colspan="6">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
     hdr.onclick=()=>{
       hdr.classList.toggle('open');
       const isOpen=hdr.classList.contains('open');
       tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]').forEach(r=>r.classList.toggle('hidden',!isOpen));
     };
     tbody.appendChild(hdr);
-    cat.products.forEach((p,idx)=>{
+    sorted.forEach(p=>{
       const tr=document.createElement('tr');
-      const statusColors={ok:'',price_up:'rgba(251,191,36,.12)',price_down:'rgba(74,222,128,.1)',unavailable:'rgba(248,113,113,.12)',new:'rgba(56,189,248,.1)'};
-      const bg=statusColors[p.status]||'';
+      // Фоновый цвет строки по статусу
+      const bgMap={ok:'',price_up:'rgba(251,191,36,.1)',price_down:'rgba(74,222,128,.08)',unavailable:'rgba(248,113,113,.1)',new:'rgba(56,189,248,.08)'};
       tr.className='prod-row hidden';
       tr.dataset.catid=catId;
-      if(bg)tr.style.background=bg;
+      if(bgMap[p.status])tr.style.background=bgMap[p.status];
+      // Фото
       const photo=p.photo
         ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
-      const statusLabel={ok:'',price_up:'🟡 +цена',price_down:'🟢 -цена',unavailable:'🔴 нет',new:'🆕 новый'}[p.status]||'';
-      const prevPrice=p.priceHistory&&p.priceHistory.length>1?p.priceHistory[p.priceHistory.length-2].price:null;
-      const histCell=prevPrice?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(prevPrice)}</span>`:'—';
+      // Название — зачёркнутое если нет в наличии
       const nameStyle=p.status==='unavailable'?'text-decoration:line-through;color:var(--text2);':'';
-      tr.innerHTML=`<td style="text-align:left;color:var(--text2);font-size:11px;">${cat.catName}</td>
+      // Плашка скидки — если текущая цена меньше предыдущей в истории
+      const prevPrice=p.priceHistory&&p.priceHistory.length>1?p.priceHistory[p.priceHistory.length-2].price:null;
+      const discBadge=prevPrice&&p.price<prevPrice
+        ?`<span class="discount-badge">-${Math.round((1-p.price/prevPrice)*100)}%</span>`:'';
+      // Цена — если нет в наличии показываем последнюю известную зачёркнуто
+      const priceCell=p.status==='unavailable'
+        ?`<span style="text-decoration:line-through;color:var(--text2);">${fmtPrice(p.price)}</span>`
+        :`<span style="color:#fbbf24;font-weight:600;">${fmtPrice(p.price)}</span>${discBadge}`;
+      // Старая цена (До скидки)
+      const oldPriceCell=prevPrice&&p.price<prevPrice
+        ?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(prevPrice)}</span>`:'';
+      // Индикатор изменения цены — как в КБЖУ: ↑↓= и ✕ для недоступных
+      let badge='';
+      const ph=p.priceHistory||[];
+      if(p.status==='unavailable'){
+        badge=`<span class="p-badge" style="background:rgba(248,113,113,.15);border:1px solid var(--red);color:var(--red);cursor:pointer;font-size:10px;" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Нет в наличии — нажмите для истории">✕</span>`;
+      } else if(ph.length>1){
+        const last=ph[ph.length-1].price,prev2=ph[ph.length-2].price;
+        if(last>prev2) badge=`<span class="p-badge up" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Подорожал — нажмите для истории">↑</span>`;
+        else if(last<prev2) badge=`<span class="p-badge dn" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Подешевел — нажмите для истории">↓</span>`;
+        else badge=`<span class="p-badge eq" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Цена не изменилась">=</span>`;
+      } else if(ph.length===1){
+        badge=`<span class="p-badge eq" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="История цен">=</span>`;
+      }
+      // Новый продукт — синяя метка
+      if(p.status==='new') badge=`<span class="p-badge" style="background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;">NEW</span>`;
+      tr.innerHTML=`
         <td style="padding:4px 6px;text-align:center;">${photo}</td>
         <td style="text-align:left;${nameStyle}">${p.name}</td>
-        <td style="text-align:center;color:#fbbf24;font-weight:600;">${p.status==='unavailable'?'—':fmtPrice(p.price)}</td>
-        <td style="text-align:center;">${histCell}</td>
+        <td style="text-align:center;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div></td>
+        <td style="text-align:center;">${oldPriceCell}</td>
         <td style="text-align:center;color:var(--text2);font-size:11px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
-        <td style="text-align:center;font-size:13px;">${statusLabel}</td>
-        <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${idx})">✕</button></td>`;
+        <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${p._origIdx})">✕</button></td>`;
       tbody.appendChild(tr);
     });
   });
   const cnt=document.getElementById('myProdCount');
   if(cnt)cnt.textContent=total+' товаров';
+}
+
+function showMyProdHistory(catId,name){
+  const cat=myProdList[catId];if(!cat)return;
+  const p=cat.products.find(x=>x.name===name);if(!p)return;
+  document.getElementById('phTitle').textContent='История цен: '+name;
+  const h=p.priceHistory||[];
+  const cv=document.getElementById('phCanvas'),ctx=cv.getContext('2d'),W=cv.width,Hi=cv.height;
+  ctx.clearRect(0,0,W,Hi);ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,W,Hi);
+  if(h.length>0){
+    const prices=h.map(x=>x.price),mn=Math.min(...prices),mx=Math.max(...prices),rng=mx-mn||1;
+    const pd={l:44,r:14,t:14,b:26},iW=W-pd.l-pd.r,iH=Hi-pd.t-pd.b;
+    ctx.strokeStyle='#404040';ctx.lineWidth=1;
+    for(let i=0;i<=4;i++){const y=pd.t+(iH/4)*i;ctx.beginPath();ctx.moveTo(pd.l,y);ctx.lineTo(W-pd.r,y);ctx.stroke();ctx.fillStyle='#b0b0b0';ctx.font='10px Segoe UI';ctx.fillText(Math.round(mx-(rng/4)*i),2,y+4);}
+    if(h.length>1){ctx.strokeStyle='#4a9eff';ctx.lineWidth=2;ctx.beginPath();h.forEach((x,i)=>{const px=pd.l+(i/(h.length-1))*iW,py=pd.t+(1-(x.price-mn)/rng)*iH;i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});ctx.stroke();}
+    h.forEach((x,i)=>{const px=pd.l+(h.length>1?i/(h.length-1):0.5)*iW,py=pd.t+(h.length>1?(1-(x.price-mn)/rng):0.5)*iH;ctx.fillStyle='#4a9eff';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();});
+  }
+  const unavDate=p.status==='unavailable'?`<div style="color:var(--red);margin-bottom:6px;">🔴 Не найден при обновлении ${p.statusDate||''}</div>`:'';
+  document.getElementById('phList').innerHTML=unavDate+h.slice().reverse().map(x=>'<div>'+x.date+': <strong style="color:var(--accent)">'+x.price.toLocaleString('ru-RU')+' ֏</strong></div>').join('');
+  openModal('priceHistModal');
 }
 
 function delMyProd(catId,idx){
