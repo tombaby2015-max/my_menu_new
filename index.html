@@ -362,29 +362,43 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
           <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
           <div class="parse-status" id="parseStatus"></div>
-          <div class="cat-screen-inner">
-            <div class="cat-panel">
-              <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
-              <div class="cat-panel-body" id="catalogPanel">
-                <div class="load-row"><div class="spin"></div> Загрузка...</div>
+          <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:0;">
+            <div class="cat-screen-inner" style="flex-shrink:0;min-height:280px;">
+              <div class="cat-panel">
+                <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
+                <div class="cat-panel-body" id="catalogPanel">
+                  <div class="load-row"><div class="spin"></div> Загрузка...</div>
+                </div>
+              </div>
+              <div class="sel-panel">
+                <div class="cat-panel-hdr">✅ Выбранные категории</div>
+                <div class="cat-panel-body" id="selectedPanel">
+                  <div class="sel-empty">Отметьте категории слева</div>
+                </div>
+                <button class="btn-exp" id="exportViewBtn" onclick="exportDataView()" disabled>👁 Выгрузить</button>
+                <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
               </div>
             </div>
-            <div class="sel-panel">
-              <div class="cat-panel-hdr">✅ Выбранные категории</div>
-              <div class="cat-panel-body" id="selectedPanel">
-                <div class="sel-empty">Отметьте категории слева</div>
+            <!-- Панель просмотра результатов выгрузки -->
+            <div id="viewPanel" style="display:none;flex:1;padding:10px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);"></span>
+                <button class="ctrl-btn sec" style="padding:2px 10px;font-size:11px;" onclick="document.getElementById('viewPanel').style.display='none'">✕ Закрыть</button>
               </div>
-              <button class="btn-exp" id="exportBtn" onclick="exportData()" disabled>⬇ Выгрузить</button>
+              <div id="viewPanelBody"></div>
             </div>
           </div>
         </div>
 
         <!-- Область 2 -->
         <div class="parse-area" id="parse-area-2" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
-          <div style="padding:6px 12px;background:#111318;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <span style="font-size:11px;font-weight:600;color:var(--accentL);text-transform:uppercase;letter-spacing:.7px;">📋 Товары</span>
-            <span id="parsedCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
+          <div style="padding:6px 12px;background:#111318;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;color:var(--accentL);text-transform:uppercase;letter-spacing:.7px;">📋 Мои товары</span>
+            <span id="myProdCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
+            <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
+            <button class="ctrl-btn sec" style="padding:2px 10px;font-size:12px;" onclick="clearMyProdChanges()">Сбросить метки</button>
           </div>
+          <div id="myProdChanges" style="display:none;padding:7px 12px;background:rgba(56,189,248,.07);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;max-height:90px;overflow-y:auto;"></div>
           <div style="flex:1;overflow:auto;padding:10px;">
             <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border2);">
             <table class="prod-table" id="prodTable">
@@ -393,9 +407,10 @@ input[type=number]{-moz-appearance:textfield;}
                 <th style="width:34px;text-align:center;">Фото</th>
                 <th style="min-width:160px">Название</th>
                 <th style="width:80px;text-align:center;">Цена</th>
-                <th style="width:80px;text-align:center;">До скидки</th>
+                <th style="width:80px;text-align:center;">История</th>
                 <th style="width:80px;text-align:center;">1 ед.</th>
-                <th style="width:80px;text-align:center;">✓</th>
+                <th style="width:80px;text-align:center;">Статус</th>
+                <th style="width:50px;text-align:center;">✕</th>
               </tr></thead>
               <tbody id="prodBody"></tbody>
             </table>
@@ -694,6 +709,7 @@ const WORKER_URL = 'https://my-menu.belovolov-email.workers.dev';
 
 let menuData={}, kbjuTable={}, mealTimes={}, savedRecipes={Завтрак:[],Перекус:[],Обед:[],Ужин:[]}, notes='', myList=[];
 let _parsedRows=[], _parsedCats=[];
+let myProdList={}; // {catId: {catName, lastUpdated, products: [{name, price, priceHistory:[{date,price}], photo, pricePerUnit, weightMeasure, status, statusDate}]}}
 let curDay='Понедельник', kSortKey=null, kSortDir=1;
 let _editProd=null, _psTarget=null, _atmRec=null, _syncDec=[], _renameTarget=null;
 let _kbjuSelectMode=false;
@@ -710,6 +726,7 @@ function saveAll(){
   localStorage.setItem('notes',notes);
   localStorage.setItem('myList',JSON.stringify(myList));
   localStorage.setItem('_parsedRows',JSON.stringify(_parsedRows));
+  localStorage.setItem('myProdList',JSON.stringify(myProdList));
   clearTimeout(_kvTimer);
   _kvTimer=setTimeout(syncToKV,1500);
 }
@@ -721,12 +738,13 @@ function loadAll(){
   notes=localStorage.getItem('notes')||'';
   try{myList=JSON.parse(localStorage.getItem('myList')||'[]')}catch(e){}
   try{_parsedRows=JSON.parse(localStorage.getItem('_parsedRows')||'[]')}catch(e){}
+  try{myProdList=JSON.parse(localStorage.getItem('myProdList')||'{}')}catch(e){}
 }
 function saveNotes(){notes=document.getElementById('notesArea').value;saveAll();}
 async function syncToKV(){
   try{
     await fetch(WORKER_URL+'/kv/app_data',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({menuData,kbjuTable,mealTimes,savedRecipes,notes,myList,_parsedRows})});
+      body:JSON.stringify({menuData,kbjuTable,mealTimes,savedRecipes,notes,myList,_parsedRows,myProdList})});
     showBadge('✓ Сохранено в облаке','#4caf50');
   }catch(e){showBadge('⚠ Только локально','#ff9800');}
 }
@@ -743,6 +761,7 @@ async function loadFromKV(){
       if(d.notes&&d.notes.length>=notes.length) notes=d.notes;
       if(d.myList&&d.myList.length>=myList.length) myList=d.myList;
       if(d._parsedRows&&d._parsedRows.length>=_parsedRows.length) _parsedRows=d._parsedRows;
+      if(d.myProdList&&Object.keys(d.myProdList).length>=Object.keys(myProdList).length) myProdList=d.myProdList;
       localStorage.setItem('menuData',JSON.stringify(menuData));
       localStorage.setItem('kbjuTable',JSON.stringify(kbjuTable));
       localStorage.setItem('mealTimes',JSON.stringify(mealTimes));
@@ -750,6 +769,7 @@ async function loadFromKV(){
       localStorage.setItem('notes',notes);
       localStorage.setItem('myList',JSON.stringify(myList));
       localStorage.setItem('_parsedRows',JSON.stringify(_parsedRows));
+      localStorage.setItem('myProdList',JSON.stringify(myProdList));
       showBadge('✓ Загружено из облака','#4a9eff');
       return true;
     }
@@ -758,7 +778,7 @@ async function loadFromKV(){
 }
 async function doSync(){
   const ok=await loadFromKV();
-  if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;renderMyList();if(_parsedRows.length)renderProdTable();}
+  if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;renderMyList();renderMyProdTable();}
 }
 function showBadge(t,c){
   let b=document.getElementById('syncBadge');
@@ -789,20 +809,13 @@ function init(){
   document.getElementById('notesArea').value=notes;
   // renderMyList при старте
   renderMyList();
-  // Восстанавливаем таблицу продуктов если были данные
-  if(_parsedRows.length){
-    document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
-    renderProdTable();
-  }
+  renderMyProdTable();
   loadFromKV().then(ok=>{
     if(ok){
       renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();
       document.getElementById('notesArea').value=notes;
       renderMyList();
-      if(_parsedRows.length){
-        document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
-        renderProdTable();
-      }
+      renderMyProdTable();
     }
     reEvalStatuses();
     goSec(lastSec);
@@ -1338,9 +1351,15 @@ function removeCatSel(id){
   renderSelPanel();
 }
 function renderSelPanel(){
-  const p=document.getElementById('selectedPanel'),btn=document.getElementById('exportBtn');
-  if(!parseSelected.size){p.innerHTML='<div class="sel-empty">Отметьте категории слева</div>';btn.disabled=true;return;}
-  btn.disabled=false;p.innerHTML='';
+  const p=document.getElementById('selectedPanel');
+  const btnV=document.getElementById('exportViewBtn');
+  const btnM=document.getElementById('exportMemBtn');
+  if(!parseSelected.size){
+    p.innerHTML='<div class="sel-empty">Отметьте категории слева</div>';
+    btnV.disabled=true;btnM.disabled=true;return;
+  }
+  btnV.disabled=false;btnM.disabled=false;
+  p.innerHTML='';
   parseSelected.forEach((cat,id)=>{const t=document.createElement('div');t.className='sel-tag';t.innerHTML='<span class="tn">'+cat.name+'</span><span class="tr" onclick="removeCatSel('+id+')">×</span>';p.appendChild(t);});
 }
 
@@ -1356,17 +1375,17 @@ async function resolveLeafCats(cat,depth=0){
   }catch(e){return[{...cat}];}
 }
 
-async function exportData(){
+async function exportDataView(){
   if(!parseSelected.size)return;
-  const btn=document.getElementById('exportBtn'),fill=document.getElementById('parseProg'),msg=document.getElementById('parseStatus');
-  btn.disabled=true;btn.textContent='Загрузка...';
-  // П.1: очищаем _parsedRows только в начале новой выгрузки
-  _parsedRows=[];_parsedCats=[];fill.style.width='0%';
-  msg.textContent='Определяю подкатегории...';
+  const btnV=document.getElementById('exportViewBtn'),btnM=document.getElementById('exportMemBtn');
+  const fill=document.getElementById('parseProg'),msg=document.getElementById('parseStatus');
+  btnV.disabled=true;btnM.disabled=true;btnV.textContent='Загрузка...';
+  fill.style.width='0%';msg.textContent='Определяю подкатегории...';
   const selected=[...parseSelected.values()];
   const leafCats=[];
   for(const cat of selected){const leaves=await resolveLeafCats(cat);leafCats.push(...leaves);}
   msg.textContent='Найдено подкатегорий: '+leafCats.length;
+  const viewRows=[];
   for(let i=0;i<leafCats.length;i++){
     const cat=leafCats[i];
     msg.textContent='Загружаю: '+cat.name+'...';
@@ -1374,19 +1393,97 @@ async function exportData(){
     try{
       const prods=await fetchAllProds(cat.id);
       prods.sort((a,b)=>{const pa=a.discountedPrice>0?a.discountedPrice:a.price||0,pb=b.discountedPrice>0?b.discountedPrice:b.price||0;return pa-pb;});
-      _parsedCats.push({cat,prods});
+      viewRows.push({cat,prods});
+    }catch(e){console.warn(e);}
+  }
+  fill.style.width='100%';
+  const total=viewRows.reduce((s,g)=>s+g.prods.length,0);
+  msg.textContent='✅ Готово — '+total+' товаров из '+leafCats.length+' категорий';
+  btnV.disabled=false;btnM.disabled=false;btnV.textContent='👁 Выгрузить';
+  renderViewPanel(viewRows,total);
+}
+
+function renderViewPanel(viewRows,total){
+  const panel=document.getElementById('viewPanel');
+  const title=document.getElementById('viewPanelTitle');
+  const body=document.getElementById('viewPanelBody');
+  title.textContent=total+' товаров — только просмотр';
+  let html='';
+  viewRows.forEach(({cat,prods})=>{
+    html+=`<div style="margin-bottom:6px;">
+      <div style="padding:6px 10px;background:var(--th-bg);border-radius:6px 6px 0 0;font-size:12px;font-weight:600;color:#fff;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        ▶ ${cat.name} (${prods.length})
+      </div>
+      <div style="display:none;border:1px solid var(--border2);border-radius:0 0 6px 6px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:var(--bg3);">
+            <th style="padding:5px 8px;text-align:left;border-bottom:1px solid var(--border2);color:var(--text2);font-size:11px;">Название</th>
+            <th style="padding:5px 8px;text-align:center;width:90px;border-bottom:1px solid var(--border2);color:var(--text2);font-size:11px;">Цена</th>
+            <th style="padding:5px 8px;text-align:center;width:90px;border-bottom:1px solid var(--border2);color:var(--text2);font-size:11px;">1 ед.</th>
+          </tr></thead>
+          <tbody>
+            ${prods.map((p,i)=>{
+              const disc=p.discountedPrice>0&&p.discountedPrice<p.price;
+              const price=disc?p.discountedPrice:p.price;
+              const ppu=p.productPricePerUnit>0?fmtUnit({pricePerUnit:p.productPricePerUnit,weightMeasure:p.weightMeasure}):'';
+              return `<tr style="background:${i%2===0?'var(--bg3)':'var(--bg4)'}">
+                <td style="padding:5px 8px;color:var(--text);">${p.name}${disc?'<span class="discount-badge" style="margin-left:6px;">-'+Math.round(p.discountPercent)+'%</span>':''}</td>
+                <td style="padding:5px 8px;text-align:center;color:#fbbf24;font-weight:600;">${fmtPrice(price)}</td>
+                <td style="padding:5px 8px;text-align:center;color:var(--text2);font-size:11px;">${ppu}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+  body.innerHTML=html;
+  panel.style.display='block';
+}
+
+async function exportDataToMemory(){
+  if(!parseSelected.size)return;
+  const btnV=document.getElementById('exportViewBtn'),btnM=document.getElementById('exportMemBtn');
+  const fill=document.getElementById('parseProg'),msg=document.getElementById('parseStatus');
+  btnV.disabled=true;btnM.disabled=true;btnM.textContent='Загрузка...';
+  fill.style.width='0%';msg.textContent='Определяю подкатегории...';
+  const selected=[...parseSelected.values()];
+  const leafCats=[];
+  for(const cat of selected){const leaves=await resolveLeafCats(cat);leafCats.push(...leaves);}
+  const today=new Date().toLocaleDateString('ru-RU');
+  let addedCats=0,addedProds=0,skippedProds=0;
+  for(let i=0;i<leafCats.length;i++){
+    const cat=leafCats[i];
+    msg.textContent='Загружаю: '+cat.name+'...';
+    fill.style.width=((i/leafCats.length)*100)+'%';
+    try{
+      const prods=await fetchAllProds(cat.id);
+      if(!myProdList[cat.id]){myProdList[cat.id]={catName:cat.name,lastUpdated:today,products:[]};addedCats++;}
       prods.forEach(item=>{
         const disc=item.discountedPrice>0&&item.discountedPrice<item.price;
-        _parsedRows.push({catId:cat.id,catName:cat.name,name:item.name||'',price:disc?item.discountedPrice:item.price,origPrice:disc?item.price:null,discPct:disc?Math.round(item.discountPercent):0,pricePerUnit:item.productPricePerUnit,weightMeasure:item.weightMeasure,photo:item.photo||''});
+        const price=disc?item.discountedPrice:item.price;
+        const exists=myProdList[cat.id].products.find(p=>p.name===item.name);
+        if(!exists){
+          myProdList[cat.id].products.push({
+            name:item.name||'',price,
+            priceHistory:[{date:today,price}],
+            photo:item.photo||'',
+            pricePerUnit:item.productPricePerUnit||0,
+            weightMeasure:item.weightMeasure||'',
+            status:'ok',statusDate:today
+          });
+          addedProds++;
+        } else {
+          skippedProds++;
+        }
       });
     }catch(e){console.warn(e);}
   }
   fill.style.width='100%';
-  document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
-  msg.textContent='✅ Готово — '+_parsedRows.length+' товаров из '+leafCats.length+' категорий';
-  btn.disabled=false;btn.textContent='⬇ Выгрузить';
-  saveAll(); // П.1: сохраняем _parsedRows сразу после выгрузки
-  renderProdTable();
+  msg.textContent=`✅ В память: +${addedCats} кат., +${addedProds} товаров, пропущено ${skippedProds} (уже есть)`;
+  btnV.disabled=false;btnM.disabled=false;btnM.textContent='💾 Выгрузить в память';
+  saveAll();
+  renderMyProdTable();
 }
 
 async function fetchAllProds(catId){
@@ -1409,45 +1506,146 @@ function fmtUnit(row){
 }
 function fmtPrice(v){if(!v)return '—';return Math.round(v).toLocaleString('ru-RU')+' ֏';}
 
-function renderProdTable(){
+function renderMyProdTable(){
   const tbody=document.getElementById('prodBody');
   tbody.innerHTML='';
-  const myNames=new Set(myList.map(p=>p.name));
-  const groups={};
-  _parsedRows.forEach((row,i)=>{
-    if(!groups[row.catId])groups[row.catId]={name:row.catName,rows:[]};
-    groups[row.catId].rows.push({...row,idx:i});
-  });
-  Object.entries(groups).forEach(([catId,g])=>{
+  const catIds=Object.keys(myProdList);
+  let total=0;
+  catIds.forEach(catId=>{
+    const cat=myProdList[catId];
+    total+=cat.products.length;
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="7">'+g.name+' ('+g.rows.length+')</td>';
+    hdr.innerHTML='<td colspan="8">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
     hdr.onclick=()=>{
       hdr.classList.toggle('open');
       const isOpen=hdr.classList.contains('open');
       tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]').forEach(r=>r.classList.toggle('hidden',!isOpen));
     };
     tbody.appendChild(hdr);
-    g.rows.forEach(row=>{
-      const inMyList=myNames.has(row.name);
+    cat.products.forEach((p,idx)=>{
       const tr=document.createElement('tr');
-      tr.className='prod-row hidden'+(inMyList?' prod-in-mylist':'');
+      const statusColors={ok:'',price_up:'rgba(251,191,36,.12)',price_down:'rgba(74,222,128,.1)',unavailable:'rgba(248,113,113,.12)',new:'rgba(56,189,248,.1)'};
+      const bg=statusColors[p.status]||'';
+      tr.className='prod-row hidden';
       tr.dataset.catid=catId;
-      const photo=row.photo
-        ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${row.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
+      if(bg)tr.style.background=bg;
+      const photo=p.photo
+        ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
-      const rowData=encodeURIComponent(JSON.stringify({name:row.name,price:row.price,origPrice:row.origPrice||null,discPct:row.discPct||0,catId:row.catId,catName:row.catName,photo:row.photo||'',pricePerUnit:row.pricePerUnit||0,weightMeasure:row.weightMeasure||''}));
-      tr.innerHTML=`<td></td><td style="padding:4px 6px;text-align:center;">${photo}</td><td style="text-align:left;">${row.name}</td><td style="text-align:center;color:#fbbf24;font-weight:600;">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td><td style="text-align:center;color:rgba(255,255,255,.45);text-decoration:line-through;font-size:11px;">${row.origPrice?fmtPrice(row.origPrice):''}</td><td style="text-align:center;color:#fbbf24;font-size:11px;">${fmtUnit(row)}</td><td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>`;
-      tr.onclick=function(e){
-        if(e.target.type==='checkbox')return;
-        if(e.target.closest('.photo-thumb'))return;
-        const cb=tr.querySelector('.cb-add');
-        if(!cb)return;
-        cb.checked=!cb.checked;
-        toggleMyListItem(cb);
-      };
+      const statusLabel={ok:'',price_up:'🟡 +цена',price_down:'🟢 -цена',unavailable:'🔴 нет',new:'🆕 новый'}[p.status]||'';
+      const prevPrice=p.priceHistory&&p.priceHistory.length>1?p.priceHistory[p.priceHistory.length-2].price:null;
+      const histCell=prevPrice?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(prevPrice)}</span>`:'—';
+      const nameStyle=p.status==='unavailable'?'text-decoration:line-through;color:var(--text2);':'';
+      tr.innerHTML=`<td style="text-align:left;color:var(--text2);font-size:11px;">${cat.catName}</td>
+        <td style="padding:4px 6px;text-align:center;">${photo}</td>
+        <td style="text-align:left;${nameStyle}">${p.name}</td>
+        <td style="text-align:center;color:#fbbf24;font-weight:600;">${p.status==='unavailable'?'—':fmtPrice(p.price)}</td>
+        <td style="text-align:center;">${histCell}</td>
+        <td style="text-align:center;color:var(--text2);font-size:11px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
+        <td style="text-align:center;font-size:13px;">${statusLabel}</td>
+        <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${idx})">✕</button></td>`;
       tbody.appendChild(tr);
     });
   });
+  const cnt=document.getElementById('myProdCount');
+  if(cnt)cnt.textContent=total+' товаров';
+}
+
+function delMyProd(catId,idx){
+  if(!myProdList[catId])return;
+  myProdList[catId].products.splice(idx,1);
+  if(!myProdList[catId].products.length)delete myProdList[catId];
+  saveAll();renderMyProdTable();
+}
+
+function clearMyProdChanges(){
+  Object.values(myProdList).forEach(cat=>{
+    cat.products.forEach(p=>{if(p.status!=='unavailable')p.status='ok';});
+  });
+  saveAll();renderMyProdTable();
+  document.getElementById('myProdChanges').style.display='none';
+}
+
+async function updateMyProds(){
+  const catIds=Object.keys(myProdList);
+  if(!catIds.length){alert('Область 2 пуста — сначала добавьте товары через «Выгрузить в память»');return;}
+  const msg=document.getElementById('parseStatus');
+  const fill=document.getElementById('parseProg');
+  const changesEl=document.getElementById('myProdChanges');
+  fill.style.width='0%';
+  const today=new Date().toLocaleDateString('ru-RU');
+  const changes=[];
+  for(let ci=0;ci<catIds.length;ci++){
+    const catId=catIds[ci];
+    const cat=myProdList[catId];
+    msg.textContent='Обновляю: '+cat.catName+'...';
+    fill.style.width=((ci/catIds.length)*100)+'%';
+    try{
+      const freshProds=await fetchAllProds(parseInt(catId));
+      const freshNames=new Map(freshProds.map(p=>([p.name,p])));
+      // Проверяем существующие продукты
+      cat.products.forEach(p=>{
+        const fresh=freshNames.get(p.name);
+        if(!fresh){
+          // Нет в наличии
+          if(p.status!=='unavailable'){
+            p.status='unavailable';p.statusDate=today;
+            changes.push({type:'unavailable',name:p.name,cat:cat.catName});
+          }
+        } else {
+          const disc=fresh.discountedPrice>0&&fresh.discountedPrice<fresh.price;
+          const newPrice=disc?fresh.discountedPrice:fresh.price;
+          const oldPrice=p.price;
+          if(Math.round(newPrice)!==Math.round(oldPrice)){
+            const isUp=newPrice>oldPrice;
+            p.status=isUp?'price_up':'price_down';
+            p.statusDate=today;
+            if(!p.priceHistory)p.priceHistory=[];
+            p.priceHistory.push({date:today,price:newPrice});
+            p.price=newPrice;
+            changes.push({type:p.status,name:p.name,cat:cat.catName,oldPrice,newPrice});
+          } else {
+            if(p.status==='unavailable')p.status='ok';
+          }
+          p.photo=fresh.photo||p.photo;
+          p.pricePerUnit=fresh.productPricePerUnit||p.pricePerUnit;
+        }
+      });
+      // Ищем новые продукты
+      freshNames.forEach((fresh,name)=>{
+        const exists=cat.products.find(p=>p.name===name);
+        if(!exists){
+          const disc=fresh.discountedPrice>0&&fresh.discountedPrice<fresh.price;
+          const price=disc?fresh.discountedPrice:fresh.price;
+          cat.products.push({
+            name,price,priceHistory:[{date:today,price}],
+            photo:fresh.photo||'',
+            pricePerUnit:fresh.productPricePerUnit||0,
+            weightMeasure:fresh.weightMeasure||'',
+            status:'new',statusDate:today
+          });
+          changes.push({type:'new',name,cat:cat.catName,price});
+        }
+      });
+      cat.lastUpdated=today;
+    }catch(e){console.warn(catId,e);}
+  }
+  fill.style.width='100%';
+  msg.textContent='✅ Обновление завершено. Изменений: '+changes.length;
+  saveAll();renderMyProdTable();
+  // Показываем сводку изменений
+  if(changes.length){
+    const icons={price_up:'🟡',price_down:'🟢',unavailable:'🔴',new:'🆕'};
+    const labels={price_up:'подорожал',price_down:'подешевел',unavailable:'нет в наличии',new:'новый'};
+    changesEl.innerHTML='<strong style="color:var(--text);">Изменения:</strong> '+
+      changes.map(c=>`${icons[c.type]} <span style="color:var(--text);">${c.name}</span> — ${labels[c.type]}`+
+        (c.newPrice?` (${fmtPrice(c.oldPrice)} → ${fmtPrice(c.newPrice)})`:'')
+      ).join(' &nbsp;·&nbsp; ');
+    changesEl.style.display='block';
+  } else {
+    changesEl.innerHTML='<span style="color:var(--green);">Изменений нет — всё актуально</span>';
+    changesEl.style.display='block';
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1546,7 +1744,7 @@ function renderMyList(){
 
 function removeFromMyList(idx){
   myList.splice(idx,1);
-  saveAll();renderMyList();renderProdTable();
+  saveAll();renderMyList();
 }
 
 // П.3: sendMyListToKbju — исправленная версия
