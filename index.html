@@ -110,7 +110,7 @@ input[type=number]{-moz-appearance:textfield;}
 .parse-nav-btn.active{background:var(--accentDim);color:var(--accentL);border-color:var(--accent);font-weight:600;}
 .parse-area{display:none;flex-direction:column;}
 .parse-area.active{display:flex;}
-.cat-screen-inner{flex:1;display:flex;gap:14px;padding:14px;overflow:hidden;}
+.cat-screen-inner{flex:1;display:flex;gap:14px;padding:14px;overflow:visible;}
 .cat-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;flex:1;box-shadow:var(--card-shadow);}
 .cat-panel-hdr{padding:10px 14px;font-weight:600;font-size:11px;color:var(--th-text);background:var(--th-bg);border-bottom:1px solid var(--border2);letter-spacing:.6px;text-transform:uppercase;flex-shrink:0;}
 .cat-panel-body{flex:1;overflow-y:auto;}
@@ -359,33 +359,30 @@ input[type=number]{-moz-appearance:textfield;}
       <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
 
         <!-- Область 1 -->
-        <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-          <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
-          <div class="parse-status" id="parseStatus"></div>
-          <!-- Скроллируемый контейнер: каталог + результаты под ним -->
-          <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
-            <!-- Каталог — исходный размер, не ограничен -->
-            <div class="cat-screen-inner" style="flex-shrink:0;">
-              <div class="cat-panel">
-                <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
-                <div class="cat-panel-body" id="catalogPanel">
-                  <div class="load-row"><div class="spin"></div> Загрузка...</div>
-                </div>
-              </div>
-              <div class="sel-panel">
-                <div class="cat-panel-hdr">✅ Выбранные категории</div>
-                <div class="cat-panel-body" id="selectedPanel">
-                  <div class="sel-empty">Отметьте категории слева</div>
-                </div>
-                <button class="btn-exp" id="exportViewBtn" onclick="exportDataView()" disabled>👁 Выгрузить</button>
-                <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
+        <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;">
+          <div class="prog-bar" style="flex-shrink:0;"><div class="prog-fill" id="parseProg"></div></div>
+          <div class="parse-status" id="parseStatus" style="flex-shrink:0;"></div>
+          <!-- Каталог — исходный размер -->
+          <div class="cat-screen-inner" style="flex-shrink:0;min-height:300px;">
+            <div class="cat-panel">
+              <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
+              <div class="cat-panel-body" id="catalogPanel">
+                <div class="load-row"><div class="spin"></div> Загрузка...</div>
               </div>
             </div>
-            <!-- Результаты выгрузки — появляются под каталогом -->
-            <div id="viewPanel" style="padding:10px;border-top:1px solid var(--border2);">
-              <div id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);margin-bottom:8px;"></div>
-              <div id="viewPanelBody"></div>
+            <div class="sel-panel">
+              <div class="cat-panel-hdr">✅ Выбранные категории</div>
+              <div class="cat-panel-body" id="selectedPanel">
+                <div class="sel-empty">Отметьте категории слева</div>
+              </div>
+              <button class="btn-exp" id="exportViewBtn" onclick="exportDataView()" disabled>👁 Выгрузить</button>
+              <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
             </div>
+          </div>
+          <!-- Результаты выгрузки — просто под каталогом -->
+          <div id="viewPanel" style="flex-shrink:0;padding:10px;border-top:1px solid var(--border2);">
+            <div id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);margin-bottom:8px;"></div>
+            <div id="viewPanelBody"></div>
           </div>
         </div>
 
