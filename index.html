@@ -403,12 +403,14 @@ input[type=number]{-moz-appearance:textfield;}
             <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border2);">
             <table class="prod-table" id="prodTable">
               <thead><tr>
+                <th style="width:20px;"></th>
                 <th style="width:34px;text-align:center;">Фото</th>
                 <th style="min-width:160px">Название</th>
-                <th style="width:80px;text-align:center;">Цена</th>
+                <th style="width:107px;text-align:center;">Цена</th>
                 <th style="width:80px;text-align:center;">До скидки</th>
                 <th style="width:80px;text-align:center;">1 ед.</th>
-                <th style="width:50px;text-align:center;">✕</th>
+                <th style="width:40px;text-align:center;">✓</th>
+                <th style="width:40px;text-align:center;">✕</th>
               </tr></thead>
               <tbody id="prodBody"></tbody>
             </table>
@@ -1519,7 +1521,7 @@ function renderMyProdTable(){
     total+=cat.products.length;
     // Шапка категории
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="6">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
+    hdr.innerHTML='<td colspan="8">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
     hdr.onclick=()=>{
       hdr.classList.toggle('open');
       const isOpen=hdr.classList.contains('open');
@@ -1564,12 +1566,17 @@ function renderMyProdTable(){
       }
       // Новый продукт — синяя метка
       if(p.status==='new') badge=`<span class="p-badge" style="background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;">NEW</span>`;
+      const rowData=encodeURIComponent(JSON.stringify({name:p.name,price:p.price,catId,catName:cat.catName,photo:p.photo||'',pricePerUnit:p.pricePerUnit||0,weightMeasure:p.weightMeasure||''}));
+      const inMyList=!!myList.find(x=>x.name===p.name);
+      if(inMyList)tr.classList.add('prod-in-mylist');
       tr.innerHTML=`
+        <td></td>
         <td style="padding:4px 6px;text-align:center;">${photo}</td>
         <td style="text-align:left;${nameStyle}">${p.name}</td>
-        <td style="text-align:center;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div></td>
+        <td style="text-align:center;width:107px;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div></td>
         <td style="text-align:center;">${oldPriceCell}</td>
         <td style="text-align:center;color:var(--text2);font-size:11px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
+        <td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>
         <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${p._origIdx})">✕</button></td>`;
       tbody.appendChild(tr);
     });
