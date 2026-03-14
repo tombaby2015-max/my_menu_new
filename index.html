@@ -1425,9 +1425,9 @@ function renderViewPanel(viewRows,total){
               const price=disc?p.discountedPrice:p.price;
               const ppu=p.productPricePerUnit>0?fmtUnit({pricePerUnit:p.productPricePerUnit,weightMeasure:p.weightMeasure}):'';
               return `<tr style="background:${i%2===0?'var(--bg3)':'var(--bg4)'}">
-                <td style="padding:5px 8px;color:var(--text);">${p.name}${disc?'<span class="discount-badge" style="margin-left:6px;">-'+Math.round(p.discountPercent)+'%</span>':''}</td>
-                <td style="padding:5px 8px;text-align:center;color:#fbbf24;font-weight:600;">${fmtPrice(price)}</td>
-                <td style="padding:5px 8px;text-align:center;color:var(--text2);font-size:11px;">${ppu}</td>
+                <td style="padding:5px 8px;color:var(--text);">${p.name}</td>
+                <td style="padding:5px 8px;text-align:center;color:#fbbf24;font-weight:600;">${fmtPrice(price)}${disc?'<span class="discount-badge" style="margin-left:4px;">-'+Math.round(p.discountPercent)+'%</span>':''}</td>
+                <td style="padding:5px 8px;text-align:center;color:var(--text2);font-size:11px;">${disc?'<span style="text-decoration:line-through;">'+fmtPrice(p.price)+'</span>':ppu}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1460,10 +1460,12 @@ async function exportDataToMemory(){
       prods.forEach(item=>{
         const disc=item.discountedPrice>0&&item.discountedPrice<item.price;
         const price=disc?item.discountedPrice:item.price;
+        const origPrice=disc?item.price:null;
+        const discPct=disc?Math.round(item.discountPercent):0;
         const exists=myProdList[cat.id].products.find(p=>p.name===item.name);
         if(!exists){
           myProdList[cat.id].products.push({
-            name:item.name||'',price,
+            name:item.name||'',price,origPrice,discPct,
             priceHistory:[{date:today,price}],
             photo:item.photo||'',
             pricePerUnit:item.productPricePerUnit||0,
@@ -1537,17 +1539,16 @@ function renderMyProdTable(){
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
       // Название — зачёркнутое если нет в наличии
       const nameStyle=p.status==='unavailable'?'text-decoration:line-through;color:var(--text2);':'';
-      // Плашка скидки — если текущая цена меньше предыдущей в истории
-      const prevPrice=p.priceHistory&&p.priceHistory.length>1?p.priceHistory[p.priceHistory.length-2].price:null;
-      const discBadge=prevPrice&&p.price<prevPrice
-        ?`<span class="discount-badge">-${Math.round((1-p.price/prevPrice)*100)}%</span>`:'';
+      // Плашка скидки — из сохранённых данных origPrice/discPct
+      const discBadge=p.origPrice&&p.discPct
+        ?`<span class="discount-badge">-${p.discPct}%</span>`:'';
       // Цена — если нет в наличии показываем последнюю известную зачёркнуто
       const priceCell=p.status==='unavailable'
         ?`<span style="text-decoration:line-through;color:var(--text2);">${fmtPrice(p.price)}</span>`
         :`<span style="color:#fbbf24;font-weight:600;">${fmtPrice(p.price)}</span>${discBadge}`;
-      // Старая цена (До скидки)
-      const oldPriceCell=prevPrice&&p.price<prevPrice
-        ?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(prevPrice)}</span>`:'';
+      // Старая цена (До скидки) — из p.origPrice
+      const oldPriceCell=p.origPrice
+        ?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(p.origPrice)}</span>`:'';
       // Индикатор изменения цены — как в КБЖУ: ↑↓= и ✕ для недоступных
       let badge='';
       const ph=p.priceHistory||[];
@@ -1655,6 +1656,10 @@ async function updateMyProds(){
           }
           p.photo=fresh.photo||p.photo;
           p.pricePerUnit=fresh.productPricePerUnit||p.pricePerUnit;
+          // Обновляем данные о скидке
+          const discUp=fresh.discountedPrice>0&&fresh.discountedPrice<fresh.price;
+          p.origPrice=discUp?fresh.price:null;
+          p.discPct=discUp?Math.round(fresh.discountPercent):0;
         }
       });
       // Ищем новые продукты
@@ -1664,7 +1669,10 @@ async function updateMyProds(){
           const disc=fresh.discountedPrice>0&&fresh.discountedPrice<fresh.price;
           const price=disc?fresh.discountedPrice:fresh.price;
           cat.products.push({
-            name,price,priceHistory:[{date:today,price}],
+            name,price,
+            origPrice:disc?fresh.price:null,
+            discPct:disc?Math.round(fresh.discountPercent):0,
+            priceHistory:[{date:today,price}],
             photo:fresh.photo||'',
             pricePerUnit:fresh.productPricePerUnit||0,
             weightMeasure:fresh.weightMeasure||'',
