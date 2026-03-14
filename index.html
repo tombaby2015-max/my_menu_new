@@ -141,7 +141,7 @@ input[type=number]{-moz-appearance:textfield;}
 .btn-exp:disabled{background:transparent;color:var(--text3);cursor:not-allowed;border:1px solid var(--border);}
 .prog-bar{height:3px;background:var(--border);flex-shrink:0;}
 .prog-fill{height:100%;background:var(--accent);transition:width .3s;width:0%;}
-.parse-status{font-size:11px;color:var(--text2);padding:3px 14px;flex-shrink:0;}
+.parse-status{font-size:13px;color:#ffffff;font-weight:500;padding:5px 14px;flex-shrink:0;}
 .screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--th-bg);border-bottom:none;flex-shrink:0;}
 .screen-nav h3{font-size:11px;font-weight:600;color:#ffffff;text-transform:uppercase;letter-spacing:.7px;}
 .screen-nav-hint{font-size:11px;color:var(--text2);}
@@ -155,17 +155,19 @@ input[type=number]{-moz-appearance:textfield;}
 .photo-thumb:hover .photo-popup{display:block;}
 .photo-popup img{width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;}
 .prod-table{width:100%;border-collapse:collapse;font-size:12px;}
-.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border:1px solid rgba(255,255,255,.15);border-top:none;border-bottom:2px solid rgba(255,255,255,.3);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border:1px solid var(--border2);border-top:none;border-bottom:2px solid var(--border2);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
 .prod-table td{padding:5px 6px;border:1px solid var(--border);}
 .prod-table tr.prod-row:nth-child(odd){background:var(--bg3);}
 .prod-table tr.prod-row:nth-child(even){background:var(--bg4);}
 .prod-table tr.prod-row{cursor:pointer;transition:background .1s;}
 .prod-table tr.prod-row:hover{background:var(--accentDim);}
 .prod-table tr.prod-row td{color:var(--text);}
-.prod-table th:nth-child(4),.prod-table th:nth-child(5),.prod-table th:nth-child(6),.prod-table th:nth-child(7){width:80px;}
-.prod-table td:nth-child(4),.prod-table td:nth-child(5),.prod-table td:nth-child(6){text-align:right;color:#fbbf24;}
-.prod-table td:nth-child(7){text-align:center;}
-.cat-hdr-row td{background:var(--th-bg)!important;color:#ffffff!important;font-weight:700;cursor:pointer;font-size:12px;padding:7px 10px;border-top:2px solid rgba(255,255,255,.2)!important;letter-spacing:.2px;}
+.prod-table th:nth-child(1){text-align:left;}
+.prod-table th:nth-child(3){text-align:left;}
+.prod-table th:nth-child(4),.prod-table th:nth-child(5),.prod-table th:nth-child(6),.prod-table th:nth-child(7){width:80px;text-align:center;}
+.prod-table td:nth-child(4),.prod-table td:nth-child(5),.prod-table td:nth-child(6){text-align:right;color:#fbbf24;width:80px;}
+.prod-table td:nth-child(7){text-align:center;width:80px;}
+.cat-hdr-row td{background:#2a2b35!important;color:#ffffff!important;font-weight:700;cursor:pointer;font-size:12px;padding:7px 10px;border-top:2px solid var(--border2)!important;border-bottom:1px solid var(--border2)!important;letter-spacing:.2px;}
 .cat-hdr-row td:first-child::before{content:'▶ ';font-size:10px;}
 .cat-hdr-row.open td:first-child::before{content:'▼ ';}
 .prod-row.hidden{display:none;}
@@ -381,8 +383,8 @@ input[type=number]{-moz-appearance:textfield;}
 
         <!-- Область 2 -->
         <div class="parse-area" id="parse-area-2" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
-          <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;flex-shrink:0;">
-            <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">📋 Товары</span>
+          <div style="padding:6px 12px;background:#111318;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:600;color:var(--accentL);text-transform:uppercase;letter-spacing:.7px;">📋 Товары</span>
             <span id="parsedCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
           </div>
           <div style="flex:1;overflow:auto;padding:10px;">
