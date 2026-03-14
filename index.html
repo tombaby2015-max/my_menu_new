@@ -8,26 +8,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:        #0f1623;
-  --bg2:       #131c2e;
-  --bg3:       #182236;
-  --bg4:       #1a2840;
-  --bg5:       #1e2e4a;
-  --th-bg:     #1e3a5f;
+  --bg:        #1c1d21;
+  --bg2:       #323339;
+  --bg3:       #393a41;
+  --bg4:       #41424b;
+  --bg5:       #474854;
+  --th-bg:     #1e1f24;
   --th-text:   #ffffff;
-  --text:      #cbd5e1;
-  --text2:     #64748b;
-  --text3:     #475569;
+  --text:      #e8eaf0;
+  --text2:     #9499b0;
+  --text3:     #5c6080;
   --accent:    #38bdf8;
   --accent2:   #0ea5e9;
   --accentL:   #7dd3fc;
   --accentDim: rgba(56,189,248,.18);
-  --border:    #1e2d45;
-  --border2:   #2a4a72;
-  --green:     #34d399;
+  --border:    #6e7080;
+  --border2:   #80828f;
+  --green:     #4ade80;
   --red:       #f87171;
   --yellow:    #fbbf24;
-  --card-shadow: 0 2px 12px rgba(0,0,0,.5);
+  --card-shadow: 0 2px 12px rgba(0,0,0,.35);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;font-size:13px;line-height:1.4;}
@@ -51,9 +51,9 @@ input[type=number]{-moz-appearance:textfield;}
 .sync-btn:hover{border-color:var(--accentL);color:var(--accentL);}
 #dayTabsWrap{flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:6px 14px 0;margin:0;}
 #dayTabs{display:flex;gap:5px;}
-.day-btn{padding:9px 0;border:1px solid var(--text2);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;border-radius:8px 8px 0 0;border-bottom:2px solid var(--text2);transition:all .15s;white-space:nowrap;flex:1;text-align:center;letter-spacing:.2px;}
-.day-btn:hover{color:#fff;background:rgba(16,185,129,.25);border-color:var(--accent);}
-.day-btn.active{color:#fff;border-color:var(--accent);border-bottom-color:var(--accent);background:var(--accent);font-weight:600;}
+.day-btn{padding:9px 0;border-top:1px solid var(--text2);border-left:1px solid var(--text2);border-right:1px solid var(--text2);border-bottom:none;background:transparent;color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;border-radius:8px 8px 0 0;transition:all .15s;white-space:nowrap;flex:1;text-align:center;letter-spacing:.2px;}
+.day-btn:hover{color:#fff;background:var(--accentDim);border-color:var(--accentL);}
+.day-btn.active{color:#fff;border-top:1px solid var(--accent);border-left:1px solid var(--accent);border-right:1px solid var(--accent);border-bottom:none;background:var(--accent);font-weight:600;}
 #main{flex:1;overflow:hidden;}
 .section{display:none;height:100%;flex-direction:column;}
 .section.active{display:flex;}
@@ -74,14 +74,14 @@ input[type=number]{-moz-appearance:textfield;}
 .meal-tbody:first-child tr:first-child td,.meal-tbody tr:first-child td{border-top:1px solid var(--border2);}
 .day-total-row td{background:var(--bg2)!important;color:#ffffff!important;font-weight:700;}
 .meal-spacer-tbody td{height:6px;padding:0!important;background:var(--bg2)!important;border:none!important;}
-.col-time{width:4%;min-width:40px;}
-.col-meal{width:8%;min-width:70px;position:relative;}
-.col-dish{width:13%;min-width:90px;text-align:center;position:relative;}
-.col-ing{width:20%;min-width:120px;text-align:left;}
-.col-w{width:4%;min-width:42px;}
-.col-num{width:3%;min-width:32px;}
-.col-kcal{width:3%;min-width:38px;}
-.col-recipe{width:39%;min-width:140px;text-align:left;font-size:12px;color:var(--text);}
+.col-time{width:4%;min-width:42px;}
+.col-meal{width:8%;min-width:72px;position:relative;}
+.col-dish{width:12%;min-width:80px;text-align:center;position:relative;}
+.col-ing{width:18%;min-width:110px;text-align:left;}
+.col-w{width:5%;min-width:52px;}
+.col-num{width:4%;min-width:36px;}
+.col-kcal{width:4%;min-width:44px;}
+.col-recipe{width:36%;min-width:140px;text-align:left;font-size:12px;color:var(--text);}
 .ing-wrap{display:flex;align-items:center;justify-content:space-between;gap:3px;}
 .col-w input,.w-inp{width:50px;padding:2px 4px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:#fbbf24;text-align:center;font-size:12px;}
 .w-inp:focus{outline:none;border-color:var(--accent);}
@@ -105,8 +105,11 @@ input[type=number]{-moz-appearance:textfield;}
 .dp-i:last-child{border-bottom:none;}
 .dp-i:hover{background:var(--accent);color:white;}
 #sec-parse{overflow:hidden;}
-#parseScroller{flex:1;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;}
-.parse-screen{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;overflow:hidden;}
+.parse-nav-btn{width:100%;padding:10px 6px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text2);cursor:pointer;font-size:11px;font-weight:500;text-align:center;transition:all .15s;line-height:1.4;}
+.parse-nav-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--accentL);}
+.parse-nav-btn.active{background:var(--accentDim);color:var(--accentL);border-color:var(--accent);font-weight:600;}
+.parse-area{display:none;flex-direction:column;}
+.parse-area.active{display:flex;}
 .cat-screen-inner{flex:1;display:flex;gap:14px;padding:14px;overflow:hidden;}
 .cat-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;flex:1;box-shadow:var(--card-shadow);}
 .cat-panel-hdr{padding:10px 14px;font-weight:600;font-size:11px;color:var(--th-text);background:var(--th-bg);border-bottom:1px solid var(--border2);letter-spacing:.6px;text-transform:uppercase;flex-shrink:0;}
@@ -139,9 +142,9 @@ input[type=number]{-moz-appearance:textfield;}
 .prog-bar{height:3px;background:var(--border);flex-shrink:0;}
 .prog-fill{height:100%;background:var(--accent);transition:width .3s;width:0%;}
 .parse-status{font-size:11px;color:var(--text2);padding:3px 14px;flex-shrink:0;}
-.screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#0f2240;border-bottom:none;flex-shrink:0;}
+.screen-nav{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--th-bg);border-bottom:none;flex-shrink:0;}
 .screen-nav h3{font-size:11px;font-weight:600;color:#ffffff;text-transform:uppercase;letter-spacing:.7px;}
-.screen-nav-hint{font-size:11px;color:rgba(125,211,252,.7);}
+.screen-nav-hint{font-size:11px;color:var(--text2);}
 .prod-screen-inner{flex:1;overflow:auto;padding:0;background:var(--bg);}
 .prod-table thead{background:var(--th-bg);}
 .prod-table thead th{top:0;position:sticky;}
@@ -152,13 +155,16 @@ input[type=number]{-moz-appearance:textfield;}
 .photo-thumb:hover .photo-popup{display:block;}
 .photo-popup img{width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;}
 .prod-table{width:100%;border-collapse:collapse;font-size:12px;}
-.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border:1px solid rgba(255,255,255,.3);border-top:none;border-bottom:2px solid rgba(255,255,255,.5);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
+.prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border:1px solid rgba(255,255,255,.15);border-top:none;border-bottom:2px solid rgba(255,255,255,.3);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
 .prod-table td{padding:5px 6px;border:1px solid var(--border);}
 .prod-table tr.prod-row:nth-child(odd){background:var(--bg3);}
 .prod-table tr.prod-row:nth-child(even){background:var(--bg4);}
 .prod-table tr.prod-row{cursor:pointer;transition:background .1s;}
-.prod-table tr.prod-row:hover{background:rgba(96,165,250,.18);}
-.prod-table tr.prod-row td{color:#ffffff;}
+.prod-table tr.prod-row:hover{background:var(--accentDim);}
+.prod-table tr.prod-row td{color:var(--text);}
+.prod-table th:nth-child(4),.prod-table th:nth-child(5),.prod-table th:nth-child(6),.prod-table th:nth-child(7){width:80px;}
+.prod-table td:nth-child(4),.prod-table td:nth-child(5),.prod-table td:nth-child(6){text-align:right;color:#fbbf24;}
+.prod-table td:nth-child(7){text-align:center;}
 .cat-hdr-row td{background:var(--th-bg)!important;color:#ffffff!important;font-weight:700;cursor:pointer;font-size:12px;padding:7px 10px;border-top:2px solid rgba(255,255,255,.2)!important;letter-spacing:.2px;}
 .cat-hdr-row td:first-child::before{content:'▶ ';font-size:10px;}
 .cat-hdr-row.open td:first-child::before{content:'▼ ';}
@@ -180,7 +186,7 @@ input[type=number]{-moz-appearance:textfield;}
 .btn-dl:hover{border-color:var(--accentL);color:var(--accentL);}
 .saved-group{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;margin-bottom:12px;overflow:hidden;box-shadow:var(--card-shadow);}
 .saved-group-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .15s;background:var(--th-bg);}
-.saved-group-hdr:hover{background:#27507a;}
+.saved-group-hdr:hover{background:var(--bg4);}
 .saved-group-hdr h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#ffffff;}
 .saved-group-body{padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .saved-group-body.collapsed{display:none;}
@@ -192,7 +198,7 @@ input[type=number]{-moz-appearance:textfield;}
 .btn-to-menu:hover{background:var(--accent);color:#111;border-color:var(--accent);}
 .kbju-tbl{width:100%;border-collapse:collapse;font-size:13px;}
 .kbju-tbl th{background:var(--th-bg);color:var(--th-text);padding:9px 7px;text-align:center;border:1px solid rgba(255,255,255,.3);border-bottom:2px solid rgba(255,255,255,.5);cursor:pointer;user-select:none;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
-.kbju-tbl th:hover{background:#27507a;color:#ffffff;}
+.kbju-tbl th:hover{background:var(--bg4);color:var(--accentL);}
 .kbju-tbl td{padding:6px 7px;border:1px solid var(--border);background:var(--bg3);}
 .kbju-tbl tr:nth-child(even):not(.arc-hdr) td{background:var(--bg4);}
 /* Числовые колонки КБЖУ: Б(3), Ж(4), У(5), Ккал(6) */
@@ -273,16 +279,17 @@ input[type=number]{-moz-appearance:textfield;}
 .fill-cand-name{flex:1;font-size:15px;font-weight:600;color:#ffffff;}
 .fill-cand-kbju{font-size:13px;color:#ffffff;white-space:nowrap;}
 .mylist-cat-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--th-bg);border:1px solid rgba(255,255,255,.2);border-radius:8px;margin-bottom:4px;cursor:pointer;font-size:12px;font-weight:600;color:#ffffff;letter-spacing:.4px;text-transform:uppercase;user-select:none;}
-.mylist-cat-hdr:hover{background:#27507a;}
+.mylist-cat-hdr:hover{background:var(--bg4);}
 .mylist-cat-tog{font-size:10px;color:rgba(255,255,255,.8);width:12px;}
-.mylist-cat-body{margin-bottom:10px;}
-.mylist-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:13px;cursor:default;transition:background .1s;}
+.mylist-cat-body{margin-bottom:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;overflow:hidden;}
+.mylist-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:default;transition:background .1s;}
+.mylist-row:last-child{border-bottom:none;}
 .mylist-row:hover{background:var(--bg4);}
-.mylist-name{flex:1;color:#ffffff;}
-.mylist-price{min-width:80px;text-align:right;color:#fbbf24;font-size:12px;white-space:nowrap;}
-.mylist-meals{display:flex;gap:8px;font-size:11px;color:rgba(255,255,255,.7);}
-.mylist-meals label{display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;color:#ffffff;}
-.mylist-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px;opacity:.6;}
+.mylist-name{flex:1;color:var(--text);}
+.mylist-price{min-width:90px;text-align:right;color:#fbbf24;font-size:12px;white-space:nowrap;flex-shrink:0;}
+.mylist-meals{display:flex;gap:16px;font-size:12px;}
+.mylist-meals label{display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;color:var(--text);}
+.mylist-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px;opacity:.6;flex-shrink:0;}
 .mylist-del:hover{opacity:1;}
 .prod-in-mylist td{background:rgba(74,222,128,.08)!important;}
 .prod-in-mylist td:first-child{border-left:3px solid var(--green);}
@@ -338,106 +345,107 @@ input[type=number]{-moz-appearance:textfield;}
 
   <!-- PARSE -->
   <div id="sec-parse" class="section">
-    <div id="parseScroller">
+    <div style="display:flex;flex:1;overflow:hidden;">
 
-      <!-- Область 1 -->
-      <div class="parse-screen">
-        <div class="screen-nav">
-          <h3>🗂 Область 1 — Каталог</h3>
-          <span class="screen-nav-hint">Прокрутите вниз → товары</span>
-        </div>
-        <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
-        <div class="parse-status" id="parseStatus"></div>
-        <div class="cat-screen-inner">
-          <div class="cat-panel">
-            <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
-            <div class="cat-panel-body" id="catalogPanel">
-              <div class="load-row"><div class="spin"></div> Загрузка...</div>
-            </div>
-          </div>
-          <div class="sel-panel">
-            <div class="cat-panel-hdr">✅ Выбранные категории</div>
-            <div class="cat-panel-body" id="selectedPanel">
-              <div class="sel-empty">Отметьте категории слева</div>
-            </div>
-            <button class="btn-exp" id="exportBtn" onclick="exportData()" disabled>⬇ Выгрузить</button>
-          </div>
-        </div>
+      <!-- Боковая навигация -->
+      <div id="parseNav" style="width:110px;flex-shrink:0;background:var(--bg4);border-right:1px solid var(--border2);display:flex;flex-direction:column;gap:8px;padding:12px 8px;">
+        <button class="parse-nav-btn active" onclick="showParseArea(1)">🗂 Каталог</button>
+        <button class="parse-nav-btn" onclick="showParseArea(2)">📋 Товары</button>
+        <button class="parse-nav-btn" onclick="showParseArea(3)">📒 Мой список</button>
+        <button class="parse-nav-btn" onclick="showParseArea(4)">🧺 Корзина</button>
       </div>
 
-      <!-- Область 2 -->
-      <div class="parse-screen">
-        <div class="screen-nav">
-          <h3>📋 Область 2 — Товары</h3>
-          <div style="display:flex;align-items:center;gap:10px;">
+      <!-- Области -->
+      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+
+        <!-- Область 1 -->
+        <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+          <div class="prog-bar"><div class="prog-fill" id="parseProg"></div></div>
+          <div class="parse-status" id="parseStatus"></div>
+          <div class="cat-screen-inner">
+            <div class="cat-panel">
+              <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
+              <div class="cat-panel-body" id="catalogPanel">
+                <div class="load-row"><div class="spin"></div> Загрузка...</div>
+              </div>
+            </div>
+            <div class="sel-panel">
+              <div class="cat-panel-hdr">✅ Выбранные категории</div>
+              <div class="cat-panel-body" id="selectedPanel">
+                <div class="sel-empty">Отметьте категории слева</div>
+              </div>
+              <button class="btn-exp" id="exportBtn" onclick="exportData()" disabled>⬇ Выгрузить</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Область 2 -->
+        <div class="parse-area" id="parse-area-2" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+          <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">📋 Товары</span>
             <span id="parsedCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
-            <span class="screen-nav-hint">↑ каталог · ↓ мой список</span>
+          </div>
+          <div style="flex:1;overflow:auto;padding:10px;">
+            <table class="prod-table" id="prodTable" style="border-radius:10px;overflow:hidden;">
+              <thead><tr>
+                <th style="text-align:left;min-width:100px">Категория</th>
+                <th style="width:34px">Фото</th>
+                <th style="text-align:left;min-width:160px">Название</th>
+                <th style="width:80px;text-align:right;">Цена</th>
+                <th style="width:80px;text-align:right;">До скидки</th>
+                <th style="width:80px;text-align:right;">1 ед.</th>
+                <th style="width:40px;text-align:center;">✓</th>
+              </tr></thead>
+              <tbody id="prodBody"></tbody>
+            </table>
           </div>
         </div>
-        <div class="prod-screen-inner">
-          <table class="prod-table" id="prodTable">
-            <thead><tr>
-              <th style="text-align:left;min-width:100px">Категория</th>
-              <th style="width:34px">Фото</th>
-              <th style="text-align:left;min-width:160px">Название</th>
-              <th style="white-space:nowrap">Цена</th>
-              <th style="white-space:nowrap">До скидки</th>
-              <th style="white-space:nowrap">1 ед.</th>
-              <th style="width:40px">✓</th>
-            </tr></thead>
-            <tbody id="prodBody"></tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Область 3 -->
-      <div class="parse-screen">
-        <div class="screen-nav">
-          <h3>📒 Область 3 — Мой список</h3>
-          <div style="display:flex;align-items:center;gap:8px;">
+        <!-- Область 3 -->
+        <div class="parse-area" id="parse-area-3" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+          <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">📒 Мой список</span>
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;" onclick="sendMyListToKbju()">↗ В таблицу КБЖУ</button>
-            <span class="screen-nav-hint">↑ товары · ↓ корзина</span>
+          </div>
+          <div style="flex:1;overflow-y:auto;padding:10px;">
+            <div id="myListWrap"></div>
           </div>
         </div>
-        <div class="prod-screen-inner">
-          <div id="myListWrap" style="padding:10px;overflow-y:auto;flex:1;"></div>
-        </div>
-      </div>
 
-      <!-- Область 4 -->
-      <div class="parse-screen">
-        <div class="screen-nav">
-          <h3>🧺 Область 4 — Корзина</h3>
-          <span class="screen-nav-hint">↑ мой список</span>
-        </div>
-        <div class="lists-screen-inner">
-          <div class="lists-left">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;">
-              <div class="list-block">
-                <div class="list-block-hdr">Перекус</div>
-                <div class="list-block-body"><ul id="lst-snack"></ul></div>
-                <div class="list-block-btns"><button class="btn-dl" onclick="dlList('snack','Перекус')">⬇ Скачать</button></div>
-              </div>
-              <div class="list-block">
-                <div class="list-block-hdr">Завтрак</div>
-                <div class="list-block-body"><ul id="lst-breakfast"></ul></div>
-                <div class="list-block-btns"><button class="btn-dl" onclick="dlList('breakfast','Завтрак')">⬇ Скачать</button></div>
-              </div>
-              <div class="list-block">
-                <div class="list-block-hdr">Обед</div>
-                <div class="list-block-body"><ul id="lst-lunch"></ul></div>
-                <div class="list-block-btns"><button class="btn-dl" onclick="dlList('lunch','Обед')">⬇ Скачать</button></div>
-              </div>
-              <div class="list-block">
-                <div class="list-block-hdr">Ужин</div>
-                <div class="list-block-body"><ul id="lst-dinner"></ul></div>
-                <div class="list-block-btns"><button class="btn-dl" onclick="dlList('dinner','Ужин')">⬇ Скачать</button></div>
+        <!-- Область 4 -->
+        <div class="parse-area" id="parse-area-4" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+          <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);flex-shrink:0;">
+            <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">🧺 Корзина</span>
+          </div>
+          <div class="lists-screen-inner" style="flex:1;overflow:auto;">
+            <div class="lists-left">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="list-block">
+                  <div class="list-block-hdr">Перекус</div>
+                  <div class="list-block-body"><ul id="lst-snack"></ul></div>
+                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('snack','Перекус')">⬇ Скачать</button></div>
+                </div>
+                <div class="list-block">
+                  <div class="list-block-hdr">Завтрак</div>
+                  <div class="list-block-body"><ul id="lst-breakfast"></ul></div>
+                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('breakfast','Завтрак')">⬇ Скачать</button></div>
+                </div>
+                <div class="list-block">
+                  <div class="list-block-hdr">Обед</div>
+                  <div class="list-block-body"><ul id="lst-lunch"></ul></div>
+                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('lunch','Обед')">⬇ Скачать</button></div>
+                </div>
+                <div class="list-block">
+                  <div class="list-block-hdr">Ужин</div>
+                  <div class="list-block-body"><ul id="lst-dinner"></ul></div>
+                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('dinner','Ужин')">⬇ Скачать</button></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
 
@@ -784,11 +792,6 @@ function init(){
     document.getElementById('parsedCount').textContent=_parsedRows.length+' товаров';
     renderProdTable();
   }
-  // Проблема 2: если lastSec=parse — грузим каталог СРАЗУ, не ждём loadFromKV
-  if(lastSec==='parse'&&!window._catLoaded){
-    loadTopCats();
-    window._catLoaded=true;
-  }
   loadFromKV().then(ok=>{
     if(ok){
       renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();
@@ -816,6 +819,15 @@ function init(){
 // NAV
 // ══════════════════════════════════════════════════════════════════
 function toggleNav(){document.getElementById('navDropdown').classList.toggle('open');}
+function showParseArea(n){
+  document.querySelectorAll('.parse-area').forEach(a=>a.style.display='none');
+  document.querySelectorAll('.parse-nav-btn').forEach(b=>b.classList.remove('active'));
+  const area=document.getElementById('parse-area-'+n);
+  if(area){area.style.display='flex';}
+  const btns=document.querySelectorAll('.parse-nav-btn');
+  if(btns[n-1])btns[n-1].classList.add('active');
+  if(n===1&&!window._catLoaded){loadTopCats();window._catLoaded=true;}
+}
 function goSec(sec){
   document.getElementById('navDropdown').classList.remove('open');
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -826,7 +838,7 @@ function goSec(sec){
   if(sec==='cost') calcCosts();
   if(sec==='kbju') renderKbju();
   if(sec==='saved') renderSaved();
-  if(sec==='parse'&&!window._catLoaded){loadTopCats();window._catLoaded=true;}
+  if(sec==='parse'){showParseArea(1);}
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -1424,8 +1436,8 @@ function renderProdTable(){
       const rowData=encodeURIComponent(JSON.stringify({name:row.name,price:row.price,origPrice:row.origPrice||null,discPct:row.discPct||0,catId:row.catId,catName:row.catName,photo:row.photo||'',pricePerUnit:row.pricePerUnit||0,weightMeasure:row.weightMeasure||''}));
       tr.innerHTML=`<td></td><td style="padding:4px 6px;">${photo}</td><td style="text-align:left">${row.name}</td><td class="td-price">${fmtPrice(row.price)}${row.discPct?'<span class="discount-badge">-'+row.discPct+'%</span>':''}</td><td class="td-orig">${row.origPrice?fmtPrice(row.origPrice):''}</td><td class="td-kg">${fmtUnit(row)}</td><td style="text-align:center"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>`;
       tr.onclick=function(e){
-        // Клик по самому чекбоксу — не перехватываем, он сработает сам
         if(e.target.type==='checkbox')return;
+        if(e.target.closest('.photo-thumb'))return;
         const cb=tr.querySelector('.cb-add');
         if(!cb)return;
         cb.checked=!cb.checked;
@@ -1513,7 +1525,7 @@ function renderMyList(){
     g.items.forEach(p=>{
       const row=document.createElement('div');
       row.className='mylist-row';
-      row.innerHTML=`<div class="mylist-name">${p.name}</div><div class="mylist-price">${fmtPrice(p.price)}</div><div class="mylist-meals"><label><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Пер.</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завт.</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label></div><button class="mylist-del" onclick="removeFromMyList(${p.idx})">✕</button>`;
+      row.innerHTML=`<div class="mylist-name">${p.name}</div><div class="mylist-meals"><label><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Перекус</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завтрак</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label></div><div class="mylist-price">${fmtPrice(p.price)}</div><button class="mylist-del" onclick="removeFromMyList(${p.idx})">✕</button>`;
       body.appendChild(row);
     });
     wrap.appendChild(hdr);
