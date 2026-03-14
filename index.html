@@ -113,7 +113,7 @@ input[type=number]{-moz-appearance:textfield;}
 .cat-screen-inner{display:flex;gap:14px;padding:14px;overflow:hidden;}
 .cat-panel{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;flex:1;box-shadow:var(--card-shadow);}
 .cat-panel-hdr{padding:10px 14px;font-weight:600;font-size:11px;color:var(--th-text);background:var(--th-bg);border-bottom:1px solid var(--border2);letter-spacing:.6px;text-transform:uppercase;flex-shrink:0;}
-.cat-panel-body{flex:1;overflow-y:auto;}
+.cat-panel-body{flex:1;overflow-y:auto;min-height:0;max-height:calc(100vh - 280px);}
 .cat-row{display:flex;align-items:center;padding:8px 12px;cursor:pointer;gap:7px;transition:background .1s;border-bottom:1px solid var(--border);}
 .cat-row:hover{background:var(--bg4);}
 .cat-tog{width:14px;height:14px;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:9px;flex-shrink:0;transition:transform .2s;}
@@ -362,8 +362,8 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;">
           <div class="prog-bar" style="flex-shrink:0;"><div class="prog-fill" id="parseProg"></div></div>
           <div class="parse-status" id="parseStatus" style="flex-shrink:0;"></div>
-          <!-- Каталог — исходный размер -->
-          <div class="cat-screen-inner" style="flex-shrink:0;height:320px;overflow:hidden;">
+          <!-- Каталог — исходный размер, overflow:hidden не даёт содержимому менять размер блока -->
+          <div class="cat-screen-inner" style="flex-shrink:0;overflow:hidden;">
             <div class="cat-panel">
               <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
               <div class="cat-panel-body" id="catalogPanel">
