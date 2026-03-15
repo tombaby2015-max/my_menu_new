@@ -760,6 +760,7 @@ const WORKER_URL = 'https://my-menu.belovolov-email.workers.dev';
 let menuData={}, kbjuTable={}, mealTimes={}, savedRecipes={Завтрак:[],Перекус:[],Обед:[],Ужин:[]}, notes='', myList=[];
 let _parsedRows=[], _parsedCats=[];
 let myProdList={};
+let basketExtras={snack:[],breakfast:[],lunch:[],dinner:[]};
 let curDay='Понедельник', kSortKey=null, kSortDir=1;
 let _editProd=null, _psTarget=null, _atmRec=null, _syncDec=[], _renameTarget=null;
 let _kbjuSelectMode=false;
@@ -777,6 +778,7 @@ function saveAll(){
   localStorage.setItem('myList',JSON.stringify(myList));
   localStorage.setItem('_parsedRows',JSON.stringify(_parsedRows));
   localStorage.setItem('myProdList',JSON.stringify(myProdList));
+  localStorage.setItem('basketExtras',JSON.stringify(basketExtras));
   clearTimeout(_kvTimer);
   _kvTimer=setTimeout(syncToKV,1500);
 }
@@ -789,12 +791,13 @@ function loadAll(){
   try{myList=JSON.parse(localStorage.getItem('myList')||'[]')}catch(e){}
   try{_parsedRows=JSON.parse(localStorage.getItem('_parsedRows')||'[]')}catch(e){}
   try{myProdList=JSON.parse(localStorage.getItem('myProdList')||'{}')}catch(e){}
+  try{basketExtras=JSON.parse(localStorage.getItem('basketExtras')||'{\"snack\":[],\"breakfast\":[],\"lunch\":[],\"dinner\":[]}')}catch(e){}
 }
 function saveNotes(){notes=document.getElementById('notesArea').value;saveAll();}
 async function syncToKV(){
   try{
     await fetch(WORKER_URL+'/kv/app_data',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({menuData,kbjuTable,mealTimes,savedRecipes,notes,myList,_parsedRows,myProdList})});
+      body:JSON.stringify({menuData,kbjuTable,mealTimes,savedRecipes,notes,myList,_parsedRows,myProdList,basketExtras})});
     showBadge('✓ Сохранено в облаке','#4caf50');
   }catch(e){showBadge('⚠ Только локально','#ff9800');}
 }
@@ -812,6 +815,7 @@ async function loadFromKV(){
       if(d.myList&&d.myList.length>=myList.length) myList=d.myList;
       if(d._parsedRows&&d._parsedRows.length>=_parsedRows.length) _parsedRows=d._parsedRows;
       if(d.myProdList&&Object.keys(d.myProdList).length>=Object.keys(myProdList).length) myProdList=d.myProdList;
+      if(d.basketExtras) basketExtras=d.basketExtras;
       localStorage.setItem('menuData',JSON.stringify(menuData));
       localStorage.setItem('kbjuTable',JSON.stringify(kbjuTable));
       localStorage.setItem('mealTimes',JSON.stringify(mealTimes));
@@ -820,6 +824,7 @@ async function loadFromKV(){
       localStorage.setItem('myList',JSON.stringify(myList));
       localStorage.setItem('_parsedRows',JSON.stringify(_parsedRows));
       localStorage.setItem('myProdList',JSON.stringify(myProdList));
+      localStorage.setItem('basketExtras',JSON.stringify(basketExtras));
       showBadge('✓ Загружено из облака','#4a9eff');
       return true;
     }
@@ -1886,15 +1891,20 @@ function showChangesModal(){
 function updLists(){
   const lists={snack:[],breakfast:[],lunch:[],dinner:[]};
   myList.forEach(p=>{
-    if(p.snack)lists.snack.push(p.name);
-    if(p.breakfast)lists.breakfast.push(p.name);
-    if(p.lunch)lists.lunch.push(p.name);
-    if(p.dinner)lists.dinner.push(p.name);
+    if(p.snack)lists.snack.push({name:p.name,ok:true});
+    if(p.breakfast)lists.breakfast.push({name:p.name,ok:true});
+    if(p.lunch)lists.lunch.push({name:p.name,ok:true});
+    if(p.dinner)lists.dinner.push({name:p.name,ok:true});
   });
-  document.getElementById('lst-snack').innerHTML=lists.snack.map(n=>'<li>'+n+'</li>').join('');
-  document.getElementById('lst-breakfast').innerHTML=lists.breakfast.map(n=>'<li>'+n+'</li>').join('');
-  document.getElementById('lst-lunch').innerHTML=lists.lunch.map(n=>'<li>'+n+'</li>').join('');
-  document.getElementById('lst-dinner').innerHTML=lists.dinner.map(n=>'<li>'+n+'</li>').join('');
+  // Добавляем несовпадающие (красным)
+  ['snack','breakfast','lunch','dinner'].forEach(k=>{
+    (basketExtras[k]||[]).forEach(n=>lists[k].push({name:n,ok:false}));
+  });
+  ['snack','breakfast','lunch','dinner'].forEach(k=>{
+    document.getElementById('lst-'+k).innerHTML=lists[k].map(item=>
+      item.ok?'<li>'+item.name+'</li>':'<li style="color:var(--red);">'+item.name+'</li>'
+    ).join('');
+  });
 }
 function dlList(id,label){
   const items=[...document.getElementById('lst-'+id).querySelectorAll('li')].map(li=>li.textContent);
@@ -1927,10 +1937,13 @@ function copyListToClipboard(meal){
 let _basketImportMeal=null;
 function openBasketImport(meal,label){
   _basketImportMeal=meal;
+  const mealKey=meal;
   document.getElementById('basketImportTitle').textContent='Список: '+label;
-  // Показываем текущие продукты этого приёма
-  const items=[...document.getElementById('lst-'+meal).querySelectorAll('li')].map(li=>li.textContent);
-  document.getElementById('basketImportTA').value=items.join('\n');
+  // Показываем текущие продукты: совпадающие из myList + extras
+  const matched=myList.filter(p=>p[mealKey]).map(p=>p.name);
+  const extras=basketExtras[mealKey]||[];
+  const all=[...matched,...extras];
+  document.getElementById('basketImportTA').value=all.join('\n');
   openModal('basketImportModal');
 }
 
@@ -1940,15 +1953,17 @@ function applyBasketImport(){
   const mealKey={snack:'snack',breakfast:'breakfast',lunch:'lunch',dinner:'dinner'}[meal];
   const text=document.getElementById('basketImportTA').value;
   const newNames=text.split('\n').map(l=>l.trim()).filter(Boolean);
-  // Для каждого продукта в myList обновляем флаг этого приёма
-  myList.forEach(p=>{
-    const inNew=newNames.includes(p.name);
-    p[mealKey]=inNew;
-  });
+  const knownNames=new Set(myList.map(p=>p.name));
+  // Обновляем флаги в myList
+  myList.forEach(p=>{p[mealKey]=newNames.includes(p.name);});
+  // Несовпадающие сохраняем в basketExtras
+  basketExtras[mealKey]=newNames.filter(n=>!knownNames.has(n));
   saveAll();
   renderMyList();
+  updLists();
   closeModal('basketImportModal');
-  showBadge('✓ Список обновлён','#4caf50');
+  const badCount=basketExtras[mealKey].length;
+  showBadge(badCount?'⚠ Список обновлён, '+badCount+' не найдено':'✓ Список обновлён', badCount?'#ff9800':'#4caf50');
 }
 
 function toggleMyListItem(cb){
