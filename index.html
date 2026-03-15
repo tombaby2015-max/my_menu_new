@@ -348,7 +348,7 @@ input[type=number]{-moz-appearance:textfield;}
     <div style="display:flex;flex:1;overflow:hidden;">
 
       <!-- Боковая навигация -->
-      <div id="parseNav" style="width:110px;flex-shrink:0;background:var(--bg4);border-right:1px solid var(--border2);display:flex;flex-direction:column;gap:8px;padding:12px 8px;">
+      <div id="parseNav" style="width:130px;flex-shrink:0;background:var(--bg4);border-right:1px solid var(--border2);display:flex;flex-direction:column;gap:8px;padding:12px 8px;">
         <button class="parse-nav-btn active" onclick="showParseArea(1)">🗂 Каталог</button>
         <button class="parse-nav-btn" onclick="showParseArea(2)">📋 Товары</button>
         <button class="parse-nav-btn" onclick="showParseArea(3)">📒 Мой список</button>
@@ -435,7 +435,10 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="parse-area" id="parse-area-3" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
           <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
             <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">📒 Мой список</span>
-            <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;" onclick="sendMyListToKbju()">↗ В таблицу КБЖУ</button>
+            <div style="display:flex;gap:7px;">
+              <button class="ctrl-btn sec" style="padding:2px 12px;font-size:12px;" onclick="saveMyListToTxt()">💾 Сохранить в TXT</button>
+              <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;" onclick="sendMyListToKbju()">↗ В таблицу КБЖУ</button>
+            </div>
           </div>
           <div style="flex:1;overflow-y:auto;padding:10px;">
             <div id="myListWrap"></div>
@@ -451,24 +454,44 @@ input[type=number]{-moz-appearance:textfield;}
             <div class="lists-left">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div class="list-block">
-                  <div class="list-block-hdr">Перекус</div>
+                  <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Перекус</span>
+                    <div style="display:flex;gap:5px;">
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('snack')" title="Скопировать в буфер">📋</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('snack','Перекус')" title="Вставить из буфера">📥</button>
+                    </div>
+                  </div>
                   <div class="list-block-body"><ul id="lst-snack"></ul></div>
-                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('snack','Перекус')">⬇ Скачать</button></div>
                 </div>
                 <div class="list-block">
-                  <div class="list-block-hdr">Завтрак</div>
+                  <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Завтрак</span>
+                    <div style="display:flex;gap:5px;">
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('breakfast')" title="Скопировать в буфер">📋</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('breakfast','Завтрак')" title="Вставить из буфера">📥</button>
+                    </div>
+                  </div>
                   <div class="list-block-body"><ul id="lst-breakfast"></ul></div>
-                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('breakfast','Завтрак')">⬇ Скачать</button></div>
                 </div>
                 <div class="list-block">
-                  <div class="list-block-hdr">Обед</div>
+                  <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Обед</span>
+                    <div style="display:flex;gap:5px;">
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('lunch')" title="Скопировать в буфер">📋</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('lunch','Обед')" title="Вставить из буфера">📥</button>
+                    </div>
+                  </div>
                   <div class="list-block-body"><ul id="lst-lunch"></ul></div>
-                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('lunch','Обед')">⬇ Скачать</button></div>
                 </div>
                 <div class="list-block">
-                  <div class="list-block-hdr">Ужин</div>
+                  <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span>Ужин</span>
+                    <div style="display:flex;gap:5px;">
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('dinner')" title="Скопировать в буфер">📋</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('dinner','Ужин')" title="Вставить из буфера">📥</button>
+                    </div>
+                  </div>
                   <div class="list-block-body"><ul id="lst-dinner"></ul></div>
-                  <div class="list-block-btns"><button class="btn-dl" onclick="dlList('dinner','Ужин')">⬇ Скачать</button></div>
                 </div>
               </div>
             </div>
@@ -711,6 +734,19 @@ input[type=number]{-moz-appearance:textfield;}
     <div id="fillCandidates" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;"></div>
     <div class="m-btns" id="fillBtns" style="display:none;">
       <button class="ctrl-btn sec" id="fillSkipBtn" onclick="fillSkip()">Пропустить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Basket import modal -->
+<div id="basketImportModal" class="modal-ov">
+  <div class="modal-box" style="max-width:480px;width:95%;">
+    <div class="modal-title" id="basketImportTitle">Список продуктов</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">По одному продукту на строку. Точное название как в «Мой список».</div>
+    <textarea id="basketImportTA" class="fi" style="height:260px;resize:vertical;" placeholder="Молоко Марианна 3.2% 450мл&#10;Яйца куриные..."></textarea>
+    <div class="m-btns">
+      <button class="ctrl-btn" onclick="applyBasketImport()">Добавить</button>
+      <button class="ctrl-btn sec" onclick="closeModal('basketImportModal')">Отмена</button>
     </div>
   </div>
 </div>
@@ -1867,6 +1903,47 @@ function dlList(id,label){
   a.download=label.replace(/\s/g,'_')+'.txt';a.click();
 }
 
+function saveMyListToTxt(){
+  if(!myList.length){alert('Список пуст');return;}
+  const lines=myList.map(p=>p.name);
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='my_list.txt';a.click();
+}
+
+function copyListToClipboard(meal){
+  const items=[...document.getElementById('lst-'+meal).querySelectorAll('li')].map(li=>li.textContent);
+  if(!items.length){showBadge('Список пуст','#ff9800');return;}
+  navigator.clipboard.writeText(items.join('\n')).then(()=>showBadge('✓ Скопировано в буфер','#4caf50'));
+}
+
+let _basketImportMeal=null;
+function openBasketImport(meal,label){
+  _basketImportMeal=meal;
+  document.getElementById('basketImportTitle').textContent='Список: '+label;
+  // Показываем текущие продукты этого приёма
+  const items=[...document.getElementById('lst-'+meal).querySelectorAll('li')].map(li=>li.textContent);
+  document.getElementById('basketImportTA').value=items.join('\n');
+  openModal('basketImportModal');
+}
+
+function applyBasketImport(){
+  if(!_basketImportMeal)return;
+  const meal=_basketImportMeal;
+  const mealKey={snack:'snack',breakfast:'breakfast',lunch:'lunch',dinner:'dinner'}[meal];
+  const text=document.getElementById('basketImportTA').value;
+  const newNames=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  // Для каждого продукта в myList обновляем флаг этого приёма
+  myList.forEach(p=>{
+    const inNew=newNames.includes(p.name);
+    p[mealKey]=inNew;
+  });
+  saveAll();
+  renderMyList();
+  closeModal('basketImportModal');
+  showBadge('✓ Список обновлён','#4caf50');
+}
+
 function toggleMyListItem(cb){
   const row=JSON.parse(decodeURIComponent(cb.dataset.row));
   if(!row)return;
@@ -1909,7 +1986,7 @@ function renderMyList(){
   Object.entries(groups).forEach(([catName,g])=>{
     const hdr=document.createElement('div');
     hdr.className='mylist-cat-hdr';
-    hdr.innerHTML=`<span class="mylist-cat-tog">▼</span> ${catName} <span style="color:var(--text2);font-size:11px;">(${g.items.length})</span>`;
+    hdr.innerHTML=`<span class="mylist-cat-tog">▼</span> ${catName} <span style="color:var(--text2);font-size:11px;">(${g.items.length})</span><button onclick="removeMyListCat('${catName}',event)" style="margin-left:auto;background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;padding:0 4px;" title="Удалить категорию">✕</button>`;
     const body=document.createElement('div');
     body.className='mylist-cat-body';
     body.dataset.cat=catName;
@@ -1941,6 +2018,15 @@ function renderMyList(){
 function removeFromMyList(idx){
   myList.splice(idx,1);
   saveAll();renderMyList();
+}
+
+function removeMyListCat(catName,e){
+  e.stopPropagation();
+  const cat=catName||'Без категории';
+  const count=myList.filter(p=>(p.catName||'Без категории')===cat).length;
+  if(!confirm('Удалить категорию "'+cat+'" ('+count+' товаров)?'))return;
+  myList=myList.filter(p=>(p.catName||'Без категории')!==cat);
+  saveAll();renderMyList();renderMyProdTable();
 }
 
 function sendMyListToKbju(){
