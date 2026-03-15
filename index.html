@@ -1558,6 +1558,14 @@ function renderMyProdTable(){
       tr.dataset.catid=catId;
       tr.dataset.status=p.status||'ok';
       tr.dataset.discount=(p.origPrice&&p.discPct)?'1':'0';
+      // pricedir вычисляем из priceHistory — не зависит от status
+      const ph2=p.priceHistory||[];
+      if(ph2.length>1){
+        const last=ph2[ph2.length-1].price,prev=ph2[ph2.length-2].price;
+        tr.dataset.pricedir=last>prev?'up':last<prev?'down':'eq';
+      } else {
+        tr.dataset.pricedir='none';
+      }
       if(bgMap[p.status])tr.style.background=bgMap[p.status];
       const photo=p.photo
         ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
@@ -1622,13 +1630,6 @@ function toggleMyProdFilter(type){
     btn.style.borderColor=active?'var(--accent)':'';
     btn.style.color=active?'var(--accentL)':'';
   });
-  // Диагностика: показываем статусы всех строк
-  const allStatuses={};
-  document.querySelectorAll('.prod-row').forEach(tr=>{
-    const s=tr.dataset.status||'(нет)';
-    allStatuses[s]=(allStatuses[s]||0)+1;
-  });
-  console.log('[filter debug] data-status counts:', allStatuses, '| filter:', _myProdFilter);
   const si=document.getElementById('myProdSearch');
   if(si)si.value='';
   filterMyProds();
@@ -1639,7 +1640,6 @@ function filterMyProds(){
   const f=_myProdFilter;
   const hasFilter=q||f;
   const tbody=document.getElementById('prodBody');
-  // Запоминаем какие категории были открыты до фильтра (только если фильтр включается)
   if(hasFilter&&!tbody._filterWasActive){
     tbody._openBeforeFilter=new Set();
     tbody.querySelectorAll('.cat-hdr-row.open').forEach(h=>tbody._openBeforeFilter.add(h.dataset.catid));
@@ -1654,7 +1654,9 @@ function filterMyProds(){
       const matchQ=!q||nameEl?.textContent.toLowerCase().includes(q);
       let matchF=true;
       if(f){
-        if(f==='discount') matchF=tr.dataset.discount==='1';
+        if(f==='price_up')   matchF=tr.dataset.pricedir==='up';
+        else if(f==='price_down') matchF=tr.dataset.pricedir==='down';
+        else if(f==='discount')   matchF=tr.dataset.discount==='1';
         else matchF=tr.dataset.status===f;
       }
       const match=matchQ&&matchF;
@@ -1667,7 +1669,6 @@ function filterMyProds(){
       else hdr.classList.remove('open');
     } else {
       hdr.style.display='';
-      // Восстанавливаем состояние до фильтра
       const wasOpen=tbody._openBeforeFilter?tbody._openBeforeFilter.has(catId):hdr.classList.contains('open');
       hdr.classList.toggle('open',wasOpen);
       if(wasOpen) rows.forEach(tr=>tr.classList.remove('hidden'));
