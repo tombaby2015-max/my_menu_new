@@ -436,6 +436,7 @@ input[type=number]{-moz-appearance:textfield;}
           <div style="padding:6px 12px;background:var(--th-bg);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
             <span style="font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.7px;">📒 Мой список</span>
             <div style="display:flex;gap:7px;">
+              <button class="ctrl-btn sec" style="padding:2px 12px;font-size:12px;" onclick="copyMyListToClipboard()">📋 В буфер</button>
               <button class="ctrl-btn sec" style="padding:2px 12px;font-size:12px;" onclick="saveMyListToTxt()">💾 Сохранить в TXT</button>
               <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;" onclick="sendMyListToKbju()">↗ В таблицу КБЖУ</button>
             </div>
@@ -457,8 +458,8 @@ input[type=number]{-moz-appearance:textfield;}
                   <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
                     <span>Перекус</span>
                     <div style="display:flex;gap:5px;">
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('snack')" title="Скопировать в буфер">📋</button>
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('snack','Перекус')" title="Вставить из буфера">📥</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('snack')">В буфер</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('snack','Перекус')">Вставить</button>
                     </div>
                   </div>
                   <div class="list-block-body"><ul id="lst-snack"></ul></div>
@@ -467,8 +468,8 @@ input[type=number]{-moz-appearance:textfield;}
                   <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
                     <span>Завтрак</span>
                     <div style="display:flex;gap:5px;">
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('breakfast')" title="Скопировать в буфер">📋</button>
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('breakfast','Завтрак')" title="Вставить из буфера">📥</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('breakfast')">В буфер</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('breakfast','Завтрак')">Вставить</button>
                     </div>
                   </div>
                   <div class="list-block-body"><ul id="lst-breakfast"></ul></div>
@@ -477,8 +478,8 @@ input[type=number]{-moz-appearance:textfield;}
                   <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
                     <span>Обед</span>
                     <div style="display:flex;gap:5px;">
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('lunch')" title="Скопировать в буфер">📋</button>
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('lunch','Обед')" title="Вставить из буфера">📥</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('lunch')">В буфер</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('lunch','Обед')">Вставить</button>
                     </div>
                   </div>
                   <div class="list-block-body"><ul id="lst-lunch"></ul></div>
@@ -487,8 +488,8 @@ input[type=number]{-moz-appearance:textfield;}
                   <div class="list-block-hdr" style="display:flex;align-items:center;justify-content:space-between;">
                     <span>Ужин</span>
                     <div style="display:flex;gap:5px;">
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('dinner')" title="Скопировать в буфер">📋</button>
-                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('dinner','Ужин')" title="Вставить из буфера">📥</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="copyListToClipboard('dinner')">В буфер</button>
+                      <button class="btn-dl" style="flex:none;padding:2px 8px;" onclick="openBasketImport('dinner','Ужин')">Вставить</button>
                     </div>
                   </div>
                   <div class="list-block-body"><ul id="lst-dinner"></ul></div>
@@ -1909,6 +1910,12 @@ function saveMyListToTxt(){
   const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='my_list.txt';a.click();
+}
+
+function copyMyListToClipboard(){
+  if(!myList.length){showBadge('Список пуст','#ff9800');return;}
+  const lines=myList.map(p=>p.name);
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>showBadge('✓ Список скопирован в буфер','#4caf50'));
 }
 
 function copyListToClipboard(meal){
