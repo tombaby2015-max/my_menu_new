@@ -1544,9 +1544,9 @@ function renderMyProdTable(){
       .sort((a,b)=>(a.status==='unavailable'?999999:a.price)-(b.status==='unavailable'?999999:b.price));
     total+=cat.products.length;
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="8" style="display:flex;align-items:center;justify-content:space-between;">'+
-      '<span>'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></span>'+
-      '<button onclick="delMyCat(\''+catId+'\',event)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;opacity:.6;padding:0 4px;line-height:1;" title="Удалить категорию">✕</button>'+
+    hdr.innerHTML='<td colspan="8" style="position:relative;">'+
+      cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span>'+
+      '<button onclick="delMyCat(\''+catId+'\',event)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;opacity:.6;padding:0 4px;line-height:1;" title="Удалить категорию">✕</button>'+
       '</td>';
     hdr.onclick=()=>{
       hdr.classList.toggle('open');
