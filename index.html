@@ -1556,6 +1556,8 @@ function renderMyProdTable(){
       const bgMap={ok:'',price_up:'rgba(251,191,36,.1)',price_down:'rgba(74,222,128,.08)',unavailable:'rgba(248,113,113,.1)',new:'rgba(56,189,248,.08)'};
       tr.className='prod-row hidden';
       tr.dataset.catid=catId;
+      tr.dataset.status=p.status||'ok';
+      tr.dataset.discount=(p.origPrice&&p.discPct)?'1':'0';
       if(bgMap[p.status])tr.style.background=bgMap[p.status];
       const photo=p.photo
         ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
@@ -1632,41 +1634,42 @@ function filterMyProds(){
   const f=_myProdFilter;
   const hasFilter=q||f;
   const tbody=document.getElementById('prodBody');
+  // Запоминаем какие категории были открыты до фильтра (только если фильтр включается)
+  if(hasFilter&&!tbody._filterWasActive){
+    tbody._openBeforeFilter=new Set();
+    tbody.querySelectorAll('.cat-hdr-row.open').forEach(h=>tbody._openBeforeFilter.add(h.dataset.catid));
+  }
+  tbody._filterWasActive=!!hasFilter;
   tbody.querySelectorAll('.cat-hdr-row').forEach(hdr=>{
     const catId=hdr.dataset.catid;
     const rows=tbody.querySelectorAll('.prod-row[data-catid="'+catId+'"]');
     let catVisible=0;
     rows.forEach(tr=>{
-      const name=tr.querySelector('td:nth-child(3)');
-      const matchQ=!q||name?.textContent.toLowerCase().includes(q);
+      const nameEl=tr.querySelector('td:nth-child(3)');
+      const matchQ=!q||nameEl?.textContent.toLowerCase().includes(q);
       let matchF=true;
       if(f){
-        const cat=myProdList[catId];
-        const prodName=name?.textContent;
-        const prod=cat?.products.find(p=>p.name===prodName);
-        if(prod){
-          if(f==='discount') matchF=!!(prod.origPrice&&prod.discPct);
-          else matchF=prod.status===f;
-        } else matchF=false;
+        if(f==='discount') matchF=tr.dataset.discount==='1';
+        else matchF=tr.dataset.status===f;
       }
       const match=matchQ&&matchF;
-      if(match){
-        tr.classList.remove('hidden');
-        catVisible++;
-      } else {
-        tr.classList.add('hidden');
-      }
+      if(match){tr.classList.remove('hidden');catVisible++;}
+      else tr.classList.add('hidden');
     });
     if(hasFilter){
       hdr.style.display=catVisible?'':'none';
       if(catVisible) hdr.classList.add('open');
+      else hdr.classList.remove('open');
     } else {
       hdr.style.display='';
-      if(!hdr.classList.contains('open')){
-        rows.forEach(tr=>tr.classList.add('hidden'));
-      }
+      // Восстанавливаем состояние до фильтра
+      const wasOpen=tbody._openBeforeFilter?tbody._openBeforeFilter.has(catId):hdr.classList.contains('open');
+      hdr.classList.toggle('open',wasOpen);
+      if(wasOpen) rows.forEach(tr=>tr.classList.remove('hidden'));
+      else rows.forEach(tr=>tr.classList.add('hidden'));
     }
   });
+  if(!hasFilter) tbody._openBeforeFilter=null;
 }
 
 function showMyProdHistory(catId,name){
