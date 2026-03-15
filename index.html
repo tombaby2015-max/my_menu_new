@@ -1030,6 +1030,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     const tr=e.target.closest('tr[data-name]');
     if(tr) pickProd(tr.dataset.name);
   });
+  document.getElementById('prodBody').addEventListener('click',e=>{
+    const badge=e.target.closest('.p-badge');
+    if(badge&&badge.dataset.catid&&badge.dataset.prodname){
+      e.stopPropagation();
+      showMyProdHistory(badge.dataset.catid,decodeURIComponent(badge.dataset.prodname));
+      return;
+    }
+  });
   document.getElementById('kbjuBody').addEventListener('click',e=>{
     const name=e.target.dataset.name?decodeURIComponent(e.target.dataset.name):null;
     if(e.target.classList.contains('kbju-edit-btn')&&name){openAddProd(name);return;}
@@ -1556,17 +1564,18 @@ function renderMyProdTable(){
         ?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(p.origPrice)}</span>`:'';
       let badge='';
       const ph=p.priceHistory||[];
+      const badgeData=`data-catid="${catId}" data-prodname="${encodeURIComponent(p.name)}"`;
       if(p.status==='unavailable'){
-        badge=`<span class="p-badge" style="background:rgba(248,113,113,.15);border:1px solid var(--red);color:var(--red);cursor:pointer;font-size:10px;" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Нет в наличии — нажмите для истории">✕</span>`;
+        badge=`<span class="p-badge" style="background:rgba(248,113,113,.15);border:1px solid var(--red);color:var(--red);cursor:pointer;font-size:10px;" ${badgeData} title="Нет в наличии — нажмите для истории">✕</span>`;
       } else if(ph.length>1){
         const last=ph[ph.length-1].price,prev2=ph[ph.length-2].price;
-        if(last>prev2) badge=`<span class="p-badge up" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Подорожал — нажмите для истории">↑</span>`;
-        else if(last<prev2) badge=`<span class="p-badge dn" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Подешевел — нажмите для истории">↓</span>`;
-        else badge=`<span class="p-badge eq" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="Цена не изменилась">=</span>`;
+        if(last>prev2) badge=`<span class="p-badge up" ${badgeData} title="Подорожал — нажмите для истории">↑</span>`;
+        else if(last<prev2) badge=`<span class="p-badge dn" ${badgeData} title="Подешевел — нажмите для истории">↓</span>`;
+        else badge=`<span class="p-badge eq" ${badgeData} title="Цена не изменилась">=</span>`;
       } else if(ph.length===1){
-        badge=`<span class="p-badge eq" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="История цен">=</span>`;
+        badge=`<span class="p-badge eq" ${badgeData} title="История цен">=</span>`;
       }
-      if(p.status==='new') badge=`<span class="p-badge" style="background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;">NEW</span>`;
+      if(p.status==='new') badge=`<span class="p-badge" style="background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;cursor:pointer;" ${badgeData} title="Новый товар — нажмите для истории">NEW</span>`;
       const rowData=encodeURIComponent(JSON.stringify({name:p.name,price:p.price,catId,catName:cat.catName,photo:p.photo||'',pricePerUnit:p.pricePerUnit||0,weightMeasure:p.weightMeasure||''}));
       const inMyList=!!myList.find(x=>x.name===p.name);
       if(inMyList)tr.classList.add('prod-in-mylist');
