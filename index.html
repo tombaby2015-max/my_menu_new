@@ -414,8 +414,8 @@ input[type=number]{-moz-appearance:textfield;}
                 <th style="width:34px;text-align:center;">Фото</th>
                 <th style="min-width:160px">Название</th>
                 <th style="width:160px;text-align:center;">Цена</th>
-                <th style="width:160px;text-align:center;">До скидки</th>
-                <th style="width:80px;text-align:center;">1 ед.</th>
+                <th style="width:80px;text-align:center;">До скидки</th>
+                <th style="width:160px;text-align:center;">Цена за 1 кг</th>
                 <th style="width:40px;text-align:center;">✓</th>
                 <th style="width:40px;text-align:center;">✕</th>
               </tr></thead>
@@ -1575,15 +1575,14 @@ function renderMyProdTable(){
         <td style="padding:4px 6px;text-align:center;">${photo}</td>
         <td style="text-align:left;${nameStyle}">${p.name}</td>
         <td style="text-align:center;width:107px;position:relative;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div>${discBadge?`<span class="discount-badge" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);margin:0;">${p.discPct}%</span>`:''}</td>
-        <td style="text-align:center;">${oldPriceCell}</td>
-        <td style="text-align:center;color:var(--text2);font-size:11px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
+        <td style="text-align:center;width:80px;color:#ffffff;">${oldPriceCell}</td>
+        <td style="text-align:center;width:160px;color:#ffffff;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
         <td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>
         <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${p._origIdx})">✕</button></td>`;
       tr.onclick=function(e){
         if(e.target.closest('.photo-thumb'))return;
         if(e.target.tagName==='BUTTON')return;
         if(e.target.closest('.p-badge'))return;
-        if(e.target.closest('.price-cell'))return;
         const cb=tr.querySelector('.cb-add');
         if(!cb)return;
         cb.checked=!cb.checked;
@@ -1612,7 +1611,7 @@ function showMyProdHistory(catId,name){
     h.forEach((x,i)=>{const px=pd.l+(h.length>1?i/(h.length-1):0.5)*iW,py=pd.t+(h.length>1?(1-(x.price-mn)/rng):0.5)*iH;ctx.fillStyle='#4a9eff';ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();});
   }
   const unavDate=p.status==='unavailable'?`<div style="color:var(--red);margin-bottom:6px;">🔴 Не найден при обновлении ${p.statusDate||''}</div>`:'';
-  document.getElementById('phList').innerHTML=unavDate+h.slice().reverse().map(x=>'<div>'+x.date+': <strong style="color:var(--accent)">'+x.price.toLocaleString('ru-RU')+' ֏</strong></div>').join('');
+  document.getElementById('phList').innerHTML=unavDate+h.slice().reverse().map(x=>'<div>'+x.date+': <strong style="color:var(--accent)">'+Math.round(x.price).toLocaleString('ru-RU')+' ֏</strong></div>').join('');
   openModal('priceHistModal');
 }
 
