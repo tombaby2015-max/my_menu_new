@@ -1426,7 +1426,7 @@ function renderViewPanel(viewRows,total){
                 <td style="padding:4px 6px;"></td>
                 <td style="padding:4px 6px;text-align:center;">${photo}</td>
                 <td style="padding:5px 8px;color:var(--text);">${p.name}</td>
-                <td style="padding:5px 8px;text-align:center;color:#fbbf24;font-weight:600;">${fmtPrice(price)}${disc?'<span class="discount-badge" style="margin-left:4px;">-'+Math.round(p.discountPercent)+'%</span>':''}</td>
+                <td style="padding:5px 8px;text-align:center;color:#fbbf24;font-weight:600;position:relative;"><span>${fmtPrice(price)}</span>${disc?'<span class="discount-badge" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);margin:0;">-'+Math.round(p.discountPercent)+'%</span>':''}</td>
                 <td style="padding:5px 8px;text-align:center;color:var(--text2);font-size:11px;">${disc?'<span style="text-decoration:line-through;">'+fmtPrice(p.price)+'</span>':''}</td>
                 <td style="padding:5px 8px;text-align:center;color:var(--text2);font-size:11px;">${ppu}</td>
               </tr>`;
