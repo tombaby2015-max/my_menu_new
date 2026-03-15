@@ -1515,15 +1515,18 @@ async function fetchAllProds(catId){
   let items=inner.list||[];
   const ps=[];for(let p=2;p<=pages;p++)ps.push(apiCall('/api/products',{...body,page:p}));
   (await Promise.all(ps)).forEach(d=>{items=items.concat(d?.data?.list||[]);});
+  // Диагностика: логируем уникальные weightMeasure
+  const wm=new Set(items.map(i=>i.weightMeasure||'(пусто)'));
+  if(wm.size)console.log('[weightMeasure] catId='+catId, [...wm]);
   return items;
 }
 
 function fmtUnit(row){
   const ppu=row.pricePerUnit;if(!ppu||ppu<=0)return '';
-  const m=row.weightMeasure||'';
+  const m=(row.weightMeasure||'').toUpperCase();
   let u='кг';
-  if(m==='ML'||m==='L')u='л';
-  else if(m==='PCS'||m==='PIECE'||m==='EA')u='шт.';
+  if(m==='ML'||m==='L'||m==='LT'||m==='LITRE'||m==='LITER')u='л';
+  else if(m==='PCS'||m==='PIECE'||m==='EA'||m==='PC'||m==='EACH'||m==='UNIT'||m==='UNITS'||m==='ШТ'||m==='SHT')u='шт.';
   return '1 '+u+' / '+Math.round(ppu).toLocaleString('ru-RU')+' ֏';
 }
 function fmtPrice(v){if(!v)return '—';return Math.round(v).toLocaleString('ru-RU')+' ֏';}
