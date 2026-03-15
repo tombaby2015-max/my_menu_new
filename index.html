@@ -362,7 +362,6 @@ input[type=number]{-moz-appearance:textfield;}
         <div class="parse-area active" id="parse-area-1" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;">
           <div class="prog-bar" style="flex-shrink:0;"><div class="prog-fill" id="parseProg"></div></div>
           <div class="parse-status" id="parseStatus" style="flex-shrink:0;"></div>
-          <!-- Каталог — исходный размер, overflow:hidden не даёт содержимому менять размер блока -->
           <div class="cat-screen-inner" style="flex-shrink:0;overflow:hidden;">
             <div class="cat-panel">
               <div class="cat-panel-hdr">📂 Каталог категорий Yerevan City</div>
@@ -379,7 +378,6 @@ input[type=number]{-moz-appearance:textfield;}
               <button class="btn-exp" id="exportMemBtn" onclick="exportDataToMemory()" disabled style="margin-top:0;background:rgba(56,189,248,.15);color:var(--accentL);border-color:var(--accent);">💾 Выгрузить в память</button>
             </div>
           </div>
-          <!-- Результаты выгрузки — просто под каталогом -->
           <div id="viewPanel" style="flex-shrink:0;padding:10px;border-top:1px solid var(--border2);">
             <div id="viewPanelTitle" style="font-size:12px;font-weight:600;color:var(--accentL);margin-bottom:8px;"></div>
             <div id="viewPanelBody"></div>
@@ -705,7 +703,7 @@ const WORKER_URL = 'https://my-menu.belovolov-email.workers.dev';
 
 let menuData={}, kbjuTable={}, mealTimes={}, savedRecipes={Завтрак:[],Перекус:[],Обед:[],Ужин:[]}, notes='', myList=[];
 let _parsedRows=[], _parsedCats=[];
-let myProdList={}; // {catId: {catName, lastUpdated, products: [{name, price, priceHistory:[{date,price}], photo, pricePerUnit, weightMeasure, status, statusDate}]}}
+let myProdList={};
 let curDay='Понедельник', kSortKey=null, kSortDir=1;
 let _editProd=null, _psTarget=null, _atmRec=null, _syncDec=[], _renameTarget=null;
 let _kbjuSelectMode=false;
@@ -803,7 +801,6 @@ function init(){
   renderSaved();
   renderNotesLists();
   document.getElementById('notesArea').value=notes;
-  // renderMyList при старте
   renderMyList();
   renderMyProdTable();
   loadFromKV().then(ok=>{
@@ -987,7 +984,6 @@ function confirmRenameDish(){
 }
 
 function openEditRecipe(day,meal){
-  // Simple prompt-based edit
   const cur=menuData[day]?.[meal]?.recipe||'';
   const val=prompt('Приготовление:',cur);
   if(val===null)return;
@@ -1152,7 +1148,6 @@ function renderKbju(){
     const h=d.priceHistory||[],cur=h.length?h[h.length-1]:null,prev=h.length>1?h[h.length-2].price:null;
     let bc='eq',sym='=';if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
     const dn=encodeURIComponent(name);
-    // П.4: метка "из ЕреванСити"
     const ycLabel=d.fromYC?'<span style="color:var(--accent);opacity:.7;font-size:10px;margin-left:5px;">из ЕреванСити</span>':'';
     const actionCell=_kbjuSelectMode
       ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+dn+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
@@ -1286,7 +1281,6 @@ function applyKbjuText(text){
 // NOTES
 // ══════════════════════════════════════════════════════════════════
 function renderNotesLists(){
-  // placeholder — можно расширить
   document.getElementById('notesListWrap').innerHTML='';
 }
 
@@ -1519,11 +1513,9 @@ function renderMyProdTable(){
   let total=0;
   catIds.forEach(catId=>{
     const cat=myProdList[catId];
-    // Сортировка по цене от дешёвой к дорогой
     const sorted=[...cat.products].map((p,i)=>({...p,_origIdx:i}))
       .sort((a,b)=>(a.status==='unavailable'?999999:a.price)-(b.status==='unavailable'?999999:b.price));
     total+=cat.products.length;
-    // Шапка категории
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
     hdr.innerHTML='<td colspan="8">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
     hdr.onclick=()=>{
@@ -1534,28 +1526,21 @@ function renderMyProdTable(){
     tbody.appendChild(hdr);
     sorted.forEach(p=>{
       const tr=document.createElement('tr');
-      // Фоновый цвет строки по статусу
       const bgMap={ok:'',price_up:'rgba(251,191,36,.1)',price_down:'rgba(74,222,128,.08)',unavailable:'rgba(248,113,113,.1)',new:'rgba(56,189,248,.08)'};
       tr.className='prod-row hidden';
       tr.dataset.catid=catId;
       if(bgMap[p.status])tr.style.background=bgMap[p.status];
-      // Фото
       const photo=p.photo
         ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
-      // Название — зачёркнутое если нет в наличии
       const nameStyle=p.status==='unavailable'?'text-decoration:line-through;color:var(--text2);':'';
-      // Плашка скидки — из сохранённых данных origPrice/discPct
       const discBadge=p.origPrice&&p.discPct
         ?`<span class="discount-badge">-${p.discPct}%</span>`:'';
-      // Цена — если нет в наличии показываем последнюю известную зачёркнуто
       const priceCell=p.status==='unavailable'
         ?`<span style="text-decoration:line-through;color:var(--text2);">${fmtPrice(p.price)}</span>`
-        :`<span style="color:#fbbf24;font-weight:600;">${fmtPrice(p.price)}</span>${discBadge}`;
-      // Старая цена (До скидки) — из p.origPrice
+        :`<span style="color:#fbbf24;font-weight:600;">${fmtPrice(p.price)}</span>`;
       const oldPriceCell=p.origPrice
         ?`<span style="color:var(--text2);text-decoration:line-through;font-size:11px;">${fmtPrice(p.origPrice)}</span>`:'';
-      // Индикатор изменения цены — как в КБЖУ: ↑↓= и ✕ для недоступных
       let badge='';
       const ph=p.priceHistory||[];
       if(p.status==='unavailable'){
@@ -1568,7 +1553,6 @@ function renderMyProdTable(){
       } else if(ph.length===1){
         badge=`<span class="p-badge eq" onclick="showMyProdHistory('${catId}','${esc(p.name)}')" title="История цен">=</span>`;
       }
-      // Новый продукт — синяя метка
       if(p.status==='new') badge=`<span class="p-badge" style="background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;">NEW</span>`;
       const rowData=encodeURIComponent(JSON.stringify({name:p.name,price:p.price,catId,catName:cat.catName,photo:p.photo||'',pricePerUnit:p.pricePerUnit||0,weightMeasure:p.weightMeasure||''}));
       const inMyList=!!myList.find(x=>x.name===p.name);
@@ -1577,7 +1561,7 @@ function renderMyProdTable(){
         <td></td>
         <td style="padding:4px 6px;text-align:center;">${photo}</td>
         <td style="text-align:left;${nameStyle}">${p.name}</td>
-        <td style="text-align:center;width:107px;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div></td>
+        <td style="text-align:center;width:107px;position:relative;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div>${discBadge?`<span class="discount-badge" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);margin:0;">${p.discPct}%</span>`:''}</td>
         <td style="text-align:center;">${oldPriceCell}</td>
         <td style="text-align:center;color:var(--text2);font-size:11px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
         <td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>
@@ -1649,11 +1633,9 @@ async function updateMyProds(){
     try{
       const freshProds=await fetchAllProds(parseInt(catId));
       const freshNames=new Map(freshProds.map(p=>([p.name,p])));
-      // Проверяем существующие продукты
       cat.products.forEach(p=>{
         const fresh=freshNames.get(p.name);
         if(!fresh){
-          // Нет в наличии
           if(p.status!=='unavailable'){
             p.status='unavailable';p.statusDate=today;
             changes.push({type:'unavailable',name:p.name,cat:cat.catName});
@@ -1675,13 +1657,11 @@ async function updateMyProds(){
           }
           p.photo=fresh.photo||p.photo;
           p.pricePerUnit=fresh.productPricePerUnit||p.pricePerUnit;
-          // Обновляем данные о скидке
           const discUp=fresh.discountedPrice>0&&fresh.discountedPrice<fresh.price;
           p.origPrice=discUp?fresh.price:null;
           p.discPct=discUp?Math.round(fresh.discountPercent):0;
         }
       });
-      // Ищем новые продукты
       freshNames.forEach((fresh,name)=>{
         const exists=cat.products.find(p=>p.name===name);
         if(!exists){
@@ -1706,7 +1686,6 @@ async function updateMyProds(){
   fill.style.width='100%';
   msg.textContent='✅ Обновление завершено. Изменений: '+changes.length;
   saveAll();renderMyProdTable();
-  // Показываем сводку изменений
   if(changes.length){
     const icons={price_up:'🟡',price_down:'🟢',unavailable:'🔴',new:'🆕'};
     const labels={price_up:'подорожал',price_down:'подешевел',unavailable:'нет в наличии',new:'новый'};
@@ -1820,7 +1799,6 @@ function removeFromMyList(idx){
   saveAll();renderMyList();
 }
 
-// П.3: sendMyListToKbju — исправленная версия
 function sendMyListToKbju(){
   if(!myList.length){alert('Список пуст');return;}
   const today=new Date().toLocaleDateString('ru-RU');
@@ -1828,7 +1806,6 @@ function sendMyListToKbju(){
   myList.forEach(p=>{
     if(!p.name)return;
     if(kbjuTable[p.name]){
-      // Продукт уже есть — обновляем цену если изменилась
       const ex=kbjuTable[p.name];
       if(p.price!=null){
         const last=ex.priceHistory?.length?ex.priceHistory[ex.priceHistory.length-1].price:null;
@@ -1837,11 +1814,9 @@ function sendMyListToKbju(){
           ex.priceHistory.push({date:today,price:p.price});
         }
       }
-      // Обновляем флаги fromYC и ycCatId если их нет
       if(!ex.fromYC){ex.fromYC=true;ex.ycCatId=p.catId;ex.ycCatName=p.catName;}
       updated++;
     } else {
-      // П.4: новый продукт с fromYC:true
       kbjuTable[p.name]={
         proteins:0,fats:0,carbs:0,calories:0,
         priceType:'kg',
@@ -1860,7 +1835,6 @@ function sendMyListToKbju(){
   alert('Добавлено: '+added+', обновлено (цена): '+updated);
 }
 
-// П.5: updatePricesFromYC
 async function updatePricesFromYC(){
   const ycProds=Object.entries(kbjuTable).filter(([n,d])=>d.fromYC&&d.ycCatId);
   if(!ycProds.length){alert('Нет продуктов из ЕреванСити');return;}
@@ -1896,7 +1870,6 @@ async function updatePricesFromYC(){
   alert('Цены обновлены: '+updated+', не найдено: '+notFound);
 }
 
-// П.6: startFillKbju — автозаполнение КБЖУ через Gemini
 async function startFillKbju(){
   const empty=Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!d.calories||d.calories===0));
   if(!empty.length){alert('Все продукты уже имеют КБЖУ');return;}
@@ -1959,7 +1932,6 @@ ${names.map((n,i)=>`${i}. ${n}`).join('\n')}`;
       return;
     }
 
-    // Показываем medium для подтверждения по одному
     prog.textContent='Автозаполнено: '+autoFilled+'. Требуют подтверждения: '+mediumItems.length;
     btns.style.display='flex';
     let mIdx=0;
