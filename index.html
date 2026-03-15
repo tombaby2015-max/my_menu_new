@@ -1616,14 +1616,19 @@ let _myProdFilter=null;
 
 function toggleMyProdFilter(type){
   _myProdFilter=(_myProdFilter===type)?null:type;
-  // Обновляем стиль кнопок
   document.querySelectorAll('.mpf-btn').forEach(btn=>{
     const active=btn.dataset.filter===_myProdFilter;
     btn.style.background=active?'var(--accentDim)':'';
     btn.style.borderColor=active?'var(--accent)':'';
     btn.style.color=active?'var(--accentL)':'';
   });
-  // Сбрасываем поиск
+  // Диагностика: показываем статусы всех строк
+  const allStatuses={};
+  document.querySelectorAll('.prod-row').forEach(tr=>{
+    const s=tr.dataset.status||'(нет)';
+    allStatuses[s]=(allStatuses[s]||0)+1;
+  });
+  console.log('[filter debug] data-status counts:', allStatuses, '| filter:', _myProdFilter);
   const si=document.getElementById('myProdSearch');
   if(si)si.value='';
   filterMyProds();
