@@ -623,7 +623,14 @@ input[type=number]{-moz-appearance:textfield;}
       </select>
     </div>
     <div class="fg"><label class="fl">Цена (֏)</label><input id="npP" class="fi" type="number" step="1"></div>
-    <div class="fg" id="npPR" style="display:none;"><label class="fl">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
+    <div class="fg" id="npPR" style="display:none;"><label class="fl" id="npPWLabel">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
+    <div class="fg"><label class="fl">Единица измерения</label>
+      <select id="npUT" class="fi" onchange="togglePackRow()">
+        <option value="g">По весу (г)</option>
+        <option value="piece">Штучный (шт)</option>
+      </select>
+    </div>
+    <div class="fg" id="npUWR" style="display:none;"><label class="fl">Вес 1 шт (г)</label><input id="npUW" class="fi" type="number" step="1" placeholder="50"></div>
     <div class="m-btns">
       <button class="ctrl-btn" onclick="saveProd()">Сохранить</button>
       <button class="ctrl-btn red" id="npDel" style="display:none;" onclick="delProd()">Удалить</button>
@@ -970,16 +977,23 @@ function renderIngCell(ing,i,day,meal){
   if(isPartial){actionBtn=`<button class="btn-q" onclick="showSug(event,'${esc(day)}','${esc(meal)}',${i})">?</button>`;}
   else if(isNotFound){actionBtn=`<button class="btn-act" style="background:rgba(160,35,35,.7);border-color:rgba(200,80,80,.5);" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;}
   else{actionBtn=`<button class="btn-act" onclick="showActMenu(event,'${esc(day)}','${esc(meal)}',${i})">!</button>`;}
-  return `<td class="col-ing" style="${ingStyle}"><div class="ing-wrap"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${ingColor};">${nameDisp}</span>${actionBtn}</div></td><td class="col-w"><input class="w-inp" type="number" value="${ing.weight}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)"></td><td class="col-num">${n1(ing.proteins)}</td><td class="col-num">${n1(ing.fats)}</td><td class="col-num">${n1(ing.carbs)}</td><td class="col-kcal">${n1(ing.calories)}</td>`;
+  // Определяем единицу из kbjuTable
+  const kt=kbjuTable[ing.name];
+  const isPiece=kt&&kt.unitType==='piece'&&kt.unitWeight>0;
+  const dispVal=isPiece?Math.ceil(ing.weight/kt.unitWeight):ing.weight;
+  const dispUnit=isPiece?'шт':'г';
+  return `<td class="col-ing" style="${ingStyle}"><div class="ing-wrap"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${ingColor};">${nameDisp}</span>${actionBtn}</div></td><td class="col-w"><input class="w-inp" type="number" value="${dispVal}" onchange="updW('${esc(day)}','${esc(meal)}',${i},this.value)" style="width:45px;"> <span style="font-size:10px;color:var(--text2);">${dispUnit}</span></td><td class="col-num">${n1(ing.proteins)}</td><td class="col-num">${n1(ing.fats)}</td><td class="col-num">${n1(ing.carbs)}</td><td class="col-kcal">${n1(ing.calories)}</td>`;
 }
 
 function n1(v){if(v==null||v===undefined||v==='')return '—';const n=parseFloat(v);return isNaN(n)?'—':(Math.round(n*10)/10).toFixed(1);}
 function esc(s){return (s||'').replace(/'/g,"\\'");}
 
 function updW(day,meal,idx,val){
-  const w=parseFloat(val)||0,ing=menuData[day]?.[meal]?.ingredients?.[idx];if(!ing)return;
-  ing.weight=w;
-  if(kbjuTable[ing.name]){const k=kbjuTable[ing.name],r=w/100;ing.proteins=k.proteins*r;ing.fats=k.fats*r;ing.carbs=k.carbs*r;ing.calories=k.calories*r;}
+  const v=parseFloat(val)||0,ing=menuData[day]?.[meal]?.ingredients?.[idx];if(!ing)return;
+  const kt=kbjuTable[ing.name];
+  const isPiece=kt&&kt.unitType==='piece'&&kt.unitWeight>0;
+  ing.weight=isPiece?v*kt.unitWeight:v;
+  if(kt){const r=ing.weight/100;ing.proteins=kt.proteins*r;ing.fats=kt.fats*r;ing.carbs=kt.carbs*r;ing.calories=kt.calories*r;}
   saveAll();renderMenuDay(curDay);
 }
 function delIng(day,meal,idx){
@@ -1064,10 +1078,18 @@ function filterPS(){
   tbody.innerHTML='';
   Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).forEach(([name,d])=>{
     const _ph=d.priceHistory,_lp=_ph&&_ph.length?_ph[_ph.length-1].price:null;
-    const price=_lp!=null?_lp+'₽':'—';
-    const unit=d.priceType==='pack'&&d.packWeight?d.packWeight+'г':'кг';
+    const isPiece=d.unitType==='piece'&&d.unitWeight>0;
+    let priceStr='—';
+    if(_lp!=null){
+      if(isPiece&&d.priceType==='pack'&&d.packWeight){
+        priceStr=Math.round(_lp/(d.packWeight/d.unitWeight)).toLocaleString('ru-RU')+'₽/шт';
+      } else {
+        const unit=isPiece?'шт':(d.priceType==='pack'&&d.packWeight?d.packWeight+'г':'кг');
+        priceStr=_lp+'₽/'+unit;
+      }
+    }
     const tr=document.createElement('tr');tr.dataset.name=name;tr.style.cursor='pointer';
-    [[name,'text-align:left'],[n1(d.proteins),''],[n1(d.fats),''],[n1(d.carbs),''],[n1(d.calories),''],[price+'/'+unit,'color:var(--text2);font-size:11px;']].forEach(([txt,style])=>{const td=document.createElement('td');td.textContent=txt;if(style)td.style.cssText=style;tr.appendChild(td);});
+    [[name,'text-align:left'],[n1(d.proteins),''],[n1(d.fats),''],[n1(d.carbs),''],[n1(d.calories),''],[priceStr,'color:var(--text2);font-size:11px;']].forEach(([txt,style])=>{const td=document.createElement('td');td.textContent=txt;if(style)td.style.cssText=style;tr.appendChild(td);});
     tbody.appendChild(tr);
   });
 }
@@ -1101,8 +1123,9 @@ function pickProd(name){
   if(!menuData[day])menuData[day]={};
   if(!menuData[day][meal])menuData[day][meal]={dish:'',ingredients:[],recipe:''};
   const k=kbjuTable[name];
+  const defaultW=(k.unitType==='piece'&&k.unitWeight>0)?k.unitWeight:100;
   if(replaceIdx!=null){replIng(day,meal,replaceIdx,name);}
-  else{menuData[day][meal].ingredients.push({name,originalName:name,weight:100,status:'exact',suggestions:[],proteins:k.proteins,fats:k.fats,carbs:k.carbs,calories:k.calories,price:k.price,priceType:k.priceType,packWeight:k.packWeight});saveAll();renderMenuDay(curDay);}
+  else{menuData[day][meal].ingredients.push({name,originalName:name,weight:defaultW,status:'exact',suggestions:[],proteins:k.proteins*(defaultW/100),fats:k.fats*(defaultW/100),carbs:k.carbs*(defaultW/100),calories:k.calories*(defaultW/100),price:k.price,priceType:k.priceType,packWeight:k.packWeight});saveAll();renderMenuDay(curDay);}
   closeModal('prodSelModal');
 }
 
@@ -1145,7 +1168,28 @@ function parseRecipes(){
       if(/^состав\s*:/i.test(l)){mode='ing';continue;}
       if(/^кбжу\s*:/i.test(l)){mode=null;continue;}
       if(/^приготовление\s*:/i.test(l)){mode='recipe';continue;}
-      if(mode==='ing'){const m=l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*г?/);if(m){const nm=m[1].trim(),w=parseFloat(m[2]),f=findKbju(nm);if(f.type!=='not_found'){const k=kbjuTable[f.name],r=w/100;ings.push({name:f.name,originalName:nm,weight:w,status:f.type,suggestions:f.all||[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});}else{ings.push({name:nm,originalName:nm,weight:w,status:'not_found',suggestions:[],proteins:0,fats:0,carbs:0,calories:0});}}}
+      if(mode==='ing'){
+        // Сначала пробуем штучный формат: "3 шт", "2 яйца", "1 egg" и т.д.
+        const mPiece=l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*(шт\.?|яиц|яйца?|яйцо|egg|eggs?|pieces?|pcs?)?\s*$/i);
+        const mGram=l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*г?/);
+        const mPieceOnly=l.match(/^(.+?)\s*[–—\-]+\s*(\d+(?:\.\d+)?)\s*(шт\.?|яиц|яйца?|яйцо|egg|eggs?|pieces?|pcs?)\s*$/i);
+        if(mPieceOnly){
+          const nm=mPieceOnly[1].trim(),cnt=parseFloat(mPieceOnly[2]),f=findKbju(nm);
+          if(f.type!=='not_found'){
+            const k=kbjuTable[f.name];
+            const isPiece=k.unitType==='piece'&&k.unitWeight>0;
+            const w=isPiece?cnt*k.unitWeight:cnt;
+            const r=w/100;
+            ings.push({name:f.name,originalName:nm,weight:w,status:f.type,suggestions:f.all||[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});
+          } else {
+            ings.push({name:nm,originalName:nm,weight:cnt,status:'not_found',suggestions:[],proteins:0,fats:0,carbs:0,calories:0});
+          }
+        } else if(mGram){
+          const nm=mGram[1].trim(),w=parseFloat(mGram[2]),f=findKbju(nm);
+          if(f.type!=='not_found'){const k=kbjuTable[f.name],r=w/100;ings.push({name:f.name,originalName:nm,weight:w,status:f.type,suggestions:f.all||[],proteins:k.proteins*r,fats:k.fats*r,carbs:k.carbs*r,calories:k.calories*r});}
+          else{ings.push({name:nm,originalName:nm,weight:w,status:'not_found',suggestions:[],proteins:0,fats:0,carbs:0,calories:0});}
+        }
+      }
       else if(mode==='recipe'){recipe+=(recipe?' ':'')+l;}
     }
     if(!menuData[day])menuData[day]={};
@@ -1196,8 +1240,27 @@ function calcCosts(){
     const k=kbjuTable[name];if(!k)return;
     let cost=0,pack='—',buy='—';
     const cur=k.priceHistory?.length?k.priceHistory[k.priceHistory.length-1].price:null;
-    if(cur&&k.priceType==='kg'){cost=(g/1000)*cur;pack=cur.toLocaleString('ru-RU')+' ֏/кг';buy=(g/1000).toFixed(2)+' кг';}
-    else if(cur&&k.priceType==='pack'&&k.packWeight){const n=Math.ceil(g/k.packWeight);cost=n*cur;pack=k.packWeight+'г / '+cur.toLocaleString('ru-RU')+' ֏';buy=n+' шт.';}
+    const isPiece=k.unitType==='piece'&&k.unitWeight>0;
+    if(isPiece){
+      const pieces=Math.ceil(g/k.unitWeight);
+      if(cur){
+        if(k.priceType==='pack'&&k.packWeight){
+          const piecesPerPack=k.packWeight/k.unitWeight;
+          const packs=Math.ceil(pieces/piecesPerPack);
+          cost=packs*cur;
+          const pricePerPiece=Math.round(cur/piecesPerPack);
+          pack=piecesPerPack+' шт / '+cur.toLocaleString('ru-RU')+' ֏';
+          buy=pieces+' шт ('+packs+' уп.), 1 шт = '+pricePerPiece+' ֏';
+        } else {
+          cost=pieces*cur;
+          pack=cur.toLocaleString('ru-RU')+' ֏/шт';
+          buy=pieces+' шт';
+        }
+      }
+    } else {
+      if(cur&&k.priceType==='kg'){cost=(g/1000)*cur;pack=cur.toLocaleString('ru-RU')+' ֏/кг';buy=(g/1000).toFixed(2)+' кг';}
+      else if(cur&&k.priceType==='pack'&&k.packWeight){const n=Math.ceil(g/k.packWeight);cost=n*cur;pack=k.packWeight+'г / '+cur.toLocaleString('ru-RU')+' ֏';buy=n+' шт.';}
+    }
     grand+=cost;
     html+='<tr><td>'+name+'</td><td style="color:var(--text2)">'+Math.round(g)+' г</td><td style="color:var(--text2)">'+pack+'</td><td style="color:var(--text2)">'+buy+'</td><td style="font-weight:bold;color:var(--accent)">'+(cost?Math.round(cost).toLocaleString('ru-RU')+' ֏':'—')+'</td></tr>';
   });
@@ -1226,7 +1289,14 @@ function renderKbju(){
       +'<td style="text-align:left">'+name+ycLabel+'</td>'
       +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'
       +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'
-      +'<td><div class="price-cell"><span>'+(cur?Math.round(cur.price).toLocaleString('ru-RU')+' ֍':'—')+'</span>'
+      +'<td><div class="price-cell"><span>'+(cur?(()=>{
+        const isPiece=d.unitType==='piece'&&d.unitWeight>0;
+        if(isPiece&&d.priceType==='pack'&&d.packWeight){
+          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));
+          return ppu.toLocaleString('ru-RU')+' ֏/шт';
+        }
+        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' ֏/шт':' ֍');
+      })():'—')+'</span>'
       +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="История">'+sym+'</span>':'')
       +(cur?'<span class="p-date">'+cur.date+'</span>':'')
       +'</div></td>'+actionCell+'</tr>';
@@ -1237,7 +1307,22 @@ function renderKbju(){
 }
 function sortK(k){kSortDir=kSortKey===k?kSortDir*-1:1;kSortKey=k;renderKbju();}
 function togArc(n){kbjuTable[n].archived=!kbjuTable[n].archived;saveAll();renderKbju();reEvalStatuses();}
-function togglePackRow(){document.getElementById('npPR').style.display=document.getElementById('npPT').value==='pack'?'block':'none';}
+function togglePackRow(){
+  const isPack=document.getElementById('npPT').value==='pack';
+  const isPiece=document.getElementById('npUT').value==='piece';
+  document.getElementById('npPR').style.display=isPack?'block':'none';
+  document.getElementById('npUWR').style.display=isPiece?'block':'none';
+  // Меняем лейбл и placeholder поля упаковки
+  const lbl=document.getElementById('npPWLabel');
+  const inp=document.getElementById('npPW');
+  if(isPack&&isPiece){
+    lbl.textContent='Штук в упаковке';
+    inp.placeholder='12';
+  } else {
+    lbl.textContent='Вес упаковки (г)';
+    inp.placeholder='850';
+  }
+}
 
 function toggleKbjuSelect(){
   _kbjuSelectMode=!_kbjuSelectMode;
@@ -1268,8 +1353,27 @@ function openAddProd(name){
   _editProd=name||null;
   document.getElementById('addProdTitle').textContent=name?'Редактировать':'Добавить продукт';
   document.getElementById('npDel').style.display=name?'inline-block':'none';
-  if(name&&kbjuTable[name]){const d=kbjuTable[name],cur=d.priceHistory?.length?d.priceHistory[d.priceHistory.length-1].price:'';document.getElementById('npN').value=name;document.getElementById('npB').value=d.proteins||'';document.getElementById('npJ').value=d.fats||'';document.getElementById('npU').value=d.carbs||'';document.getElementById('npK').value=d.calories||'';document.getElementById('npP').value=cur;document.getElementById('npPT').value=d.priceType||'kg';document.getElementById('npPW').value=d.packWeight||'';document.getElementById('npPR').style.display=d.priceType==='pack'?'block':'none';}
-  else{['npN','npB','npJ','npU','npK','npP','npPW'].forEach(id=>document.getElementById(id).value='');document.getElementById('npPT').value='kg';document.getElementById('npPR').style.display='none';}
+  if(name&&kbjuTable[name]){
+    const d=kbjuTable[name],cur=d.priceHistory?.length?d.priceHistory[d.priceHistory.length-1].price:'';
+    document.getElementById('npN').value=name;
+    document.getElementById('npB').value=d.proteins||'';
+    document.getElementById('npJ').value=d.fats||'';
+    document.getElementById('npU').value=d.carbs||'';
+    document.getElementById('npK').value=d.calories||'';
+    document.getElementById('npP').value=cur;
+    document.getElementById('npPT').value=d.priceType||'kg';
+    document.getElementById('npUT').value=d.unitType||'g';
+    document.getElementById('npUW').value=d.unitWeight||'';
+    // Для штучных показываем packCount (штук), для весовых — packWeight (г)
+    const showPiece=d.unitType==='piece';
+    document.getElementById('npPW').value=showPiece?(d.packCount||''):(d.packWeight||'');
+    togglePackRow();
+  } else {
+    ['npN','npB','npJ','npU','npK','npP','npPW','npUW'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('npPT').value='kg';
+    document.getElementById('npUT').value='g';
+    togglePackRow();
+  }
   openModal('addProdModal');
 }
 
@@ -1303,11 +1407,23 @@ function saveProd(){
   const name=document.getElementById('npN').value.trim();if(!name){alert('Введите название');return;}
   const p=parseFloat(document.getElementById('npB').value)||0,f=parseFloat(document.getElementById('npJ').value)||0,c=parseFloat(document.getElementById('npU').value)||0,k=parseFloat(document.getElementById('npK').value)||0;
   const price=parseFloat(document.getElementById('npP').value)||null,pt=document.getElementById('npPT').value,pw=parseFloat(document.getElementById('npPW').value)||null;
+  const ut=document.getElementById('npUT').value,uw=parseFloat(document.getElementById('npUW').value)||null;
+  if(ut==='piece'&&!uw){alert('Укажите вес 1 шт (г)');return;}
   const today=new Date().toLocaleDateString('ru-RU');
   if(_editProd&&_editProd!==name){kbjuTable[name]=kbjuTable[_editProd];delete kbjuTable[_editProd];}
   if(!kbjuTable[name])kbjuTable[name]={priceHistory:[]};
-  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt});
-  if(pw)d.packWeight=pw;if(!d.priceHistory)d.priceHistory=[];
+  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt,unitType:ut});
+  if(ut==='piece'&&uw)d.unitWeight=uw; else delete d.unitWeight;
+  // Для штучных: поле npPW = штук в упаковке → packWeight = штук * unitWeight
+  // Для весовых: поле npPW = граммы упаковки → packWeight как есть
+  if(pw&&pt==='pack'){
+    d.packWeight=(ut==='piece'&&uw)?pw*uw:pw;
+    d.packCount=(ut==='piece')?pw:null; // сохраняем штуки для отображения в модалке
+  } else {
+    delete d.packWeight;
+    delete d.packCount;
+  }
+  if(!d.priceHistory)d.priceHistory=[];
   if(price!==null){const last=d.priceHistory.length?d.priceHistory[d.priceHistory.length-1].price:null;if(last!==price)d.priceHistory.push({date:today,price});}
   saveAll();renderKbju();reEvalStatuses();closeModal('addProdModal');
 }
