@@ -390,11 +390,11 @@ input[type=number]{-moz-appearance:textfield;}
             <span style="font-size:11px;font-weight:600;color:var(--accentL);text-transform:uppercase;letter-spacing:.7px;">📋 Мои товары</span>
             <span id="myProdCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
             <input id="myProdSearch" type="text" placeholder="Поиск товара..." class="fi" style="width:200px;padding:3px 9px;font-size:12px;" oninput="filterMyProds()">
-            <button class="ctrl-btn sec mpf-btn" data-filter="price_up"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_up')">🟡 Подорожали</button>
-            <button class="ctrl-btn sec mpf-btn" data-filter="price_down" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_down')">🟢 Подешевели</button>
-            <button class="ctrl-btn sec mpf-btn" data-filter="new"        style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('new')">🆕 Новые</button>
-            <button class="ctrl-btn sec mpf-btn" data-filter="discount"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('discount')">🏷 Со скидкой</button>
-            <button class="ctrl-btn sec mpf-btn" data-filter="unavailable" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('unavailable')">🔴 Нет в наличии</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="price_up"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_up')"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(244,67,54,.12);border:1px solid var(--red);color:var(--red);font-size:9px;font-weight:bold;margin-right:4px;">↑</span>Подорожали</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="price_down" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_down')"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(76,175,80,.12);border:1px solid var(--green);color:var(--green);font-size:9px;font-weight:bold;margin-right:4px;">↓</span>Подешевели</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="new"        style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('new')"><span style="display:inline-flex;align-items:center;justify-content:center;height:14px;padding:0 3px;border-radius:3px;background:rgba(56,189,248,.15);border:1px solid var(--accent);color:var(--accentL);font-size:9px;font-weight:bold;margin-right:4px;">NEW</span>Новые</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="discount"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('discount')"><span style="display:inline-flex;align-items:center;justify-content:center;height:14px;padding:0 3px;border-radius:3px;background:var(--red);color:white;font-size:9px;font-weight:bold;margin-right:4px;">%</span>Со скидкой</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="unavailable" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('unavailable')"><span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:rgba(248,113,113,.15);border:1px solid var(--red);color:var(--red);font-size:9px;font-weight:bold;margin-right:4px;">✕</span>Нет в наличии</button>
             <button class="ctrl-btn sec mpf-btn" data-filter="inmylist"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('inmylist')">✅ В моем списке</button>
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
           </div>
@@ -1544,7 +1544,10 @@ function renderMyProdTable(){
       .sort((a,b)=>(a.status==='unavailable'?999999:a.price)-(b.status==='unavailable'?999999:b.price));
     total+=cat.products.length;
     const hdr=document.createElement('tr');hdr.className='cat-hdr-row';hdr.dataset.catid=catId;
-    hdr.innerHTML='<td colspan="8">'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></td>';
+    hdr.innerHTML='<td colspan="8" style="display:flex;align-items:center;justify-content:space-between;">'+
+      '<span>'+cat.catName+' ('+cat.products.length+') <span style="color:var(--text2);font-size:10px;font-weight:normal;">обновлено: '+(cat.lastUpdated||'—')+'</span></span>'+
+      '<button onclick="delMyCat(\''+catId+'\',event)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;opacity:.6;padding:0 4px;line-height:1;" title="Удалить категорию">✕</button>'+
+      '</td>';
     hdr.onclick=()=>{
       hdr.classList.toggle('open');
       const isOpen=hdr.classList.contains('open');
@@ -1702,6 +1705,15 @@ function showMyProdHistory(catId,name){
   const unavDate=p.status==='unavailable'?`<div style="color:var(--red);margin-bottom:6px;">🔴 Не найден при обновлении ${p.statusDate||''}</div>`:'';
   document.getElementById('phList').innerHTML=unavDate+h.slice().reverse().map(x=>'<div>'+x.date+': <strong style="color:var(--accent)">'+Math.round(x.price).toLocaleString('ru-RU')+' ֏</strong></div>').join('');
   openModal('priceHistModal');
+}
+
+function delMyCat(catId,e){
+  e.stopPropagation();
+  const cat=myProdList[catId];
+  if(!cat)return;
+  if(!confirm('Удалить категорию "'+cat.catName+'" ('+cat.products.length+' товаров)?'))return;
+  delete myProdList[catId];
+  saveAll();renderMyProdTable();
 }
 
 function delMyProd(catId,idx){
