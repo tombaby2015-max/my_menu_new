@@ -291,7 +291,7 @@ input[type=number]{-moz-appearance:textfield;}
 .mylist-meals label{display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;color:var(--text);}
 .mylist-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px;opacity:.6;flex-shrink:0;}
 .mylist-del:hover{opacity:1;}
-.prod-in-mylist td{background:rgba(74,222,128,.08)!important;}
+.prod-in-mylist td{background:rgba(74,222,128,.18)!important;}
 .prod-in-mylist td:first-child{border-left:3px solid var(--green);}
 </style>
 </head>
@@ -395,6 +395,7 @@ input[type=number]{-moz-appearance:textfield;}
             <button class="ctrl-btn sec mpf-btn" data-filter="new"        style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('new')">🆕 Новые</button>
             <button class="ctrl-btn sec mpf-btn" data-filter="discount"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('discount')">🏷 Со скидкой</button>
             <button class="ctrl-btn sec mpf-btn" data-filter="unavailable" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('unavailable')">🔴 Нет в наличии</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="inmylist"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('inmylist')">✅ В моем списке</button>
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
           </div>
           <div id="myProdUpdateStatus" style="display:none;padding:5px 12px;background:rgba(56,189,248,.05);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-shrink:0;"></div>
@@ -1594,6 +1595,7 @@ function renderMyProdTable(){
       const rowData=encodeURIComponent(JSON.stringify({name:p.name,price:p.price,catId,catName:cat.catName,photo:p.photo||'',pricePerUnit:p.pricePerUnit||0,weightMeasure:p.weightMeasure||''}));
       const inMyList=!!myList.find(x=>x.name===p.name);
       if(inMyList)tr.classList.add('prod-in-mylist');
+      tr.dataset.inmylist=inMyList?'1':'0';
       tr.innerHTML=`
         <td></td>
         <td style="padding:4px 6px;text-align:center;">${photo}</td>
@@ -1609,6 +1611,8 @@ function renderMyProdTable(){
         if(e.target.closest('.p-badge'))return;
         const cb=tr.querySelector('.cb-add');
         if(!cb)return;
+        // Если кликнули прямо на чекбокс — он уже сам переключился, просто вызываем логику
+        if(e.target===cb){toggleMyListItem(cb);return;}
         cb.checked=!cb.checked;
         toggleMyListItem(cb);
       };
@@ -1619,25 +1623,24 @@ function renderMyProdTable(){
   if(cnt)cnt.textContent=total+' товаров';
 }
 
-let _myProdFilter=null;
+const _myProdFilters=new Set();
 
 function toggleMyProdFilter(type){
-  _myProdFilter=(_myProdFilter===type)?null:type;
+  if(_myProdFilters.has(type)) _myProdFilters.delete(type);
+  else _myProdFilters.add(type);
   document.querySelectorAll('.mpf-btn').forEach(btn=>{
-    const active=btn.dataset.filter===_myProdFilter;
+    const active=_myProdFilters.has(btn.dataset.filter);
     btn.style.background=active?'var(--accentDim)':'';
     btn.style.borderColor=active?'var(--accent)':'';
     btn.style.color=active?'var(--accentL)':'';
   });
-  const si=document.getElementById('myProdSearch');
-  if(si)si.value='';
   filterMyProds();
 }
 
 function filterMyProds(){
   const q=(document.getElementById('myProdSearch')?.value||'').toLowerCase().trim();
-  const f=_myProdFilter;
-  const hasFilter=q||f;
+  const filters=_myProdFilters;
+  const hasFilter=q||filters.size>0;
   const tbody=document.getElementById('prodBody');
   if(hasFilter&&!tbody._filterWasActive){
     tbody._openBeforeFilter=new Set();
@@ -1652,11 +1655,15 @@ function filterMyProds(){
       const nameEl=tr.querySelector('td:nth-child(3)');
       const matchQ=!q||nameEl?.textContent.toLowerCase().includes(q);
       let matchF=true;
-      if(f){
-        if(f==='price_up')   matchF=tr.dataset.pricedir==='up';
-        else if(f==='price_down') matchF=tr.dataset.pricedir==='down';
-        else if(f==='discount')   matchF=tr.dataset.discount==='1';
-        else matchF=tr.dataset.status===f;
+      if(filters.size>0){
+        // Строка проходит если совпадает хотя бы один активный фильтр
+        matchF=false;
+        if(filters.has('price_up')&&tr.dataset.pricedir==='up') matchF=true;
+        if(filters.has('price_down')&&tr.dataset.pricedir==='down') matchF=true;
+        if(filters.has('new')&&tr.dataset.status==='new') matchF=true;
+        if(filters.has('discount')&&tr.dataset.discount==='1') matchF=true;
+        if(filters.has('unavailable')&&tr.dataset.status==='unavailable') matchF=true;
+        if(filters.has('inmylist')&&tr.dataset.inmylist==='1') matchF=true;
       }
       const match=matchQ&&matchF;
       if(match){tr.classList.remove('hidden');catVisible++;}
@@ -1868,6 +1875,7 @@ function toggleMyListItem(cb){
     const r=JSON.parse(decodeURIComponent(c.dataset.row));
     const inList=!!myList.find(p=>p.name===r.name);
     tr.classList.toggle('prod-in-mylist',inList);
+    tr.dataset.inmylist=inList?'1':'0';
   });
 }
 
