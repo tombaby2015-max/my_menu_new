@@ -396,7 +396,6 @@ input[type=number]{-moz-appearance:textfield;}
             <button class="ctrl-btn sec mpf-btn" data-filter="discount"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('discount')">🏷 Со скидкой</button>
             <button class="ctrl-btn sec mpf-btn" data-filter="unavailable" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('unavailable')">🔴 Нет в наличии</button>
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
-            <button class="ctrl-btn sec" style="padding:2px 10px;font-size:12px;" onclick="clearMyProdChanges()">Сбросить метки</button>
           </div>
           <div id="myProdUpdateStatus" style="display:none;padding:5px 12px;background:rgba(56,189,248,.05);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-shrink:0;"></div>
           <div id="myProdChanges" style="display:none;padding:6px 12px;background:rgba(56,189,248,.07);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;align-items:center;gap:10px;">
@@ -1553,7 +1552,7 @@ function renderMyProdTable(){
     tbody.appendChild(hdr);
     sorted.forEach(p=>{
       const tr=document.createElement('tr');
-      const bgMap={ok:'',price_up:'rgba(251,191,36,.1)',price_down:'rgba(74,222,128,.08)',unavailable:'rgba(248,113,113,.1)',new:'rgba(56,189,248,.08)'};
+      const bgMap={ok:'',price_up:'',price_down:'',unavailable:'',new:''};
       tr.className='prod-row hidden';
       tr.dataset.catid=catId;
       tr.dataset.status=p.status||'ok';
@@ -1703,16 +1702,6 @@ function delMyProd(catId,idx){
   myProdList[catId].products.splice(idx,1);
   if(!myProdList[catId].products.length)delete myProdList[catId];
   saveAll();renderMyProdTable();
-}
-
-function clearMyProdChanges(){
-  Object.values(myProdList).forEach(cat=>{
-    cat.products.forEach(p=>{if(p.status!=='unavailable')p.status='ok';});
-  });
-  saveAll();renderMyProdTable();
-  document.getElementById('myProdChanges').style.display='none';
-  document.getElementById('myProdUpdateStatus').style.display='none';
-  _lastChanges=[];
 }
 
 let _lastChanges=[];
