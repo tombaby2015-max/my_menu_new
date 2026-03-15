@@ -390,6 +390,11 @@ input[type=number]{-moz-appearance:textfield;}
             <span style="font-size:11px;font-weight:600;color:var(--accentL);text-transform:uppercase;letter-spacing:.7px;">📋 Мои товары</span>
             <span id="myProdCount" style="font-size:12px;color:var(--text2);">0 товаров</span>
             <input id="myProdSearch" type="text" placeholder="Поиск товара..." class="fi" style="width:200px;padding:3px 9px;font-size:12px;" oninput="filterMyProds()">
+            <button class="ctrl-btn sec mpf-btn" data-filter="price_up"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_up')">🟡 Подорожали</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="price_down" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('price_down')">🟢 Подешевели</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="new"        style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('new')">🆕 Новые</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="discount"   style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('discount')">🏷 Со скидкой</button>
+            <button class="ctrl-btn sec mpf-btn" data-filter="unavailable" style="padding:2px 10px;font-size:12px;" onclick="toggleMyProdFilter('unavailable')">🔴 Нет в наличии</button>
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
             <button class="ctrl-btn sec" style="padding:2px 10px;font-size:12px;" onclick="clearMyProdChanges()">Сбросить метки</button>
           </div>
@@ -1515,9 +1520,6 @@ async function fetchAllProds(catId){
   let items=inner.list||[];
   const ps=[];for(let p=2;p<=pages;p++)ps.push(apiCall('/api/products',{...body,page:p}));
   (await Promise.all(ps)).forEach(d=>{items=items.concat(d?.data?.list||[]);});
-  // Диагностика: логируем уникальные weightMeasure
-  const wm=new Set(items.map(i=>i.weightMeasure||'(пусто)'));
-  if(wm.size)console.log('[weightMeasure] catId='+catId, [...wm]);
   return items;
 }
 
@@ -1608,8 +1610,27 @@ function renderMyProdTable(){
   if(cnt)cnt.textContent=total+' товаров';
 }
 
+let _myProdFilter=null;
+
+function toggleMyProdFilter(type){
+  _myProdFilter=(_myProdFilter===type)?null:type;
+  // Обновляем стиль кнопок
+  document.querySelectorAll('.mpf-btn').forEach(btn=>{
+    const active=btn.dataset.filter===_myProdFilter;
+    btn.style.background=active?'var(--accentDim)':'';
+    btn.style.borderColor=active?'var(--accent)':'';
+    btn.style.color=active?'var(--accentL)':'';
+  });
+  // Сбрасываем поиск
+  const si=document.getElementById('myProdSearch');
+  if(si)si.value='';
+  filterMyProds();
+}
+
 function filterMyProds(){
   const q=(document.getElementById('myProdSearch')?.value||'').toLowerCase().trim();
+  const f=_myProdFilter;
+  const hasFilter=q||f;
   const tbody=document.getElementById('prodBody');
   tbody.querySelectorAll('.cat-hdr-row').forEach(hdr=>{
     const catId=hdr.dataset.catid;
@@ -1617,8 +1638,18 @@ function filterMyProds(){
     let catVisible=0;
     rows.forEach(tr=>{
       const name=tr.querySelector('td:nth-child(3)');
-      const match=!q||name?.textContent.toLowerCase().includes(q);
-      // Показываем строку если совпадает поиск (и категория раскрыта или поиск активен)
+      const matchQ=!q||name?.textContent.toLowerCase().includes(q);
+      let matchF=true;
+      if(f){
+        const cat=myProdList[catId];
+        const prodName=name?.textContent;
+        const prod=cat?.products.find(p=>p.name===prodName);
+        if(prod){
+          if(f==='discount') matchF=!!(prod.origPrice&&prod.discPct);
+          else matchF=prod.status===f;
+        } else matchF=false;
+      }
+      const match=matchQ&&matchF;
       if(match){
         tr.classList.remove('hidden');
         catVisible++;
@@ -1626,13 +1657,11 @@ function filterMyProds(){
         tr.classList.add('hidden');
       }
     });
-    // Если есть поиск — раскрываем категории с совпадениями, скрываем без
-    if(q){
+    if(hasFilter){
       hdr.style.display=catVisible?'':'none';
       if(catVisible) hdr.classList.add('open');
     } else {
       hdr.style.display='';
-      // Возвращаем состояние collapse (все строки скрыты если категория не открыта)
       if(!hdr.classList.contains('open')){
         rows.forEach(tr=>tr.classList.add('hidden'));
       }
