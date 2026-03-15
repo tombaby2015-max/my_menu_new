@@ -392,7 +392,20 @@ input[type=number]{-moz-appearance:textfield;}
             <button class="ctrl-btn" style="padding:2px 12px;font-size:12px;margin-left:auto;" onclick="updateMyProds()">🔄 Обновить продукты</button>
             <button class="ctrl-btn sec" style="padding:2px 10px;font-size:12px;" onclick="clearMyProdChanges()">Сбросить метки</button>
           </div>
-          <div id="myProdChanges" style="display:none;padding:7px 12px;background:rgba(56,189,248,.07);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;max-height:90px;overflow-y:auto;"></div>
+          <div id="myProdUpdateStatus" style="display:none;padding:5px 12px;background:rgba(56,189,248,.05);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-shrink:0;"></div>
+          <div id="myProdChanges" style="display:none;padding:6px 12px;background:rgba(56,189,248,.07);border-bottom:1px solid var(--border);font-size:12px;flex-shrink:0;align-items:center;gap:10px;">
+            <span id="myProdChangesBadge" style="font-weight:600;color:var(--accentL);"></span>
+            <button class="ctrl-btn sec" style="padding:2px 10px;font-size:12px;" onclick="showChangesModal()">Показать изменения</button>
+          </div>
+          <div id="myProdChangesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;">
+            <div style="background:var(--bg4);border:1px solid var(--border2);border-radius:14px;padding:22px;min-width:380px;max-width:600px;width:92%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+              <div style="font-size:15px;font-weight:700;color:var(--accentL);margin-bottom:14px;text-align:center;">Изменения цен и наличия</div>
+              <div id="myProdChangesBody" style="overflow-y:auto;flex:1;"></div>
+              <div style="display:flex;justify-content:center;margin-top:14px;">
+                <button class="ctrl-btn sec" onclick="document.getElementById('myProdChangesModal').style.display='none'">Закрыть</button>
+              </div>
+            </div>
+          </div>
           <div style="flex:1;overflow:auto;padding:10px;">
             <div style="border-radius:10px;overflow:hidden;border:1px solid var(--border2);">
             <table class="prod-table" id="prodTable">
@@ -1569,6 +1582,8 @@ function renderMyProdTable(){
       tr.onclick=function(e){
         if(e.target.closest('.photo-thumb'))return;
         if(e.target.tagName==='BUTTON')return;
+        if(e.target.closest('.p-badge'))return;
+        if(e.target.closest('.price-cell'))return;
         const cb=tr.querySelector('.cb-add');
         if(!cb)return;
         cb.checked=!cb.checked;
@@ -1614,22 +1629,32 @@ function clearMyProdChanges(){
   });
   saveAll();renderMyProdTable();
   document.getElementById('myProdChanges').style.display='none';
+  document.getElementById('myProdUpdateStatus').style.display='none';
+  _lastChanges=[];
 }
 
+let _lastChanges=[];
 async function updateMyProds(){
   const catIds=Object.keys(myProdList);
   if(!catIds.length){alert('Область 2 пуста — сначала добавьте товары через «Выгрузить в память»');return;}
   const msg=document.getElementById('parseStatus');
   const fill=document.getElementById('parseProg');
+  const statusEl=document.getElementById('myProdUpdateStatus');
   const changesEl=document.getElementById('myProdChanges');
+  // Показываем строку статуса сразу
+  statusEl.style.display='block';
+  statusEl.innerHTML='<span class="spin" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span> Подготовка к обновлению...';
+  changesEl.style.display='none';
   fill.style.width='0%';
   const today=new Date().toLocaleDateString('ru-RU');
   const changes=[];
   for(let ci=0;ci<catIds.length;ci++){
     const catId=catIds[ci];
     const cat=myProdList[catId];
+    const pct=Math.round((ci/catIds.length)*100);
+    statusEl.innerHTML=`<span class="spin" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span> Обновляю ${ci+1}/${catIds.length}: <strong style="color:var(--text);">${cat.catName}</strong> <span style="color:var(--text3);">(${pct}%)</span>`;
     msg.textContent='Обновляю: '+cat.catName+'...';
-    fill.style.width=((ci/catIds.length)*100)+'%';
+    fill.style.width=pct+'%';
     try{
       const freshProds=await fetchAllProds(parseInt(catId));
       const freshNames=new Map(freshProds.map(p=>([p.name,p])));
@@ -1685,19 +1710,47 @@ async function updateMyProds(){
   }
   fill.style.width='100%';
   msg.textContent='✅ Обновление завершено. Изменений: '+changes.length;
+  _lastChanges=changes;
   saveAll();renderMyProdTable();
   if(changes.length){
     const icons={price_up:'🟡',price_down:'🟢',unavailable:'🔴',new:'🆕'};
-    const labels={price_up:'подорожал',price_down:'подешевел',unavailable:'нет в наличии',new:'новый'};
-    changesEl.innerHTML='<strong style="color:var(--text);">Изменения:</strong> '+
-      changes.map(c=>`${icons[c.type]} <span style="color:var(--text);">${c.name}</span> — ${labels[c.type]}`+
-        (c.newPrice?` (${fmtPrice(c.oldPrice)} → ${fmtPrice(c.newPrice)})`:'')
-      ).join(' &nbsp;·&nbsp; ');
-    changesEl.style.display='block';
+    const counts={price_up:0,price_down:0,unavailable:0,new:0};
+    changes.forEach(c=>{if(counts[c.type]!==undefined)counts[c.type]++;});
+    const parts=[];
+    if(counts.new) parts.push('🆕 новых: '+counts.new);
+    if(counts.price_up) parts.push('🟡 подорожало: '+counts.price_up);
+    if(counts.price_down) parts.push('🟢 подешевело: '+counts.price_down);
+    if(counts.unavailable) parts.push('🔴 нет в наличии: '+counts.unavailable);
+    document.getElementById('myProdChangesBadge').textContent=parts.join('  ·  ');
+    changesEl.style.display='flex';
+    statusEl.innerHTML='✅ Обновлено категорий: '+catIds.length+'. Изменений: <strong style="color:var(--accentL);">'+changes.length+'</strong>';
   } else {
-    changesEl.innerHTML='<span style="color:var(--green);">Изменений нет — всё актуально</span>';
-    changesEl.style.display='block';
+    statusEl.innerHTML='✅ Всё актуально — изменений не найдено';
+    changesEl.style.display='none';
   }
+}
+
+function showChangesModal(){
+  if(!_lastChanges.length)return;
+  const icons={price_up:'🟡',price_down:'🟢',unavailable:'🔴',new:'🆕'};
+  const labels={price_up:'подорожал',price_down:'подешевел',unavailable:'нет в наличии',new:'новый'};
+  const colors={price_up:'rgba(251,191,36,.12)',price_down:'rgba(74,222,128,.1)',unavailable:'rgba(248,113,113,.1)',new:'rgba(56,189,248,.08)'};
+  // Группируем по категории
+  const byCat={};
+  _lastChanges.forEach(c=>{if(!byCat[c.cat])byCat[c.cat]=[];byCat[c.cat].push(c);});
+  let html='';
+  Object.entries(byCat).forEach(([cat,items])=>{
+    html+=`<div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:8px 0 4px;">${cat}</div>`;
+    items.forEach(c=>{
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;margin-bottom:3px;background:${colors[c.type]||'var(--bg3)'};">
+        <span style="font-size:14px;">${icons[c.type]}</span>
+        <span style="flex:1;color:var(--text);font-size:13px;">${c.name}</span>
+        <span style="font-size:12px;color:var(--text2);white-space:nowrap;">${labels[c.type]}${c.newPrice?' ('+fmtPrice(c.oldPrice)+' → '+fmtPrice(c.newPrice)+')':''}</span>
+      </div>`;
+    });
+  });
+  document.getElementById('myProdChangesBody').innerHTML=html;
+  document.getElementById('myProdChangesModal').style.display='flex';
 }
 
 // ══════════════════════════════════════════════════════════════════
