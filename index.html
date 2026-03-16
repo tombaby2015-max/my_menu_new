@@ -867,6 +867,7 @@ function init(){
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   buildDayTabs();
   renderMenuDay(curDay);
+  syncMyListPrices();
   renderKbju();
   renderSaved();
   renderNotesLists();
@@ -1919,9 +1920,9 @@ function syncMyListPrices(){
       }
     });
   });
-  // Также обновляем photo в kbjuTable для продуктов из ЕреванСити
+  // Обновляем photo в kbjuTable для всех продуктов у которых есть совпадение в myProdList
   Object.entries(kbjuTable).forEach(([name,d])=>{
-    if(!d.fromYC||d.photo) return;
+    if(d.photo) return; // уже есть — не трогаем
     Object.values(myProdList).forEach(cat=>{
       const prod=cat.products.find(p=>p.name===name);
       if(prod&&prod.photo) d.photo=prod.photo;
