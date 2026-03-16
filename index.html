@@ -2258,7 +2258,10 @@ function renderMyList(){
     g.items.forEach(p=>{
       const row=document.createElement('div');
       row.className='mylist-row';
-      row.innerHTML=`<div class="mylist-name">${p.name}</div><div class="mylist-meals"><label><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Перекус</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завтрак</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label></div><div class="mylist-price">${fmtPrice(p.price)}</div><button class="mylist-del" onclick="removeFromMyList(${p.idx})">✕</button>`;
+      const photoHtml=p.photo
+        ?`<div class="photo-thumb" data-src="${p.photo}" style="flex-shrink:0;border:none;background:transparent;">🖼<div class="photo-popup"><img data-src="${p.photo}" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>`
+        :'';
+      row.innerHTML=`${photoHtml}<div class="mylist-name">${p.name}</div><div class="mylist-meals"><label><input type="checkbox" data-idx="${p.idx}" data-meal="snack" class="ml-cb" ${p.snack?'checked':''}> Перекус</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="breakfast" class="ml-cb" ${p.breakfast?'checked':''}> Завтрак</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="lunch" class="ml-cb" ${p.lunch?'checked':''}> Обед</label><label><input type="checkbox" data-idx="${p.idx}" data-meal="dinner" class="ml-cb" ${p.dinner?'checked':''}> Ужин</label></div><div class="mylist-price">${fmtPrice(p.price)}</div><button class="mylist-del" onclick="removeFromMyList(${p.idx})">✕</button>`;
       body.appendChild(row);
     });
     wrap.appendChild(hdr);
