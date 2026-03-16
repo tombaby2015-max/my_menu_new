@@ -152,8 +152,9 @@ input[type=number]{-moz-appearance:textfield;}
 .photo-thumb{width:28px;height:28px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;position:relative;transition:border-color .15s;}
 .photo-thumb:hover{border-color:var(--accent);}
 .photo-popup{display:none;position:absolute;left:34px;top:50%;transform:translateY(-50%);z-index:999;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;}
-.photo-thumb:hover .photo-popup{display:block;}
 .photo-popup img{width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;}
+#globalPhotoPopup{display:none;position:fixed;z-index:9998;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none;}
+#globalPhotoPopup img{width:160px;height:160px;object-fit:contain;border-radius:5px;display:block;}
 .prod-table{width:100%;border-collapse:collapse;font-size:12px;}
 .prod-table th{background:var(--th-bg);color:var(--th-text);padding:8px 6px;text-align:center;border:1px solid var(--border2);border-top:none;border-bottom:2px solid var(--border2);white-space:nowrap;position:sticky;top:0;z-index:5;font-size:11px;text-transform:uppercase;letter-spacing:.3px;}
 .prod-table td{padding:5px 6px;border:1px solid var(--border);}
@@ -758,6 +759,9 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
+<!-- Global photo popup -->
+<div id="globalPhotoPopup"><img id="globalPhotoPopupImg" src="" alt=""></div>
+
 <!-- Photo zoom modal -->
 <div id="photoModal" onclick="document.getElementById('photoModal').classList.remove('open')">
   <img id="photoModalImg" src="" alt="">
@@ -1153,10 +1157,38 @@ function openPhotoZoom(src){
 
 document.addEventListener('DOMContentLoaded',()=>{
   init();
-  // Загрузка фото по требованию — при наведении или тапе на photo-thumb
+  // Глобальный photo popup — position:fixed, не обрезается overflow
+  const gPopup=document.getElementById('globalPhotoPopup');
+  const gPopupImg=document.getElementById('globalPhotoPopupImg');
+  let _popupTimer=null;
+
   document.body.addEventListener('mouseover',e=>{
     const thumb=e.target.closest('.photo-thumb');
-    if(thumb) loadThumbPhoto(thumb);
+    if(!thumb)return;
+    loadThumbPhoto(thumb);
+    const src=thumb.dataset.src||(thumb.querySelector('img')?.src)||'';
+    if(!src)return;
+    clearTimeout(_popupTimer);
+    _popupTimer=setTimeout(()=>{
+      const r=thumb.getBoundingClientRect();
+      gPopupImg.src=src;
+      gPopup.style.display='block';
+      // Позиционируем справа от thumb, не выходя за экран
+      const popW=170, popH=170;
+      let left=r.right+6;
+      let top=r.top+r.height/2-popH/2;
+      if(left+popW>window.innerWidth) left=r.left-popW-6;
+      if(top<4) top=4;
+      if(top+popH>window.innerHeight-4) top=window.innerHeight-popH-4;
+      gPopup.style.left=left+'px';
+      gPopup.style.top=top+'px';
+    },100);
+  });
+  document.body.addEventListener('mouseout',e=>{
+    const thumb=e.target.closest('.photo-thumb');
+    if(!thumb)return;
+    clearTimeout(_popupTimer);
+    gPopup.style.display='none';
   });
   document.body.addEventListener('touchstart',e=>{
     const thumb=e.target.closest('.photo-thumb');
