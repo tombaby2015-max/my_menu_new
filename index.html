@@ -293,6 +293,9 @@ input[type=number]{-moz-appearance:textfield;}
 .mylist-del:hover{opacity:1;}
 .prod-in-mylist td{background:rgba(74,222,128,.18)!important;}
 .prod-in-mylist td:first-child{border-left:3px solid var(--green);}
+#photoModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:3000;align-items:center;justify-content:center;cursor:zoom-out;}
+#photoModal.open{display:flex;}
+#photoModalImg{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.7);}
 </style>
 </head>
 <body>
@@ -577,6 +580,7 @@ input[type=number]{-moz-appearance:textfield;}
         <table class="kbju-tbl">
           <thead><tr>
             <th>№</th>
+            <th style="width:36px;"></th>
             <th onclick="sortK('name')" style="text-align:left;cursor:pointer;">Продукт ⇅</th>
             <th onclick="sortK('proteins')">Б ⇅</th>
             <th onclick="sortK('fats')">Ж ⇅</th>
@@ -739,6 +743,11 @@ input[type=number]{-moz-appearance:textfield;}
   </div>
 </div>
 
+<!-- Photo zoom modal -->
+<div id="photoModal" onclick="document.getElementById('photoModal').classList.remove('open')">
+  <img id="photoModalImg" src="" alt="">
+</div>
+
 <!-- Basket import modal -->
 <div id="basketImportModal" class="modal-ov">
   <div class="modal-box" style="max-width:480px;width:95%;">
@@ -864,6 +873,7 @@ function init(){
   document.getElementById('notesArea').value=notes;
   renderMyList();
   renderMyProdTable();
+  preloadProductPhotos();
   loadFromKV().then(ok=>{
     if(ok){
       renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();
@@ -1087,8 +1097,23 @@ function filterPS(){
   });
 }
 
+function openPhotoZoom(src){
+  const modal=document.getElementById('photoModal');
+  const img=document.getElementById('photoModalImg');
+  img.src=src;
+  modal.classList.add('open');
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   init();
+  // Делегирование клика на фото — работает везде
+  document.body.addEventListener('click',e=>{
+    const thumb=e.target.closest('.photo-thumb');
+    if(thumb){
+      const src=thumb.dataset.src||thumb.querySelector('img')?.src;
+      if(src){e.stopPropagation();openPhotoZoom(src);}
+    }
+  });
   document.getElementById('psBody').addEventListener('click',e=>{
     const tr=e.target.closest('tr[data-name]');
     if(tr) pickProd(tr.dataset.name);
@@ -1277,25 +1302,10 @@ function renderKbju(){
     const actionCell=_kbjuSelectMode
       ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+dn+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
       :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec kbju-edit-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">Ред.</button><button class="ctrl-btn sec kbju-arc-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">'+(isA?'↩':'Арх.')+'</button></td>';
-    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'
-      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'
-      +'<td style="text-align:left">'+name+ycLabel+'</td>'
-      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'
-      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'
-      +'<td><div class="price-cell"><span>'+(cur?(()=>{
-        const isPiece=d.unitType==='piece'&&d.unitWeight>0;
-        if(isPiece&&d.priceType==='pack'&&d.packWeight){
-          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));
-          return ppu.toLocaleString('ru-RU')+' ֏/шт';
-        }
-        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' ֏/шт':' ֍');
-      })():'—')+'</span>'
-      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="История">'+sym+'</span>':'')
-      +(cur?'<span class="p-date">'+cur.date+'</span>':'')
-      +'</div></td>'+actionCell+'</tr>';
+    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'      +'<td style="text-align:center;padding:3px;">'+(d.photo        ?'<div class="photo-thumb kbju-photo" data-src="'+d.photo+'" style="margin:auto;cursor:pointer;" title="Нажмите для увеличения">🖼<div class="photo-popup"><img src="'+d.photo+'" alt="" loading="lazy" decoding="async"/></div></div>'        :'<div style="width:28px;height:28px;"></div>')+'</td>'      +'<td style="text-align:left">'+name+ycLabel+'</td>'      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'      +'<td><div class="price-cell"><span>'+(cur?(()=>{        const isPiece=d.unitType==='piece'&&d.unitWeight>0;        if(isPiece&&d.priceType==='pack'&&d.packWeight){          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));          return ppu.toLocaleString('ru-RU')+' \u0492/\u0448\u0442';        }        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' \u0492/\u0448\u0442':' \u0494');      })():'\u2014')+'</span>'      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="\u0418\u0441\u0442\u043e\u0440\u0438\u044f">'+sym+'</span>':'')      +(cur?'<span class="p-date">'+cur.date+'</span>':'')      +'</div></td>'+actionCell+'</tr>';
   };
   let html=act.map((e,i)=>row(e,i,false)).join('');
-  if(arc.length)html+='<tr class="arc-hdr"><td colspan="8">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
+  if(arc.length)html+='<tr class="arc-hdr"><td colspan="9">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
   document.getElementById('kbjuBody').innerHTML=html;
 }
 function sortK(k){kSortDir=kSortKey===k?kSortDir*-1:1;kSortKey=k;renderKbju();}
@@ -1671,6 +1681,18 @@ async function exportDataToMemory(){
   btnV.disabled=false;btnM.disabled=false;btnM.textContent='💾 Выгрузить в память';
   saveAll();
   renderMyProdTable();
+  // Preload фото в кэш браузера
+  preloadProductPhotos();
+}
+
+function preloadProductPhotos(){
+  // Собираем все уникальные URL фото из myProdList
+  const urls=new Set();
+  Object.values(myProdList).forEach(cat=>{
+    cat.products.forEach(p=>{if(p.photo)urls.add(p.photo);});
+  });
+  // Создаём Image объекты — браузер загрузит их в кэш
+  urls.forEach(url=>{const img=new Image();img.src=url;});
 }
 
 async function fetchAllProds(catId){
@@ -1883,6 +1905,16 @@ function delMyProd(catId,idx){
   saveAll();renderMyProdTable();
 }
 
+// Синхронизирует актуальные цены из myProdList → myList
+function syncMyListPrices(){
+  myList.forEach(item=>{
+    Object.values(myProdList).forEach(cat=>{
+      const prod=cat.products.find(p=>p.name===item.name);
+      if(prod&&prod.price!=null) item.price=prod.price;
+    });
+  });
+}
+
 let _lastChanges=[];
 async function updateMyProds(){
   const catIds=Object.keys(myProdList);
@@ -1961,6 +1993,8 @@ async function updateMyProds(){
   fill.style.width='100%';
   msg.textContent='✅ Обновление завершено. Изменений: '+changes.length;
   _lastChanges=changes;
+  // Синхронизируем цены из myProdList → myList
+  syncMyListPrices();
   saveAll();renderMyProdTable();
   if(changes.length){
     const icons={price_up:'🟡',price_down:'🟢',unavailable:'🔴',new:'🆕'};
@@ -2185,6 +2219,7 @@ function sendMyListToKbju(){
         }
       }
       if(!ex.fromYC){ex.fromYC=true;ex.ycCatId=p.catId;ex.ycCatName=p.catName;}
+      if(p.photo)ex.photo=p.photo;
       // Применяем правило яиц (на случай если раньше не было)
       applyEggRuleFromYC(p.name,ex,p);
       updated++;
@@ -2195,7 +2230,8 @@ function sendMyListToKbju(){
         priceHistory:p.price!=null?[{date:today,price:p.price}]:[],
         fromYC:true,
         ycCatId:p.catId,
-        ycCatName:p.catName
+        ycCatName:p.catName,
+        photo:p.photo||''
       };
       applyEggRuleFromYC(p.name,entry,p);
       kbjuTable[p.name]=entry;
