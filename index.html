@@ -876,6 +876,7 @@ function init(){
   renderMyProdTable();
   loadFromKV().then(ok=>{
     if(ok){
+      syncMyListPrices();
       renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();
       document.getElementById('notesArea').value=notes;
       renderMyList();
