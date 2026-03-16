@@ -623,14 +623,7 @@ input[type=number]{-moz-appearance:textfield;}
       </select>
     </div>
     <div class="fg"><label class="fl">Цена (֏)</label><input id="npP" class="fi" type="number" step="1"></div>
-    <div class="fg" id="npPR" style="display:none;"><label class="fl" id="npPWLabel">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
-    <div class="fg"><label class="fl">Единица измерения</label>
-      <select id="npUT" class="fi" onchange="togglePackRow()">
-        <option value="g">По весу (г)</option>
-        <option value="piece">Штучный (шт)</option>
-      </select>
-    </div>
-    <div class="fg" id="npUWR" style="display:none;"><label class="fl">Вес 1 шт (г)</label><input id="npUW" class="fi" type="number" step="1" placeholder="50"></div>
+    <div class="fg" id="npPR" style="display:none;"><label class="fl">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
     <div class="m-btns">
       <button class="ctrl-btn" onclick="saveProd()">Сохранить</button>
       <button class="ctrl-btn red" id="npDel" style="display:none;" onclick="delProd()">Удалить</button>
@@ -1307,21 +1300,43 @@ function renderKbju(){
 }
 function sortK(k){kSortDir=kSortKey===k?kSortDir*-1:1;kSortKey=k;renderKbju();}
 function togArc(n){kbjuTable[n].archived=!kbjuTable[n].archived;saveAll();renderKbju();reEvalStatuses();}
-function togglePackRow(){
-  const isPack=document.getElementById('npPT').value==='pack';
-  const isPiece=document.getElementById('npUT').value==='piece';
-  document.getElementById('npPR').style.display=isPack?'block':'none';
-  document.getElementById('npUWR').style.display=isPiece?'block':'none';
-  // Меняем лейбл и placeholder поля упаковки
-  const lbl=document.getElementById('npPWLabel');
-  const inp=document.getElementById('npPW');
-  if(isPack&&isPiece){
-    lbl.textContent='Штук в упаковке';
-    inp.placeholder='12';
+function isEgg(name){
+  return /яйц|яйцо|яиц/i.test(name);
+}
+
+// Применяет правило яиц к продукту kbjuTable
+function applyEggRule(name,d){
+  if(isEgg(name)){
+    d.unitType='piece';
+    d.unitWeight=50;
+    // Если тип упаковки и packWeight не задан — попробуем вычислить из названия
+    if(d.priceType==='pack'&&!d.packWeight){
+      const m=name.match(/(\d+)\s*шт/i);
+      if(m){d.packWeight=parseInt(m[1])*50;}
+    }
   } else {
-    lbl.textContent='Вес упаковки (г)';
-    inp.placeholder='850';
+    delete d.unitType;
+    delete d.unitWeight;
   }
+}
+
+// Применяет правило яиц при импорте из ЕреванСити
+// prod — объект из myList (содержит name, price, pricePerUnit, weightMeasure)
+function applyEggRuleFromYC(name,d,prod){
+  if(!isEgg(name))return;
+  d.unitType='piece';
+  d.unitWeight=50;
+  d.priceType='pack';
+  // Кол-во штук в упаковке — парсим из названия: "15шт", "10 шт" и т.д.
+  const m=name.match(/(\d+)\s*шт/i);
+  const packCount=m?parseInt(m[1]):null;
+  if(packCount){
+    d.packWeight=packCount*50;
+  }
+}
+
+function togglePackRow(){
+  document.getElementById('npPR').style.display=document.getElementById('npPT').value==='pack'?'block':'none';
 }
 
 function toggleKbjuSelect(){
@@ -1362,17 +1377,12 @@ function openAddProd(name){
     document.getElementById('npK').value=d.calories||'';
     document.getElementById('npP').value=cur;
     document.getElementById('npPT').value=d.priceType||'kg';
-    document.getElementById('npUT').value=d.unitType||'g';
-    document.getElementById('npUW').value=d.unitWeight||'';
-    // Для штучных показываем packCount (штук), для весовых — packWeight (г)
-    const showPiece=d.unitType==='piece';
-    document.getElementById('npPW').value=showPiece?(d.packCount||''):(d.packWeight||'');
-    togglePackRow();
+    document.getElementById('npPW').value=d.packWeight||'';
+    document.getElementById('npPR').style.display=d.priceType==='pack'?'block':'none';
   } else {
-    ['npN','npB','npJ','npU','npK','npP','npPW','npUW'].forEach(id=>document.getElementById(id).value='');
+    ['npN','npB','npJ','npU','npK','npP','npPW'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('npPT').value='kg';
-    document.getElementById('npUT').value='g';
-    togglePackRow();
+    document.getElementById('npPR').style.display='none';
   }
   openModal('addProdModal');
 }
@@ -1407,22 +1417,14 @@ function saveProd(){
   const name=document.getElementById('npN').value.trim();if(!name){alert('Введите название');return;}
   const p=parseFloat(document.getElementById('npB').value)||0,f=parseFloat(document.getElementById('npJ').value)||0,c=parseFloat(document.getElementById('npU').value)||0,k=parseFloat(document.getElementById('npK').value)||0;
   const price=parseFloat(document.getElementById('npP').value)||null,pt=document.getElementById('npPT').value,pw=parseFloat(document.getElementById('npPW').value)||null;
-  const ut=document.getElementById('npUT').value,uw=parseFloat(document.getElementById('npUW').value)||null;
-  if(ut==='piece'&&!uw){alert('Укажите вес 1 шт (г)');return;}
   const today=new Date().toLocaleDateString('ru-RU');
   if(_editProd&&_editProd!==name){kbjuTable[name]=kbjuTable[_editProd];delete kbjuTable[_editProd];}
   if(!kbjuTable[name])kbjuTable[name]={priceHistory:[]};
-  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt,unitType:ut});
-  if(ut==='piece'&&uw)d.unitWeight=uw; else delete d.unitWeight;
-  // Для штучных: поле npPW = штук в упаковке → packWeight = штук * unitWeight
-  // Для весовых: поле npPW = граммы упаковки → packWeight как есть
-  if(pw&&pt==='pack'){
-    d.packWeight=(ut==='piece'&&uw)?pw*uw:pw;
-    d.packCount=(ut==='piece')?pw:null; // сохраняем штуки для отображения в модалке
-  } else {
-    delete d.packWeight;
-    delete d.packCount;
-  }
+  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt});
+  if(pw)d.packWeight=pw; else delete d.packWeight;
+  delete d.packCount;
+  // Автоопределение яиц
+  applyEggRule(name,d);
   if(!d.priceHistory)d.priceHistory=[];
   if(price!==null){const last=d.priceHistory.length?d.priceHistory[d.priceHistory.length-1].price:null;if(last!==price)d.priceHistory.push({date:today,price});}
   saveAll();renderKbju();reEvalStatuses();closeModal('addProdModal');
@@ -1456,8 +1458,8 @@ function applyKbjuText(text){
     if(/^(название|name|продукт|#)/i.test(line))return;
     const pts=line.split(/\t|;/);const name=pts[0]?.trim();if(!name)return;
     const p=parseFloat(pts[1])||0,f=parseFloat(pts[2])||0,c=parseFloat(pts[3])||0,k=parseFloat(pts[4])||0,price=parseFloat(pts[5])||null;
-    if(kbjuTable[name]){if(p||f||c||k){kbjuTable[name].proteins=p;kbjuTable[name].fats=f;kbjuTable[name].carbs=c;kbjuTable[name].calories=k;}if(price){if(!kbjuTable[name].priceHistory)kbjuTable[name].priceHistory=[];const last=kbjuTable[name].priceHistory.length?kbjuTable[name].priceHistory[kbjuTable[name].priceHistory.length-1].price:null;if(last!==price)kbjuTable[name].priceHistory.push({date:today,price});}updated++;}
-    else{kbjuTable[name]={proteins:p,fats:f,carbs:c,calories:k,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};added++;}
+    if(kbjuTable[name]){if(p||f||c||k){kbjuTable[name].proteins=p;kbjuTable[name].fats=f;kbjuTable[name].carbs=c;kbjuTable[name].calories=k;}if(price){if(!kbjuTable[name].priceHistory)kbjuTable[name].priceHistory=[];const last=kbjuTable[name].priceHistory.length?kbjuTable[name].priceHistory[kbjuTable[name].priceHistory.length-1].price:null;if(last!==price)kbjuTable[name].priceHistory.push({date:today,price});}applyEggRule(name,kbjuTable[name]);updated++;}
+    else{const entry={proteins:p,fats:f,carbs:c,calories:k,priceType:'kg',priceHistory:price?[{date:today,price}]:[]};applyEggRule(name,entry);kbjuTable[name]=entry;added++;}
   });
   saveAll();renderKbju();alert('Добавлено: '+added+', обновлено: '+updated);
 }
@@ -2183,16 +2185,20 @@ function sendMyListToKbju(){
         }
       }
       if(!ex.fromYC){ex.fromYC=true;ex.ycCatId=p.catId;ex.ycCatName=p.catName;}
+      // Применяем правило яиц (на случай если раньше не было)
+      applyEggRuleFromYC(p.name,ex,p);
       updated++;
     } else {
-      kbjuTable[p.name]={
+      const entry={
         proteins:0,fats:0,carbs:0,calories:0,
-        priceType:'kg',
+        priceType:'pack',
         priceHistory:p.price!=null?[{date:today,price:p.price}]:[],
         fromYC:true,
         ycCatId:p.catId,
         ycCatName:p.catName
       };
+      applyEggRuleFromYC(p.name,entry,p);
+      kbjuTable[p.name]=entry;
       added++;
     }
   });
