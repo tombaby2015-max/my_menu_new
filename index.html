@@ -211,6 +211,7 @@ input[type=number]{-moz-appearance:textfield;}
 .p-badge.up{background:rgba(244,67,54,.12);border:1px solid var(--red);color:var(--red);}
 .p-badge.dn{background:rgba(76,175,80,.12);border:1px solid var(--green);color:var(--green);}
 .p-badge.eq{background:var(--bg2);border:1px solid var(--border);color:var(--text2);}
+.p-badge.na{background:rgba(248,113,113,.15);border:1px solid var(--red);color:var(--red);}
 .p-date{font-size:10px;color:var(--text2);}
 .cost-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;}
 .cost-tbl th{background:var(--th-bg);color:var(--th-text);padding:9px 9px;text-align:left;border:1px solid rgba(255,255,255,.3);border-bottom:2px solid rgba(255,255,255,.5);font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
@@ -1098,6 +1099,15 @@ function filterPS(){
   });
 }
 
+function loadThumbPhoto(thumb){
+  // Загружаем img с data-src если ещё не загружен
+  const img=thumb.querySelector('img[data-src]');
+  if(img&&!img.src){
+    img.src=img.dataset.src;
+    delete img.dataset.src;
+  }
+}
+
 function openPhotoZoom(src){
   const modal=document.getElementById('photoModal');
   const img=document.getElementById('photoModalImg');
@@ -1107,7 +1117,16 @@ function openPhotoZoom(src){
 
 document.addEventListener('DOMContentLoaded',()=>{
   init();
-  // Делегирование клика на фото — работает везде
+  // Загрузка фото по требованию — при наведении или тапе на photo-thumb
+  document.body.addEventListener('mouseover',e=>{
+    const thumb=e.target.closest('.photo-thumb');
+    if(thumb) loadThumbPhoto(thumb);
+  });
+  document.body.addEventListener('touchstart',e=>{
+    const thumb=e.target.closest('.photo-thumb');
+    if(thumb) loadThumbPhoto(thumb);
+  },{passive:true});
+  // Клик/тап на фото — открываем увеличенное
   document.body.addEventListener('click',e=>{
     const thumb=e.target.closest('.photo-thumb');
     if(thumb){
@@ -1297,13 +1316,13 @@ function renderKbju(){
   if(kSortKey){const sf=(a,b)=>{const va=kSortKey==='name'?a[0]:(a[1][kSortKey]||0),vb=kSortKey==='name'?b[0]:(b[1][kSortKey]||0);return kSortDir*(va<vb?-1:va>vb?1:0);};act.sort(sf);arc.sort(sf);}
   const row=([name,d],i,isA)=>{
     const h=d.priceHistory||[],cur=h.length?h[h.length-1]:null,prev=h.length>1?h[h.length-2].price:null;
-    let bc='eq',sym='=';if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
+    let bc='eq',sym='=';if(d.unavailable){bc='na';sym='✕';}else if(cur&&prev!==null){if(cur.price>prev){bc='up';sym='↑';}else if(cur.price<prev){bc='dn';sym='↓';}}
     const dn=encodeURIComponent(name);
     const ycLabel=d.fromYC?'<span style="color:var(--accent);opacity:.7;font-size:10px;margin-left:5px;">из ЕреванСити</span>':'';
     const actionCell=_kbjuSelectMode
       ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+dn+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
       :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec kbju-edit-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">Ред.</button><button class="ctrl-btn sec kbju-arc-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">'+(isA?'↩':'Арх.')+'</button></td>';
-    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'      +'<td style="text-align:center;padding:3px;">'+(d.photo        ?'<div class="photo-thumb kbju-photo" data-src="'+d.photo+'" style="margin:auto;cursor:pointer;" title="Нажмите для увеличения">🖼<div class="photo-popup"><img src="'+d.photo+'" alt="" loading="lazy" decoding="async"/></div></div>'        :'<div style="width:28px;height:28px;"></div>')+'</td>'      +'<td style="text-align:left">'+name+ycLabel+'</td>'      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'      +'<td><div class="price-cell"><span>'+(cur?(()=>{        const isPiece=d.unitType==='piece'&&d.unitWeight>0;        if(isPiece&&d.priceType==='pack'&&d.packWeight){          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));          return ppu.toLocaleString('ru-RU')+' \u0492/\u0448\u0442';        }        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' \u0492/\u0448\u0442':' \u0494');      })():'\u2014')+'</span>'      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="\u0418\u0441\u0442\u043e\u0440\u0438\u044f">'+sym+'</span>':'')      +(cur?'<span class="p-date">'+cur.date+'</span>':'')      +'</div></td>'+actionCell+'</tr>';
+    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'      +'<td style="text-align:center;padding:3px;">'+(d.photo        ?'<div class="photo-thumb kbju-photo" data-src="'+d.photo+'" style="margin:auto;cursor:pointer;" title="Нажмите для увеличения">🖼<div class="photo-popup"><img data-src="'+d.photo+'" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>'        :'<div style="width:28px;height:28px;"></div>')+'</td>'      +'<td style="text-align:left">'+name+ycLabel+'</td>'      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'      +'<td><div class="price-cell"><span>'+(cur?(()=>{        const isPiece=d.unitType==='piece'&&d.unitWeight>0;        if(isPiece&&d.priceType==='pack'&&d.packWeight){          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));          return ppu.toLocaleString('ru-RU')+' \u0492/\u0448\u0442';        }        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' \u0492/\u0448\u0442':' \u0494');      })():'\u2014')+'</span>'      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="\u0418\u0441\u0442\u043e\u0440\u0438\u044f">'+sym+'</span>':'')      +(cur?'<span class="p-date">'+cur.date+'</span>':'')      +'</div></td>'+actionCell+'</tr>';
   };
   let html=act.map((e,i)=>row(e,i,false)).join('');
   if(arc.length)html+='<tr class="arc-hdr"><td colspan="9">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
@@ -1618,7 +1637,7 @@ function renderViewPanel(viewRows,total){
               const price=disc?p.discountedPrice:p.price;
               const ppu=p.productPricePerUnit>0?fmtUnit({pricePerUnit:p.productPricePerUnit,weightMeasure:p.weightMeasure}):'';
               const photo=p.photo
-                ?`<div class="photo-thumb" style="margin:auto;">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
+                ?`<div class="photo-thumb" style="margin:auto;" data-src="${p.photo}">🖼<div class="photo-popup"><img data-src="${p.photo}" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>`
                 :`<div style="text-align:center;color:var(--text2);font-size:10px;">—</div>`;
               return `<tr style="background:${i%2===0?'var(--bg3)':'var(--bg4)'}">
                 <td style="padding:4px 6px;"></td>
@@ -1758,7 +1777,7 @@ function renderMyProdTable(){
       }
       if(bgMap[p.status])tr.style.background=bgMap[p.status];
       const photo=p.photo
-        ?`<div class="photo-thumb">🖼<div class="photo-popup"><img src="${p.photo}" alt="" loading="lazy" decoding="async"/></div></div>`
+        ?`<div class="photo-thumb" data-src="${p.photo}">🖼<div class="photo-popup"><img data-src="${p.photo}" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>`
         :`<div class="photo-thumb" style="cursor:default;font-size:10px;color:var(--text2);">—</div>`;
       const nameStyle=p.status==='unavailable'?'text-decoration:line-through;color:var(--text2);':'';
       const discBadge=p.origPrice&&p.discPct
@@ -2283,13 +2302,22 @@ async function updatePricesFromYC(){
         if(found){
           const price=found.discountedPrice>0&&found.discountedPrice<found.price?found.discountedPrice:found.price;
           const d=kbjuTable[name];
+          // Обновляем фото если ещё нет
+          if(!d.photo&&found.photo) d.photo=found.photo;
+          // Сбрасываем unavailable если продукт снова найден
+          if(d.unavailable){delete d.unavailable;delete d.unavailableDate;}
           const last=d.priceHistory?.length?d.priceHistory[d.priceHistory.length-1].price:null;
           if(price&&Math.round(price)!==Math.round(last||0)){
             if(!d.priceHistory)d.priceHistory=[];
             d.priceHistory.push({date:today,price});
             updated++;
           }
-        } else notFound++;
+        } else {
+          // Помечаем как недоступный
+          kbjuTable[name].unavailable=true;
+          kbjuTable[name].unavailableDate=today;
+          notFound++;
+        }
       });
     }catch(e){console.warn('catId '+catId,e);}
   }
