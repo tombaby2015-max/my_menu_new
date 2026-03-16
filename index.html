@@ -627,7 +627,21 @@ input[type=number]{-moz-appearance:textfield;}
         <option value="pack">За упаковку</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">Цена (֏)</label><input id="npP" class="fi" type="number" step="1"></div>
+    <div class="fg"><label class="fl">Цена</label>
+      <div style="display:flex;gap:8px;">
+        <select id="npPC" class="fi" style="width:90px;flex-shrink:0;">
+          <option value="֏">֏ Драм</option>
+          <option value="₽">₽ Рубль</option>
+          <option value="$">$ Доллар</option>
+          <option value="€">€ Евро</option>
+        </select>
+        <input id="npP" class="fi" type="number" step="1" style="flex:1;">
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text2);cursor:pointer;">
+        <input type="checkbox" id="npPCDefault" style="accent-color:var(--accent);">
+        Запомнить как валюту по умолчанию
+      </label>
+    </div>
     <div class="fg" id="npPR" style="display:none;"><label class="fl">Вес упаковки (г)</label><input id="npPW" class="fi" type="number" step="1" placeholder="850"></div>
     <div class="m-btns">
       <button class="ctrl-btn" onclick="saveProd()">Сохранить</button>
@@ -771,6 +785,18 @@ let menuData={}, kbjuTable={}, mealTimes={}, savedRecipes={Завтрак:[],П�
 let _parsedRows=[], _parsedCats=[];
 let myProdList={};
 let basketExtras={snack:[],breakfast:[],lunch:[],dinner:[]};
+let defaultCurrency='֏';
+
+const CURRENCIES={'֏':'֏','₽':'₽','$':'$','€':'€'};
+
+function fmtCurrency(price, currency){
+  if(!price&&price!==0) return '—';
+  const sym=currency||defaultCurrency||'֏';
+  const num=Math.round(price).toLocaleString('ru-RU');
+  // Символ после числа для ֏ и ₽, перед числом для $ и €
+  if(sym==='$'||sym==='€') return sym+num;
+  return num+' '+sym;
+}
 let curDay='Понедельник', kSortKey=null, kSortDir=1;
 let _editProd=null, _psTarget=null, _atmRec=null, _syncDec=[], _renameTarget=null;
 let _kbjuSelectMode=false;
@@ -789,6 +815,7 @@ function saveAll(){
   localStorage.setItem('_parsedRows',JSON.stringify(_parsedRows));
   localStorage.setItem('myProdList',JSON.stringify(myProdList));
   localStorage.setItem('basketExtras',JSON.stringify(basketExtras));
+  localStorage.setItem('defaultCurrency',defaultCurrency);
   clearTimeout(_kvTimer);
   _kvTimer=setTimeout(syncToKV,1500);
 }
@@ -802,6 +829,7 @@ function loadAll(){
   try{_parsedRows=JSON.parse(localStorage.getItem('_parsedRows')||'[]')}catch(e){}
   try{myProdList=JSON.parse(localStorage.getItem('myProdList')||'{}')}catch(e){}
   try{basketExtras=JSON.parse(localStorage.getItem('basketExtras')||'{\"snack\":[],\"breakfast\":[],\"lunch\":[],\"dinner\":[]}')}catch(e){}
+  defaultCurrency=localStorage.getItem('defaultCurrency')||'\u058f';
 }
 function saveNotes(){notes=document.getElementById('notesArea').value;saveAll();}
 async function syncToKV(){
@@ -1090,13 +1118,15 @@ function filterPS(){
   Object.entries(kbjuTable).filter(([n,d])=>!d.archived&&(!q||n.toLowerCase().includes(q))).forEach(([name,d])=>{
     const _ph=d.priceHistory,_lp=_ph&&_ph.length?_ph[_ph.length-1].price:null;
     const isPiece=d.unitType==='piece'&&d.unitWeight>0;
+    const sym=d.currency||'֏';
     let priceStr='—';
     if(_lp!=null){
+      const fmt=v=>(sym==='$'||sym==='€')?sym+Math.round(v).toLocaleString('ru-RU'):Math.round(v).toLocaleString('ru-RU')+' '+sym;
       if(isPiece&&d.priceType==='pack'&&d.packWeight){
-        priceStr=Math.round(_lp/(d.packWeight/d.unitWeight)).toLocaleString('ru-RU')+'₽/шт';
+        priceStr=fmt(_lp/(d.packWeight/d.unitWeight))+'/шт';
       } else {
         const unit=isPiece?'шт':(d.priceType==='pack'&&d.packWeight?d.packWeight+'г':'кг');
-        priceStr=_lp+'₽/'+unit;
+        priceStr=fmt(_lp)+'/'+unit;
       }
     }
     const tr=document.createElement('tr');tr.dataset.name=name;tr.style.cursor='pointer';
@@ -1328,7 +1358,7 @@ function renderKbju(){
     const actionCell=_kbjuSelectMode
       ?'<td style="text-align:center;"><input type="checkbox" class="kbju-sel-cb" data-name="'+dn+'" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);"></td>'
       :'<td style="display:flex;gap:5px;"><button class="ctrl-btn sec kbju-edit-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">Ред.</button><button class="ctrl-btn sec kbju-arc-btn" data-name="'+dn+'" style="padding:2px 7px;font-size:12px;">'+(isA?'↩':'Арх.')+'</button></td>';
-    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'      +'<td style="text-align:center;padding:3px;">'+(d.photo        ?'<div class="photo-thumb kbju-photo" data-src="'+d.photo+'" style="margin:auto;cursor:pointer;" title="Нажмите для увеличения">🖼<div class="photo-popup"><img data-src="'+d.photo+'" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>'        :'<div style="width:28px;height:28px;"></div>')+'</td>'      +'<td style="text-align:left">'+name+ycLabel+'</td>'      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'      +'<td><div class="price-cell"><span>'+(cur?(()=>{        const isPiece=d.unitType==='piece'&&d.unitWeight>0;        if(isPiece&&d.priceType==='pack'&&d.packWeight){          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));          return ppu.toLocaleString('ru-RU')+' \u0492/\u0448\u0442';        }        return Math.round(cur.price).toLocaleString('ru-RU')+(d.unitType==='piece'?' \u0492/\u0448\u0442':' \u0494');      })():'\u2014')+'</span>'      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="\u0418\u0441\u0442\u043e\u0440\u0438\u044f">'+sym+'</span>':'')      +(cur?'<span class="p-date">'+cur.date+'</span>':'')      +'</div></td>'+actionCell+'</tr>';
+    return '<tr class="kbju-row'+(isA?' kbju-archived':'')+'" data-name="'+dn+'" style="'+(isA?'opacity:.6;':'')+(_kbjuSelectMode?'cursor:pointer;':'')+'">'      +'<td style="text-align:center;color:var(--text2)">'+(i+1)+'</td>'      +'<td style="text-align:center;padding:3px;">'+(d.photo        ?'<div class="photo-thumb kbju-photo" data-src="'+d.photo+'" style="margin:auto;cursor:pointer;" title="Нажмите для увеличения">🖼<div class="photo-popup"><img data-src="'+d.photo+'" alt="" style="width:150px;height:150px;object-fit:contain;border-radius:5px;display:block;"/></div></div>'        :'<div style="width:28px;height:28px;"></div>')+'</td>'      +'<td style="text-align:left">'+name+ycLabel+'</td>'      +'<td style="text-align:center">'+n1(d.proteins)+'</td><td style="text-align:center">'+n1(d.fats)+'</td>'      +'<td style="text-align:center">'+n1(d.carbs)+'</td><td style="text-align:center">'+n1(d.calories)+'</td>'      +'<td><div class="price-cell"><span>'+(cur?(()=>{        const sym=d.currency||'֏';        const isPiece=d.unitType==='piece'&&d.unitWeight>0;        if(isPiece&&d.priceType==='pack'&&d.packWeight){          const ppu=Math.round(cur.price/(d.packWeight/d.unitWeight));          return (sym==='$'||sym==='€'?sym:'')+(sym!=='$'&&sym!=='€'?ppu.toLocaleString('ru-RU'):ppu.toLocaleString('ru-RU'))+(sym!=='$'&&sym!=='€'?' '+sym:'')+'/шт';        }        const priceStr=(sym==='$'||sym==='€')?sym+Math.round(cur.price).toLocaleString('ru-RU'):Math.round(cur.price).toLocaleString('ru-RU')+' '+sym;        return priceStr+(d.unitType==='piece'?'/шт':'');      })():'—')+'</span>'      +(h.length?'<span class="p-badge '+bc+'" data-ph="'+dn+'" title="История">'+sym+'</span>':'')      +(cur?'<span class="p-date">'+cur.date+'</span>':'')      +'</div></td>'+actionCell+'</tr>';
   };
   let html=act.map((e,i)=>row(e,i,false)).join('');
   if(arc.length)html+='<tr class="arc-hdr"><td colspan="9">Архив ('+arc.length+')</td></tr>'+arc.map((e,i)=>row(e,i,true)).join('');
@@ -1412,14 +1442,17 @@ function openAddProd(name){
     document.getElementById('npU').value=d.carbs||'';
     document.getElementById('npK').value=d.calories||'';
     document.getElementById('npP').value=cur;
+    document.getElementById('npPC').value=d.currency||defaultCurrency||'֏';
     document.getElementById('npPT').value=d.priceType||'kg';
     document.getElementById('npPW').value=d.packWeight||'';
     document.getElementById('npPR').style.display=d.priceType==='pack'?'block':'none';
   } else {
     ['npN','npB','npJ','npU','npK','npP','npPW'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('npPC').value=defaultCurrency||'֏';
     document.getElementById('npPT').value='kg';
     document.getElementById('npPR').style.display='none';
   }
+  document.getElementById('npPCDefault').checked=false;
   openModal('addProdModal');
 }
 
@@ -1453,10 +1486,13 @@ function saveProd(){
   const name=document.getElementById('npN').value.trim();if(!name){alert('Введите название');return;}
   const p=parseFloat(document.getElementById('npB').value)||0,f=parseFloat(document.getElementById('npJ').value)||0,c=parseFloat(document.getElementById('npU').value)||0,k=parseFloat(document.getElementById('npK').value)||0;
   const price=parseFloat(document.getElementById('npP').value)||null,pt=document.getElementById('npPT').value,pw=parseFloat(document.getElementById('npPW').value)||null;
+  const currency=document.getElementById('npPC').value||defaultCurrency||'֏';
+  const setDefault=document.getElementById('npPCDefault').checked;
+  if(setDefault) defaultCurrency=currency;
   const today=new Date().toLocaleDateString('ru-RU');
   if(_editProd&&_editProd!==name){kbjuTable[name]=kbjuTable[_editProd];delete kbjuTable[_editProd];}
   if(!kbjuTable[name])kbjuTable[name]={priceHistory:[]};
-  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt});
+  const d=kbjuTable[name];Object.assign(d,{proteins:p,fats:f,carbs:c,calories:k,priceType:pt,currency});
   if(pw)d.packWeight=pw; else delete d.packWeight;
   delete d.packCount;
   // Автоопределение яиц
