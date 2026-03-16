@@ -1911,23 +1911,25 @@ function delMyProd(catId,idx){
 
 // Синхронизирует актуальные цены и фото из myProdList → myList и kbjuTable
 function syncMyListPrices(){
+  let changed=false;
   myList.forEach(item=>{
     Object.values(myProdList).forEach(cat=>{
       const prod=cat.products.find(p=>p.name===item.name);
       if(prod){
-        if(prod.price!=null) item.price=prod.price;
-        if(prod.photo) item.photo=prod.photo;
+        if(prod.price!=null&&item.price!==prod.price){item.price=prod.price;changed=true;}
+        if(prod.photo&&item.photo!==prod.photo){item.photo=prod.photo;changed=true;}
       }
     });
   });
   // Обновляем photo в kbjuTable для всех продуктов у которых есть совпадение в myProdList
   Object.entries(kbjuTable).forEach(([name,d])=>{
-    if(d.photo) return; // уже есть — не трогаем
+    if(d.photo) return;
     Object.values(myProdList).forEach(cat=>{
       const prod=cat.products.find(p=>p.name===name);
-      if(prod&&prod.photo) d.photo=prod.photo;
+      if(prod&&prod.photo){d.photo=prod.photo;changed=true;}
     });
   });
+  if(changed) saveAll();
 }
 
 let _lastChanges=[];
