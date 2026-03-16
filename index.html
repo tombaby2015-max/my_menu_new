@@ -842,7 +842,7 @@ async function loadFromKV(){
 }
 async function doSync(){
   const ok=await loadFromKV();
-  if(ok){renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;renderMyList();renderMyProdTable();}
+  if(ok){syncMyListPrices();renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();document.getElementById('notesArea').value=notes;renderMyList();renderMyProdTable();}
 }
 function showBadge(t,c){
   let b=document.getElementById('syncBadge');
@@ -873,7 +873,6 @@ function init(){
   document.getElementById('notesArea').value=notes;
   renderMyList();
   renderMyProdTable();
-  preloadProductPhotos();
   loadFromKV().then(ok=>{
     if(ok){
       renderMenuDay(curDay);renderKbju();renderSaved();renderNotesLists();
@@ -1681,8 +1680,12 @@ async function exportDataToMemory(){
   btnV.disabled=false;btnM.disabled=false;btnM.textContent='💾 Выгрузить в память';
   saveAll();
   renderMyProdTable();
-  // Preload фото в кэш браузера
-  preloadProductPhotos();
+  // Preload фото — запускаем когда браузер свободен, не блокируя UI
+  if(window.requestIdleCallback){
+    requestIdleCallback(()=>preloadProductPhotos());
+  } else {
+    setTimeout(preloadProductPhotos, 2000);
+  }
 }
 
 function preloadProductPhotos(){
@@ -1788,7 +1791,7 @@ function renderMyProdTable(){
         <td style="text-align:center;width:107px;position:relative;"><div class="price-cell" style="justify-content:center;">${priceCell}${badge}</div>${discBadge?`<span class="discount-badge" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);margin:0;">${p.discPct}%</span>`:''}</td>
         <td style="text-align:center;width:160px;color:#ffffff;font-size:12px;">${fmtUnit({pricePerUnit:p.pricePerUnit,weightMeasure:p.weightMeasure})}</td>
         <td style="text-align:center;width:80px;color:#ffffff;font-size:12px;">${oldPriceCell}</td>
-        <td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''} onchange="toggleMyListItem(this)"></td>
+        <td style="text-align:center;"><input type="checkbox" class="cb-add" data-row="${rowData}" ${inMyList?'checked':''}></td>
         <td style="text-align:center;"><button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;opacity:.6;" onclick="delMyProd('${catId}',${p._origIdx})">✕</button></td>`;
       tr.onclick=function(e){
         if(e.target.closest('.photo-thumb'))return;
@@ -1905,12 +1908,23 @@ function delMyProd(catId,idx){
   saveAll();renderMyProdTable();
 }
 
-// Синхронизирует актуальные цены из myProdList → myList
+// Синхронизирует актуальные цены и фото из myProdList → myList и kbjuTable
 function syncMyListPrices(){
   myList.forEach(item=>{
     Object.values(myProdList).forEach(cat=>{
       const prod=cat.products.find(p=>p.name===item.name);
-      if(prod&&prod.price!=null) item.price=prod.price;
+      if(prod){
+        if(prod.price!=null) item.price=prod.price;
+        if(prod.photo) item.photo=prod.photo;
+      }
+    });
+  });
+  // Также обновляем photo в kbjuTable для продуктов из ЕреванСити
+  Object.entries(kbjuTable).forEach(([name,d])=>{
+    if(!d.fromYC||d.photo) return;
+    Object.values(myProdList).forEach(cat=>{
+      const prod=cat.products.find(p=>p.name===name);
+      if(prod&&prod.photo) d.photo=prod.photo;
     });
   });
 }
